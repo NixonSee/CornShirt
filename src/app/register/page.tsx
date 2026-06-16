@@ -24,6 +24,7 @@ export default function RegisterPage() {
     setLoading(true);
     setErrorMessage("");
 
+    {/*This saves the user's profile in the database (save in Supabase built-in Auth Users table) */}
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -35,7 +36,7 @@ export default function RegisterPage() {
       return;
     }
 
-    const userId = data.user?.id;
+    const userId = data.user?.id; //Get the user ID from Supabase Auth after the user account is created
 
     if (!userId) {
       setErrorMessage("Registration failed. Please try again.");
@@ -43,6 +44,7 @@ export default function RegisterPage() {
       return;
     }
 
+    {/*After Supabase Auth creates the account, save the user’s extra details into profiles table */}
     const { error: profileError } = await supabase.from("profiles").insert({
       user_id: userId,
       name,
