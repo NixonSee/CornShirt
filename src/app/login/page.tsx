@@ -23,6 +23,7 @@ export default function LoginPage() {
   setLoading(true);
   setErrorMessage("");
 
+  // Supabase receives the password, hashes it securely, and stores the hashed version in built-in auth.users system. (bcrypt + salt)
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.trim(),
     password,
