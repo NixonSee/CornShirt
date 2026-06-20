@@ -9,10 +9,8 @@ import {
   CalendarDays,
   ChevronDown,
   Clock3,
-  Heart,
   MapPin,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
   Ticket,
   WalletCards,
@@ -21,9 +19,6 @@ import { drops, filterOptions, type FilterOption } from "./events";
 
 export default function UserDashboardPage() {
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>("latest");
-  const [favoriteSlugs, setFavoriteSlugs] = useState(
-    () => new Set(drops.filter((drop) => drop.favorite).map((drop) => drop.slug)),
-  );
 
   const filteredDrops = useMemo(() => {
     const rankKey =
@@ -38,7 +33,7 @@ export default function UserDashboardPage() {
 
   return (
     <main className="min-h-screen bg-white/95 text-slate-950">
-      <section className="relative min-h-[720px] overflow-hidden bg-slate-950 text-white lg:min-h-[900px]">
+      <section className="relative min-h-[600px] overflow-hidden bg-slate-950 text-white lg:min-h-[740px]">
         <Image
           src="/Background Login Image.png"
           alt="Festival crowd facing a bright concert stage"
@@ -76,9 +71,6 @@ export default function UserDashboardPage() {
               <a className="rounded-md px-3 py-2 text-cyan-600 hover:bg-cyan-50" href="#">
                 Explore Events
               </a>
-              <a className="rounded-md px-3 py-2 hover:bg-slate-100" href="#">
-                My Tickets
-              </a>
             </div>
 
             <button
@@ -105,13 +97,13 @@ export default function UserDashboardPage() {
           </nav>
         </header>
 
-        <div className="relative z-10 mx-auto flex min-h-[610px] max-w-7xl flex-col items-center justify-center px-5 pb-28 pt-20 text-center sm:px-8 lg:min-h-[770px]">
+        <div className="relative z-10 mx-auto flex min-h-[500px] max-w-7xl flex-col items-center justify-center px-5 pb-20 pt-16 text-center sm:px-8 lg:min-h-[610px]">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/35 bg-fuchsia-500/30 px-4 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_32px_rgba(217,70,239,0.35)] backdrop-blur-md">
             <span className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_14px_rgba(103,232,249,0.95)]" />
             Live Now: Genesis Drops
           </div>
 
-          <h1 className="max-w-3xl text-4xl font-black uppercase leading-[0.95] tracking-normal text-white sm:text-6xl lg:text-7xl">
+          <h1 className="max-w-3xl text-4xl font-black uppercase leading-[0.95] tracking-normal text-white sm:text-5xl lg:text-6xl">
             The future of{" "}
             <span className="text-cyan-300 drop-shadow-[0_0_22px_rgba(34,211,238,0.65)]">
               vibing
@@ -123,13 +115,13 @@ export default function UserDashboardPage() {
           </p>
           <button
             type="button"
-            className="mt-10 h-12 min-w-48 rounded-lg border border-cyan-200/40 bg-cyan-300/20 px-8 text-xs font-black uppercase text-white shadow-[0_0_38px_rgba(34,211,238,0.32)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-cyan-300/30"
+            className="mt-8 h-11 min-w-44 rounded-lg border border-cyan-200/40 bg-cyan-300/20 px-7 text-xs font-black uppercase text-white shadow-[0_0_38px_rgba(34,211,238,0.32)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-cyan-300/30"
           >
             Learn More
           </button>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+        <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-white/45" />
           <span className="h-2.5 w-2.5 rounded-full bg-white/45" />
           <span className="h-3 w-3 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.95)]" />
@@ -140,9 +132,6 @@ export default function UserDashboardPage() {
         <div className="relative z-30 mx-auto max-w-7xl">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-600">
-                Verified Access
-              </p>
               <h2 className="mt-2 text-3xl font-black uppercase tracking-normal text-slate-950 sm:text-4xl">
                 Upcoming Drops
               </h2>
@@ -189,18 +178,16 @@ export default function UserDashboardPage() {
                       className={`object-cover ${drop.imagePosition} transition duration-500 group-hover:scale-105`}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
-                    <div className="absolute left-4 top-4">
-                      <span className={`rounded px-3 py-1 text-[10px] font-black uppercase ${drop.statusClass}`}>
-                        {drop.status}
-                      </span>
-                    </div>
+                    {drop.status === "Sold Out Soon" && (
+                      <div className="absolute left-4 top-4">
+                        <span className={`rounded px-3 py-1 text-[10px] font-black uppercase ${drop.statusClass}`}>
+                          {drop.status}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-5">
-                    <div className="mb-3 inline-flex items-center gap-1.5 text-[11px] font-black uppercase text-cyan-600">
-                      <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-                      On-chain verified
-                    </div>
                     <h3 className="min-h-16 text-2xl font-black uppercase leading-none tracking-normal text-slate-950">
                       {drop.title}
                     </h3>
@@ -218,34 +205,11 @@ export default function UserDashboardPage() {
                         {drop.location}
                       </span>
                     </div>
-                    <span className="mt-5 flex h-11 w-full items-center justify-center rounded-lg border border-slate-950 bg-slate-950 px-4 text-xs font-black uppercase text-white shadow-[0_12px_30px_rgba(15,23,42,0.18)] transition group-hover:-translate-y-0.5 group-hover:bg-cyan-500 group-hover:text-slate-950">
+                    <span className="mt-5 flex h-11 w-full items-center justify-center rounded-lg border border-slate-950 bg-slate-950 px-4 text-xs font-black uppercase text-white shadow-[0_12px_30px_rgba(15,23,42,0.18)] transition group-hover:-translate-y-0.5 group-hover:border-yellow-400 group-hover:bg-yellow-400 group-hover:text-slate-950 group-hover:shadow-[0_10px_28px_rgba(234,179,8,0.35)]">
                       {drop.action}
                     </span>
                   </div>
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFavoriteSlugs((current) => {
-                      const next = new Set(current);
-
-                      if (next.has(drop.slug)) {
-                        next.delete(drop.slug);
-                      } else {
-                        next.add(drop.slug);
-                      }
-
-                      return next;
-                    });
-                  }}
-                  className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-md transition hover:bg-white/30"
-                  aria-label={`Save ${drop.title}`}
-                >
-                  <Heart
-                    className={`h-4 w-4 ${favoriteSlugs.has(drop.slug) ? "fill-fuchsia-400 text-fuchsia-400" : ""}`}
-                    aria-hidden="true"
-                  />
-                </button>
               </article>
             ))}
           </div>
