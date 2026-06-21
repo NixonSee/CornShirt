@@ -1,11 +1,57 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import Card from "@/components/common/Card";
+import QuickStat from "@/components/admin/QuickStat";
 import AdminCharts from "@/components/admin/AdminCharts";
 import TrendCharts from "@/components/admin/TrendCharts";
 import EventPipeline from "@/components/admin/EventPipeline";
 import TicketAnalytics from "@/components/admin/TicketAnalytics";
 import ActivityFeed from "@/components/admin/ActivityFeed";
 import RecentEventsTable from "@/components/admin/RecentEventsTable";
+
+function Sparkline({ values, color }: { values: number[]; color: string }) {
+  if (values.length < 2) return null;
+  const max = Math.max(...values, 1);
+  const w = 200;
+  const h = 36;
+  const pad = 2;
+  const stepX = w / Math.max(values.length - 1, 1);
+  const points = values
+    .map((v, i) => {
+      const x = i * stepX;
+      const y = h - pad - ((v / max) * (h - 2 * pad));
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="h-full w-full">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.55}
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
+function computeTrend(
+  values: number[]
+): { value: number; direction: "up" | "down" } | undefined {
+  if (values.length < 4) return undefined;
+  const mid = Math.floor(values.length / 2);
+  const first = values.slice(0, mid);
+  const second = values.slice(mid);
+  const avg1 = first.reduce((s, v) => s + v, 0) / first.length;
+  const avg2 = second.reduce((s, v) => s + v, 0) / second.length;
+  if (avg1 === 0) return undefined;
+  const pct = Math.round(((avg2 - avg1) / avg1) * 100);
+  if (pct === 0) return undefined;
+  return { value: Math.abs(pct), direction: pct > 0 ? "up" : "down" };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -214,114 +260,157 @@ export default async function AdminDashboardPage() {
     )
     .slice(0, 10);
 
-  return (
-    <main className="min-h-screen bg-slate-50 p-8">
-      <h1 className="text-2xl font-black uppercase tracking-wide text-slate-950">
-        Admin Dashboard
-      </h1>
-      <p className="mt-1 text-sm text-slate-600">
-        Platform overview and statistics
-      </p>
+  const eventsValues = eventsTrend.map((d) => d.count);
+  const revenueValues = revenueTrend.map((d) => d.revenue);
+  const eventsTrendArrow = computeTrend(eventsValues);
+  const revenueTrendArrow = computeTrend(revenueValues);
 
-      {/* Row 1 — Metric cards */}
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+  return (
+    <main className="min-h-screen bg-[#f8fafc]">
+      <div className="mx-auto max-w-[1400px] p-4 sm:p-6 lg:px-11 lg:py-9">
+      <header className="mb-9 flex flex-col items-start gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-[28px] font-bold tracking-[-0.01em] text-[#0f172a]">
+            Admin Dashboard
+          </h1>
+          <p className="mt-1 text-[13px] text-[#64748b]">
+            Platform overview and statistics
+          </p>
+        </div>
+        <div className="text-[12px] text-[#94a3b8] md:text-right">
+          Last updated{" "}
+          <strong className="font-semibold text-[#0f172a]">
+            {new Date().toLocaleString()}
+          </strong>
+        </div>
+      </header>
+
+      {/* Row 1 — KPI cards */}
+      <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Card
           title="Total Users"
           value={totalUsers}
           description="Registered user accounts"
+          sparkline={<Sparkline values={eventsValues} color="#2563eb" />}
         />
         <Card
           title="Total Organizers"
           value={totalOrganizers}
           description="Event organizers"
+          sparkline={<Sparkline values={eventsValues} color="#2563eb" />}
         />
         <Card
           title="Total Events"
           value={totalEventsCount ?? 0}
           description="All events"
+          trend={eventsTrendArrow}
+          sparkline={<Sparkline values={eventsValues} color="#2563eb" />}
         />
         <Card
           title="Pending Events"
           value={pendingEvents}
           description="Awaiting approval"
+          sparkline={<Sparkline values={eventsValues} color="#2563eb" />}
         />
         <Card
           title="Ticket Revenue (RM)"
           value={totalTicketRevenue}
           description="From ticket purchases"
+          trend={revenueTrendArrow}
+          sparkline={<Sparkline values={revenueValues} color="#2563eb" />}
         />
         <Card
           title="Tickets Sold"
           value={totalTicketsSold}
           description="Across all events"
+          sparkline={<Sparkline values={eventsValues} color="#2563eb" />}
         />
       </div>
 
       {/* Row 2 — Trend charts */}
-      <div className="mt-10">
+      <section className="mt-9">
         <TrendCharts eventsTrend={eventsTrend} revenueTrend={revenueTrend} />
-      </div>
+      </section>
 
       {/* Row 3 — Event pipeline + Ticket analytics */}
-      <div className="mt-10 grid gap-6 sm:grid-cols-2">
+      <section className="mt-9 grid gap-5 sm:grid-cols-2">
         <EventPipeline statusData={statusData} />
         <TicketAnalytics ticketTypes={ttData} eventLookup={eventLookup} />
-      </div>
+      </section>
 
       {/* Row 4 — User roles + Quick stats */}
-      <div className="mt-10 grid gap-6 sm:grid-cols-2">
+      <section className="mt-9 grid gap-5 sm:grid-cols-2">
         <AdminCharts roleData={roleData} />
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Card
-            title="Tickets"
+        <div className="grid gap-3 sm:grid-cols-2">
+          <QuickStat
             value={totalTickets ?? 0}
-            description="Total tickets issued"
+            label="Tickets Issued"
           />
-          <Card
-            title="Transactions"
+          <QuickStat
             value={totalTransactions ?? 0}
-            description="All transactions"
+            label="Transactions"
           />
-          <Card
-            title="Top-ups"
+          <QuickStat
             value={totalTopups ?? 0}
-            description="DICKEN token top-ups"
+            label="DICKEN Top-Ups"
           />
-          <Card
-            title="Verifications"
+          <QuickStat
             value={totalVerifications ?? 0}
-            description="Ticket verification events"
+            label="Verifications"
           />
         </div>
-      </div>
+      </section>
 
       {/* Row 5 — Top Performing Events */}
       {topEvents.length > 0 && (
-        <div className="card-dashboard mt-10">
-          <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+        <section className="card-dashboard mt-9">
+          <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#64748b]">
             Top Performing Events
           </p>
-          <div className="mt-4 space-y-2">
-            {topEvents.map((ev, i) => (
-              <div
-                key={ev.eventId}
-                className="flex items-center justify-between text-sm"
-              >
-                <span className="font-semibold text-slate-900">
-                  {i + 1}. {ev.name}
-                </span>
-                <span className="text-slate-600">{ev.sold} tickets sold</span>
-              </div>
-            ))}
+          <div className="mt-4">
+            {topEvents.map((ev, i) => {
+              const maxSold = topEvents[0]?.sold ?? 1;
+              const barPct = Math.round((ev.sold / maxSold) * 100);
+              return (
+                <div
+                  key={ev.eventId}
+                  className="flex items-center justify-between border-b border-[#f1f5f9] py-3 last:border-0"
+                >
+                  <span className="w-8 shrink-0 text-[13px] font-extrabold text-[#d97706]">
+                    {i + 1}
+                  </span>
+                  <span className="flex-1 text-[13px] font-semibold text-[#0f172a]">
+                    {ev.name}
+                  </span>
+                  <div className="mx-4 h-[6px] max-w-[140px] flex-1 overflow-hidden rounded-[3px] bg-[#f1f5f9]">
+                    <div
+                      className="h-full rounded-[3px] transition-all"
+                      style={{
+                        width: `${barPct}%`,
+                        backgroundColor: "#2563eb",
+                      }}
+                    />
+                  </div>
+                  <span className="w-20 shrink-0 text-right text-[12px] font-bold text-[#64748b]">
+                    {ev.sold} sold
+                  </span>
+                </div>
+              );
+            })}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Row 6 — Activity Feed */}
-      <ActivityFeed items={feedItems} />
+      <section className="mt-9">
+        <ActivityFeed items={feedItems} />
+      </section>
 
       {/* Row 7 — Recent Events Table */}
-      <RecentEventsTable events={recentEvents} />
+      <section className="mt-9">
+        <RecentEventsTable events={recentEvents} />
+      </section>
+      </div>
     </main>
   );
 }

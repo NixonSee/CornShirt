@@ -3,7 +3,7 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 const ROLE_COLORS: Record<string, string> = {
-  User: "#3b82f6",
+  User: "#2563eb",
   Organizer: "#a855f7",
   Admin: "#64748b",
 };
@@ -19,7 +19,7 @@ export default function AdminCharts({
 
   return (
     <div className="card-dashboard">
-      <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+      <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#64748b]">
         User Roles
       </p>
       <div className="mt-4 flex justify-center">
