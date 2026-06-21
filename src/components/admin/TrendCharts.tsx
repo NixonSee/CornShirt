@@ -1,10 +1,9 @@
 "use client";
 
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
-  YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
@@ -23,61 +22,64 @@ export default function TrendCharts({
   if (eventsTrend.length === 0 && revenueTrend.length === 0) return null;
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2">
+    <div className="grid gap-5 sm:grid-cols-2">
       {eventsTrend.length > 0 && (
         <div className="card-dashboard">
-          <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-[0.06em] text-[#64748b]">
             Events Created Over Time
           </p>
-          <div className="mt-4">
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={eventsTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <div className="mt-5">
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={eventsTrend} barCategoryGap={6}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 9, fill: "#94a3b8" }}
                   tickFormatter={(v) => v.slice(5)}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                 <Tooltip labelStyle={{ color: "#000" }} />
-                <Line
-                  type="monotone"
+                <Bar
                   dataKey="count"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
+                  fill="#2563eb"
+                  radius={[4, 4, 0, 0]}
+                  minPointSize={2}
                   name="Events"
                 />
-              </LineChart>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       )}
       {revenueTrend.length > 0 && (
         <div className="card-dashboard">
-          <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-[0.06em] text-[#64748b]">
             Revenue Over Time (RM)
           </p>
-          <div className="mt-4">
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={revenueTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <div className="mt-5">
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={revenueTrend} barCategoryGap={6}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 9, fill: "#94a3b8" }}
                   tickFormatter={(v) => v.slice(5)}
+                  axisLine={false}
+                  tickLine={false}
                 />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => [`RM${v}`, "Revenue"]} labelStyle={{ color: "#000" }} />
-                <Line
-                  type="monotone"
+                <Tooltip
+                  formatter={(value) => [`RM${value}`, "Revenue"]}
+                  labelStyle={{ color: "#000" }}
+                />
+                <Bar
                   dataKey="revenue"
-                  stroke="#22c55e"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
+                  fill="#16a34a"
+                  radius={[4, 4, 0, 0]}
+                  minPointSize={2}
                   name="Revenue"
                 />
-              </LineChart>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
