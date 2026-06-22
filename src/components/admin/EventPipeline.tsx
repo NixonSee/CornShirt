@@ -2,7 +2,7 @@ const STATUS_COLORS: Record<string, string> = {
   Draft: "#94a3b8",
   Pending: "#eab308",
   Active: "#22c55e",
-  Completed: "#3b82f6",
+  Completed: "#2563eb",
   Cancelled: "#ef4444",
 };
 
@@ -20,32 +20,32 @@ export default function EventPipeline({
 
   return (
     <div className="card-dashboard">
-      <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+      <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#64748b]">
         Event Pipeline
       </p>
-      <div className="mt-4 space-y-3">
+      <div className="mt-4">
         {statusData.map((item) => {
           const color = STATUS_COLORS[item.name] ?? "#94a3b8";
           const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
           const widthPct = total > 0 ? (item.value / maxCount) * 100 : 0;
 
           return (
-            <div key={item.name}>
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 font-semibold text-slate-700">
+            <div key={item.name} className="mb-4 last:mb-0">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-2 text-[13px] font-semibold text-[#334155]">
                   <span
-                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    className="inline-block h-2 w-2 shrink-0 rounded-full"
                     style={{ backgroundColor: color }}
                   />
                   {item.name}
                 </span>
-                <span className="text-slate-500">
-                  {item.value} ({pct}%)
+                <span className="text-[12px] font-bold text-[#64748b]">
+                  {item.value} &middot; {pct}%
                 </span>
               </div>
-              <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-[10px] w-full overflow-hidden rounded-[5px] bg-[#f1f5f9]">
                 <div
-                  className="h-full rounded-full transition-all"
+                  className="h-full rounded-[5px] transition-all"
                   style={{ width: `${widthPct}%`, backgroundColor: color }}
                 />
               </div>

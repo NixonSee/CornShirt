@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  Bell,
   CalendarDays,
   Code2,
   Copy,
@@ -11,7 +10,6 @@ import {
   MapPin,
   Network,
   ShieldCheck,
-  WalletCards,
 } from "lucide-react";
 import { drops, getDropBySlug } from "../../events";
 import SecurePassPanel from "./SecurePassPanel";
@@ -34,50 +32,6 @@ export default async function ConcertDetailPage({
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <header className="border-b border-slate-200 bg-white px-5 py-5 text-slate-950 sm:px-8">
-        <nav className="mx-auto flex max-w-7xl items-center gap-6">
-          <Link
-            href="/user"
-            className="flex h-14 w-52 shrink-0 items-center"
-            aria-label="CornShirt dashboard"
-          >
-            <Image
-              src="/CornShirt-Logo.png"
-              alt="CornShirt"
-              width={190}
-              height={58}
-              className="h-11 w-auto object-contain"
-              priority
-            />
-          </Link>
-          <div className="hidden items-center gap-7 text-sm font-black md:flex">
-            <Link href="/user" className="border-b-2 border-slate-950 pb-1">
-              Explore Events
-            </Link>
-            <a href="#" className="text-slate-700 transition hover:text-slate-950">
-              Marketplace
-            </a>
-            <a href="#" className="text-slate-700 transition hover:text-slate-950">
-              Governance
-            </a>
-          </div>
-          <button
-            type="button"
-            className="ml-auto grid h-10 w-10 place-items-center rounded-md text-slate-950 transition hover:bg-slate-100"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className="hidden h-10 items-center gap-2 rounded-md bg-yellow-700 px-5 text-xs font-black uppercase text-white shadow-[0_10px_24px_rgba(161,98,7,0.30)] transition hover:bg-yellow-600 sm:flex"
-          >
-            <WalletCards className="h-4 w-4" aria-hidden="true" />
-            Connect Wallet
-          </button>
-        </nav>
-      </header>
-
       <section className="relative min-h-[500px] overflow-hidden bg-slate-950 text-white">
         <Image
           src="/Background Login Image.png"

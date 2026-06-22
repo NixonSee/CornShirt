@@ -21,7 +21,7 @@ type EventGroup = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  GA: "#3b82f6",
+  GA: "#2563eb",
   VIP: "#a855f7",
   "Early Bird": "#22c55e",
 };
@@ -68,38 +68,48 @@ export default function TicketAnalytics({
   }
 
   return (
-    <div className="card-dashboard">
-      <p className="text-xs font-black uppercase tracking-wider text-slate-500">
+    <div className="card-dashboard flex max-h-[360px] flex-col">
+      <p className="shrink-0 text-[11px] font-bold uppercase tracking-[0.06em] text-[#64748b]">
         Ticket Utilization
       </p>
-      <div className="mt-4 max-h-[500px] space-y-5 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto mt-4">
         {sorted.map((group) => (
-          <div key={group.eventId}>
-            <p className="text-sm font-bold text-slate-900">
+          <div
+            key={group.eventId}
+            className="mb-6 border-b border-[#f1f5f9] pb-5 last:mb-0 last:border-0 last:pb-0"
+          >
+            <p className="text-[14px] font-bold text-[#0f172a]">
               {group.eventName}
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="mb-[14px] text-[11px] text-[#94a3b8]">
               {group.totalSold} tickets sold
             </p>
-            <div className="mt-2 space-y-2">
+            <div className="space-y-2">
               {group.types.map((t) => {
                 const color = STATUS_COLORS[t.typeName] ?? "#94a3b8";
                 return (
-                  <div key={t.typeName}>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-700">
-                        {t.typeName}
-                      </span>
-                      <span className="text-slate-500">
-                        {t.sold} / {t.totalSupply} sold
-                      </span>
+                  <div key={t.typeName} className="flex items-center gap-3">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="w-[72px] shrink-0 text-[12px] font-semibold text-[#475569]">
+                      {t.typeName}
+                    </span>
+                    <div className="flex-1">
+                      <div className="h-2 overflow-hidden rounded-[4px] bg-[#f1f5f9]">
+                        <div
+                          className="h-full rounded-[4px] transition-all"
+                          style={{
+                            width: `${t.utilizationPct}%`,
+                            backgroundColor: color,
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="mt-0.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{ width: `${t.utilizationPct}%`, backgroundColor: color }}
-                      />
-                    </div>
+                    <span className="w-[38px] shrink-0 text-right text-[11px] font-bold text-[#64748b]">
+                      {t.utilizationPct}%
+                    </span>
                   </div>
                 );
               })}
