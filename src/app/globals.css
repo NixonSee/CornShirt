@@ -3,6 +3,21 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --dash-bg: #f8fafc;
+  --dash-surface: #ffffff;
+  --dash-fg: #0f172a;
+  --dash-muted: #64748b;
+  --dash-meta: #94a3b8;
+  --dash-border: #e2e8f0;
+  --dash-border-soft: #f1f5f9;
+  --dash-accent: #2563eb;
+  --dash-accent-hover: #1d4ed8;
+  --dash-accent-subtle: #eff6ff;
+  --dash-accent-secondary: #d97706;
+  --dash-success: #16a34a;
+  --dash-warn: #eab308;
+  --dash-danger: #dc2626;
+  --dash-purple: #a855f7;
 }
 
 @theme inline {
@@ -23,4 +38,31 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@utility card-dashboard {
+  border-radius: 16px;
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06);
+  transition: box-shadow .2s, transform .2s, border-color .2s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--dash-accent), transparent 70%);
+  }
+}
+
+@utility btn-primary {
+  @apply h-11 rounded-lg bg-slate-950 px-5 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none;
+}
+
+@utility btn-secondary {
+  @apply h-11 rounded-lg border border-slate-200 bg-white px-5 text-sm font-bold text-slate-950 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-danger {
+  @apply h-11 rounded-lg bg-red-600 px-5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition hover:-translate-y-0.5 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-red-300 disabled:shadow-none;
 }
