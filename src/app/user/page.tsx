@@ -5,15 +5,12 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  Bell,
   CalendarDays,
   ChevronDown,
   Clock3,
   MapPin,
   Search,
   SlidersHorizontal,
-  Ticket,
-  WalletCards,
 } from "lucide-react";
 import { drops, filterOptions, type FilterOption } from "./events";
 
@@ -44,58 +41,6 @@ export default function UserDashboardPage() {
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(4,8,18,0.50)_0%,rgba(4,8,18,0.24)_28%,rgba(4,8,18,0.70)_68%,rgba(4,8,18,0.95)_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_52%_44%,rgba(34,211,238,0.25),transparent_30%),linear-gradient(90deg,rgba(236,72,153,0.20),transparent_24%,transparent_76%,rgba(234,179,8,0.16))]" />
-
-        <header className="relative z-20 border-b border-white/15 bg-white/95 px-5 py-4 text-slate-950 shadow-[0_14px_60px_rgba(15,23,42,0.20)] backdrop-blur-xl sm:px-8">
-          <nav className="mx-auto flex max-w-7xl items-center gap-4">
-            <a href="#" className="flex shrink-0 items-center gap-2" aria-label="CornShirt dashboard">
-              <Image
-                src="/CornShirt-Logo.png"
-                alt="CornShirt"
-                width={168}
-                height={52}
-                className="h-10 w-auto object-contain"
-                priority
-              />
-            </a>
-
-            <div className="hidden h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm lg:flex">
-              <Search className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-              <input
-                className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-500"
-                placeholder="Search events, artists, or venues"
-                aria-label="Search events, artists, or venues"
-              />
-            </div>
-
-            <div className="ml-auto hidden items-center gap-1 text-xs font-black uppercase tracking-wide text-slate-700 md:flex">
-              <a className="rounded-md px-3 py-2 text-cyan-600 hover:bg-cyan-50" href="#">
-                Explore Events
-              </a>
-            </div>
-
-            <button
-              type="button"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-cyan-300 hover:text-cyan-600"
-              aria-label="Notifications"
-            >
-              <Bell className="h-4 w-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-cyan-300 hover:text-cyan-600"
-              aria-label="Tickets"
-            >
-              <Ticket className="h-4 w-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="hidden h-10 shrink-0 items-center gap-2 rounded-lg bg-yellow-400 px-5 text-xs font-black uppercase text-slate-950 shadow-[0_10px_28px_rgba(234,179,8,0.35)] transition hover:bg-yellow-300 sm:flex"
-            >
-              <WalletCards className="h-4 w-4" aria-hidden="true" />
-              Connect Wallet
-            </button>
-          </nav>
-        </header>
 
         <div className="relative z-10 mx-auto flex min-h-[500px] max-w-7xl flex-col items-center justify-center px-5 pb-20 pt-16 text-center sm:px-8 lg:min-h-[610px]">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/35 bg-fuchsia-500/30 px-4 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-white shadow-[0_0_32px_rgba(217,70,239,0.35)] backdrop-blur-md">
@@ -130,7 +75,16 @@ export default function UserDashboardPage() {
 
       <section className="bg-white/95 px-5 pb-16 pt-16 sm:px-8">
         <div className="relative z-30 mx-auto max-w-7xl">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm">
+            <Search className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+            <input
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-500"
+              placeholder="Search events, artists, or venues"
+              aria-label="Search events, artists, or venues"
+            />
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="mt-2 text-3xl font-black uppercase tracking-normal text-slate-950 sm:text-4xl">
                 Upcoming Drops
