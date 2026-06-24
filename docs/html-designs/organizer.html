@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Organizer Dashboard - CornShirt</title>
+    <link rel="stylesheet" href="design.css" />
+  </head>
+  <body>
+    <main class="dashboard">
+      <aside class="sidebar">
+        <a class="brand" href="root.html">
+          <img src="../../public/CornShirt-Logo.png" alt="CornShirt logo" />
+          <span>CornShirt</span>
+        </a>
+        <span class="role-badge">Organizer</span>
+        <nav class="side-nav">
+          <a class="active" href="organizer.html">Dashboard</a>
+          <a href="#create">Create Event</a>
+          <a href="#events">My Events</a>
+          <a href="#verify">Verify Ticket</a>
+        </nav>
+      </aside>
+
+      <section class="main">
+        <div class="top-row">
+          <div>
+            <h1>Organizer Dashboard</h1>
+            <p class="muted">Create events, manage ticket types, verify tickets, and track revenue.</p>
+          </div>
+          <a class="button" href="#create">Create Event</a>
+        </div>
+
+        <section class="grid-3">
+          <div class="metric"><strong>7</strong><span>Created events</span></div>
+          <div class="metric"><strong>2</strong><span>Pending approval</span></div>
+          <div class="metric"><strong>78,640</strong><span>DICKEN revenue</span></div>
+        </section>
+
+        <section class="grid-2" style="margin-top:18px" id="create">
+          <article class="panel">
+            <h2>Create Event</h2>
+            <div class="form">
+              <div class="field"><label>Event name</label><input value="Neon Corn Festival" /></div>
+              <div class="field"><label>Ticket price</label><input value="88 DICKEN" /></div>
+              <div class="field"><label>Supply</label><input value="400" /></div>
+              <a class="button" href="#events">Submit for approval</a>
+            </div>
+          </article>
+          <article class="panel" id="verify">
+            <h2>Verify Ticket</h2>
+            <p class="muted">Scan QR code, check ticket status, then mark valid tickets as used.</p>
+            <div class="button-row">
+              <a class="button" href="#">Open scanner</a>
+              <a class="button-secondary" href="#">View logs</a>
+            </div>
+          </article>
+        </section>
+
+        <section class="table-card" id="events">
+          <table>
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Status</th>
+                <th>Sold</th>
+                <th>Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Neon Corn Festival</strong><br /><span class="muted">Stadium Merdeka</span></td>
+                <td><span class="status warn">PENDING</span></td>
+                <td>0 / 2,480</td>
+                <td>0 DICKEN</td>
+              </tr>
+              <tr>
+                <td><strong>Harvest Beats Night</strong><br /><span class="muted">Penang Dome</span></td>
+                <td><span class="status good">ACTIVE</span></td>
+                <td>1,284 / 2,126</td>
+                <td>78,640 DICKEN</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

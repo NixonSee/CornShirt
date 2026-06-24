@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>User Dashboard - CornShirt</title>
+    <link rel="stylesheet" href="design.css" />
+  </head>
+  <body>
+    <main class="dashboard">
+      <aside class="sidebar">
+        <a class="brand" href="root.html">
+          <img src="../../public/CornShirt-Logo.png" alt="CornShirt logo" />
+          <span>CornShirt</span>
+        </a>
+        <span class="role-badge">Customer</span>
+        <nav class="side-nav">
+          <a class="active" href="user.html">Dashboard</a>
+          <a href="#tickets">My Tickets</a>
+          <a href="#wallet">Wallet & Top-up</a>
+          <a href="#transactions">Transactions</a>
+        </nav>
+      </aside>
+
+      <section class="main">
+        <div class="top-row">
+          <div>
+            <h1>User Dashboard</h1>
+            <p class="muted">Browse active events, manage DICKEN balance, and view Ticket NFTs.</p>
+          </div>
+          <a class="button-secondary" href="login.html">Log out</a>
+        </div>
+
+        <section class="grid-3" id="wallet">
+          <div class="metric"><strong>248</strong><span>DICKEN balance</span></div>
+          <div class="metric"><strong>3</strong><span>Ticket NFTs</span></div>
+          <div class="metric"><strong>12</strong><span>Transactions</span></div>
+        </section>
+
+        <section class="grid-2" style="margin-top:18px">
+          <article class="panel">
+            <h2>Wallet & Top-up</h2>
+            <p class="muted">Top up DICKEN through Stripe Test Mode before purchasing tickets.</p>
+            <div class="button-row">
+              <a class="button" href="#wallet">Top up DICKEN</a>
+              <a class="button-secondary" href="#transactions">Transaction history</a>
+            </div>
+          </article>
+          <article class="panel">
+            <h2>Next Purchase</h2>
+            <p class="muted">Choose a ticket type, validate balance and supply, then mint a Ticket NFT.</p>
+            <div class="button-row">
+              <a class="button" href="#events">Browse events</a>
+            </div>
+          </article>
+        </section>
+
+        <section class="table-card" id="tickets">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Status</th>
+                <th>Token</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Neon Corn Festival / VIP</strong><br /><span class="muted">Tx 0x91f...48aa</span></td>
+                <td><span class="status good">VALID</span></td>
+                <td>#1024</td>
+                <td><a class="button-secondary" href="#">Show QR</a></td>
+              </tr>
+              <tr>
+                <td><strong>Harvest Beats / General</strong><br /><span class="muted">Transfer enabled</span></td>
+                <td><span class="status warn">RESALE LISTED</span></td>
+                <td>#1088</td>
+                <td><a class="button-secondary" href="#">Manage</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

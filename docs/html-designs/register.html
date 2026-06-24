@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign up - CornShirt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="design.css" />
+  </head>
+  <body>
+    <main class="auth-page">
+      <section class="auth-card">
+        <a class="brand" href="root.html">
+          <img src="../../public/CornShirt-Logo.png" alt="CornShirt logo" />
+          <span>CornShirt Hub</span>
+        </a>
+        <h1>Create your account</h1>
+        <p class="muted">New accounts get the user role and a managed CornShirt wallet.</p>
+
+        <form class="form">
+          <div class="field">
+            <label for="name">Full name</label>
+            <input id="name" placeholder="Jane Doe" />
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Create a password" />
+          </div>
+          <a class="button full" href="user.html">Create account</a>
+        </form>
+
+        <p class="small-note">By signing up you agree to the CornShirt terms. DICKEN runs in Stripe test mode.</p>
+        <p class="auth-footer">Already have an account? <a href="login.html">Log in</a></p>
+      </section>
+    </main>
+  </body>
+</html>
