@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Log in - CornShirt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="design.css" />
+  </head>
+  <body>
+    <main class="auth-page">
+      <section class="auth-card">
+        <a class="brand" href="root.html">
+          <img src="../../public/CornShirt-Logo.png" alt="CornShirt logo" />
+          <span>CornShirt Hub</span>
+        </a>
+        <h1>Welcome back</h1>
+        <p class="muted">Log in to access your wallet, tickets and dashboards.</p>
+
+        <form class="form">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@example.com" />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="••••••••" />
+          </div>
+          <a class="button full" href="user.html">Log in</a>
+        </form>
+
+        <div class="role-grid">
+          <a class="button-outline" href="user.html">User</a>
+          <a class="button-outline" href="organizer.html">Organizer</a>
+          <a class="button-outline" href="admin.html">Admin</a>
+        </div>
+        <p class="small-note">Demo: pick a role to preview its dashboard.</p>
+        <p class="auth-footer">No account? <a href="register.html">Sign up</a></p>
+      </section>
+    </main>
+  </body>
+</html>

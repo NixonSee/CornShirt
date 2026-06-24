@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Dashboard - CornShirt</title>
+    <link rel="stylesheet" href="design.css" />
+  </head>
+  <body>
+    <main class="dashboard">
+      <aside class="sidebar">
+        <a class="brand" href="root.html">
+          <img src="../../public/CornShirt-Logo.png" alt="CornShirt logo" />
+          <span>CornShirt</span>
+        </a>
+        <span class="role-badge">Admin</span>
+        <nav class="side-nav">
+          <a class="active" href="admin.html">Dashboard</a>
+          <a href="#pending">Pending Events</a>
+          <a href="#organizers">Organizers</a>
+          <a href="#events">All Events</a>
+        </nav>
+      </aside>
+
+      <section class="main">
+        <div class="top-row">
+          <div>
+            <h1>Admin Dashboard</h1>
+            <p class="muted">Review organizers, approve event submissions, and monitor platform activity.</p>
+          </div>
+          <a class="button-secondary" href="login.html">Switch role</a>
+        </div>
+
+        <section class="grid-3">
+          <div class="metric"><strong>26</strong><span>Organizers</span></div>
+          <div class="metric"><strong>42</strong><span>Pending events</span></div>
+          <div class="metric"><strong>18</strong><span>Active events</span></div>
+        </section>
+
+        <section class="table-card" id="pending">
+          <table>
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Organizer</th>
+                <th>Status</th>
+                <th>Decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Neon Corn Festival</strong><br /><span class="muted">3 ticket types / 2,480 supply</span></td>
+                <td>CornBeat Sdn Bhd</td>
+                <td><span class="status warn">PENDING</span></td>
+                <td><div class="button-row" style="margin-top:0"><a class="button" href="#">Approve</a><a class="button-secondary" href="#">Reject</a></div></td>
+              </tr>
+              <tr>
+                <td><strong>DICKEN Live Arena</strong><br /><span class="muted">4 ticket types / 1,800 supply</span></td>
+                <td>TokenStage Events</td>
+                <td><span class="status warn">PENDING</span></td>
+                <td><div class="button-row" style="margin-top:0"><a class="button" href="#">Approve</a><a class="button-secondary" href="#">Reject</a></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="grid-3" style="margin-top:18px">
+          <article class="panel">
+            <h2>Transaction Records</h2>
+            <p class="muted">Top-ups, purchases, transfers, and refunds.</p>
+          </article>
+          <article class="panel">
+            <h2>Verification Logs</h2>
+            <p class="muted">Valid, invalid, used, refunded, and cancelled scan results.</p>
+          </article>
+          <article class="panel">
+            <h2>Cancelled Events</h2>
+            <p class="muted">Refund status and cancellation reasons.</p>
+          </article>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

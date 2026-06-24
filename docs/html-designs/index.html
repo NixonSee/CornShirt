@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CornShirt - NFT Concert Tickets with DICKEN</title>
+    <meta name="description" content="Browse live concerts and buy NFT tickets with DICKEN tokens on CornShirt." />
+    <meta property="og:title" content="CornShirt - NFT Concert Tickets" />
+    <meta property="og:description" content="Browse live concerts and buy NFT tickets with DICKEN tokens." />
+    <link rel="stylesheet" href="design.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <img src="../../public/CornShirt-Logo.png" alt="CornShirt logo" />
+        <span>CornShirt</span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="#events">Events</a>
+        <a href="login.html">Log in</a>
+        <a class="button" href="register.html">Create account</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="home-hero">
+        <div class="home-hero-inner">
+          <div class="home-hero-copy">
+            <span class="hero-kicker">⚡ Powered by DICKEN & NFT tickets</span>
+            <h1>
+              Own the night.<br />
+              <span class="text-gradient-fire">Own your ticket.</span>
+            </h1>
+            <p>
+              Discover live concerts and secure your spot with verifiable NFT tickets
+              you truly own. Buy, hold and transfer with DICKEN.
+            </p>
+            <div class="button-row">
+              <a class="button" href="#events">Browse events</a>
+              <a class="button-secondary" href="register.html">Create account</a>
+            </div>
+            <div class="feature-row">
+              <div class="feature"><span class="feature-icon">🎫</span>NFT-backed tickets</div>
+              <div class="feature"><span class="feature-icon">✓</span>Verified entry</div>
+              <div class="feature"><span class="feature-icon">⚡</span>Instant transfers</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="events" class="events-section">
+        <div class="events-toolbar">
+          <div>
+            <h2>Live events</h2>
+            <p class="muted">Active, admin-approved concerts ready for you.</p>
+          </div>
+          <label class="search-box">
+            <span>⌕</span>
+            <input id="eventSearch" type="search" placeholder="Search artists, cities..." />
+          </label>
+        </div>
+
+        <div class="category-row" aria-label="Event categories">
+          <button class="category-button active" data-category="All">All</button>
+          <button class="category-button" data-category="Rock">Rock</button>
+          <button class="category-button" data-category="Electronic">Electronic</button>
+          <button class="category-button" data-category="Indie">Indie</button>
+          <button class="category-button" data-category="Soul">Soul</button>
+          <button class="category-button" data-category="Pop">Pop</button>
+        </div>
+
+        <div class="event-grid" id="eventGrid">
+          <article class="event-card" data-title="Neon Corn Festival" data-artist="The Cob Lights" data-city="Kuala Lumpur" data-category="Electronic">
+            <div class="event-media"><span class="status good">ACTIVE</span></div>
+            <div class="event-body">
+              <h3>Neon Corn Festival</h3>
+              <p class="event-meta">The Cob Lights / Kuala Lumpur / Electronic</p>
+              <p class="muted">Jul 18, 2026 · From 42 DICKEN</p>
+              <div class="button-row">
+                <a class="button" href="login.html">Buy ticket</a>
+                <a class="button-secondary" href="register.html">Details</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="event-card" data-title="Harvest Beats Night" data-artist="Golden Husk" data-city="Penang" data-category="Pop">
+            <div class="event-media"><span class="status good">ACTIVE</span></div>
+            <div class="event-body">
+              <h3>Harvest Beats Night</h3>
+              <p class="event-meta">Golden Husk / Penang / Pop</p>
+              <p class="muted">Sep 12, 2026 · From 66 DICKEN</p>
+              <div class="button-row">
+                <a class="button" href="login.html">Buy ticket</a>
+                <a class="button-secondary" href="register.html">Details</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="event-card" data-title="DICKEN Live Arena" data-artist="Chain Pulse" data-city="Kuala Lumpur" data-category="Rock">
+            <div class="event-media"><span class="status warn">SELLING FAST</span></div>
+            <div class="event-body">
+              <h3>DICKEN Live Arena</h3>
+              <p class="event-meta">Chain Pulse / Kuala Lumpur / Rock</p>
+              <p class="muted">Aug 3, 2026 · From 70 DICKEN</p>
+              <div class="button-row">
+                <a class="button" href="login.html">Buy ticket</a>
+                <a class="button-secondary" href="register.html">Details</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="event-card" data-title="Indie Kernel Sessions" data-artist="Soft Grain" data-city="Johor Bahru" data-category="Indie">
+            <div class="event-media"><span class="status good">ACTIVE</span></div>
+            <div class="event-body">
+              <h3>Indie Kernel Sessions</h3>
+              <p class="event-meta">Soft Grain / Johor Bahru / Indie</p>
+              <p class="muted">Oct 4, 2026 · From 38 DICKEN</p>
+              <div class="button-row">
+                <a class="button" href="login.html">Buy ticket</a>
+                <a class="button-secondary" href="register.html">Details</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="event-card" data-title="Soul Silo Evening" data-artist="Amber Choir" data-city="Ipoh" data-category="Soul">
+            <div class="event-media"><span class="status good">ACTIVE</span></div>
+            <div class="event-body">
+              <h3>Soul Silo Evening</h3>
+              <p class="event-meta">Amber Choir / Ipoh / Soul</p>
+              <p class="muted">Nov 8, 2026 · From 54 DICKEN</p>
+              <div class="button-row">
+                <a class="button" href="login.html">Buy ticket</a>
+                <a class="button-secondary" href="register.html">Details</a>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="empty-state" id="emptyState">
+          <p style="font-family:var(--font-display);font-size:20px;font-weight:800">No events found</p>
+          <p>Try a different search or category.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      CornShirt · NFT concert tickets with DICKEN token checkout.
+    </footer>
+
+    <script>
+      const search = document.getElementById("eventSearch");
+      const buttons = Array.from(document.querySelectorAll(".category-button"));
+      const cards = Array.from(document.querySelectorAll(".event-card"));
+      const emptyState = document.getElementById("emptyState");
+      let activeCategory = "All";
+
+      function applyFilters() {
+        const query = search.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        cards.forEach((card) => {
+          const haystack = [
+            card.dataset.title,
+            card.dataset.artist,
+            card.dataset.city,
+            card.dataset.category,
+          ].join(" ").toLowerCase();
+          const matchesQuery = haystack.includes(query);
+          const matchesCategory = activeCategory === "All" || card.dataset.category === activeCategory;
+          const visible = matchesQuery && matchesCategory;
+          card.style.display = visible ? "" : "none";
+          if (visible) visibleCount += 1;
+        });
+
+        emptyState.style.display = visibleCount > 0 ? "none" : "block";
+      }
+
+      search.addEventListener("input", applyFilters);
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          activeCategory = button.dataset.category;
+          buttons.forEach((item) => item.classList.toggle("active", item === button));
+          applyFilters();
+        });
+      });
+    </script>
+  </body>
+</html>
