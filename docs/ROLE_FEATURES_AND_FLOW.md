@@ -6,8 +6,8 @@
 ## Public Visitor
 * Browse active events
 * Search or filter active events
-* View event previews
-* Redirect to Login or Sign Up when attempting protected actions, such as viewing full event details, buying tickets, or accessing dashboards
+* * View active event details, including artist, venue, date, description, and ticket types
+* Redirect to Login or Sign Up when attempting protected actions, such as buying tickets, accessing My Tickets, topping up DICKEN, or opening dashboards
 
 ---
 
@@ -15,26 +15,34 @@
 ### Account and Wallet
 * Register and log in using email and password
 * Access a system-managed CornShirt wallet
+* Use an assigned wallet address stored in `profiles.wallet_address`
 * View DICKEN token balance
 * Top up DICKEN through Stripe Test Mode
-* Receive Ticket NFTs through the platform-managed wallet
+* Receive platform-managed Ticket NFTs through the CornShirt wallet
 
 ### Event and Ticket Features
 * Browse active admin-approved events
 * View event details and available ticket types
 * Top up DICKEN through Stripe Test Mode
 * Buy tickets using DICKEN
-* Receive a Ticket NFT after successful purchase
+* Receive a platform-managed Ticket NFT after successful purchase
 * View My Tickets
 * View ticket details, ownership status, and transaction hash
 * Display or download a digital ticket
 * View ticket QR code
 * View transaction history
-* Transfer tickets to another wallet address
+* Transfer eligible tickets to another supported wallet address or account
 * Claim a refund when an event is cancelled
 
 ### Marketplace
-* Resell tickets through the Marketplace
+* List eligible tickets for resale
+* Set a resale price in DICKEN
+* View active resale listings
+* Purchase resale tickets using DICKEN
+* Cancel an active resale listing
+* Transfer platform-managed Ticket NFT ownership to the resale buyer after successful payment
+* Prevent resale when ticket transfer permission is disabled
+* View resale transaction history
 
 ---
 
@@ -57,7 +65,9 @@
 * Mark verified tickets as used
 * Cancel events
 * Provide a cancellation reason
-* Enable or manage refunds after event cancellation
+* Cancel events and provide a cancellation reason
+* Trigger refund eligibility for affected valid ticket holders after cancellation
+* View refund records related to cancelled events
 
 ### Financial Management
 * View ticket sales for each event
@@ -67,7 +77,7 @@
 * View transaction records related to the organizer’s events
 * View refund amounts for cancelled events
 
-> Note: Financial information becomes available after users begin purchasing tickets and transaction records are created.
+> Note: Financial information becomes available after customers begin purchasing tickets and transaction records are created.
 
 ---
 
@@ -96,9 +106,13 @@ Views active events
 ↓
 Clicks View Event
 ↓
+Views event details and ticket types
+↓
+Clicks Buy Ticket
+↓
 Redirected to Login/Register if not authenticated
 ↓
-After login, returns to selected event
+After login, returns to the selected event
 
 ---
 
@@ -136,29 +150,53 @@ Only active events appear to customers/public visitor
 
 ## 5. Ticket Purchase Flow
 
-User logs in
+Customer visits an active event page
+↓
+Selects a ticket type
 ↓
 Clicks Buy Ticket
 ↓
-Login / Register
+System checks whether the customer is logged in
 ↓
-User opens Wallet & Balance page
+If not logged in, redirect to Login/Register
 ↓
-Top up DICKEN using Stripe Test Mode
+Customer logs in and returns to the selected event
 ↓
-DICKEN balance increases
+System checks DICKEN balance
 ↓
-User chooses ticket type
+Customer tops up DICKEN through Stripe Test Mode if balance is insufficient
 ↓
 System deducts DICKEN balance
 ↓
-Backend mints Ticket NFT
+Backend mints a platform-managed Ticket NFT
 ↓
 Ticket appears in My Tickets
 
 ---
 
-## 6. Ticket Verification Flow
+## 6. Ticket Resale Flow
+
+Customer opens My Tickets
+↓
+Selects an eligible ticket
+↓
+System checks whether transfer permission is enabled
+↓
+Customer sets a resale price in DICKEN
+↓
+Ticket is listed in the Marketplace
+↓
+Another customer purchases the resale ticket
+↓
+System transfers DICKEN payment to the seller
+↓
+System transfers platform-managed Ticket NFT ownership to the buyer
+↓
+Resale transaction is recorded
+
+---
+
+## 7. Ticket Verification Flow
 
 Organizer scans ticket QR code
 ↓

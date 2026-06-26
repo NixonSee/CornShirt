@@ -2,23 +2,23 @@
 
 ## 1. System Overview
 
-CornShirt is a web-based concert ticketing platform that uses DICKEN tokens and NFT-based tickets. The system supports public event browsing, user ticket purchasing, organizer event creation, and admin event approval.
+CornShirt is a web-based concert ticketing platform that uses DICKEN tokens and NFT-based tickets. The system supports public event browsing, customer ticket purchasing, organizer event creation, and admin event approval.
 
 ---
 
-## 2. User Roles
+## 2. Roles
 
 | Role            | Description                                                                  | Permissions                                                                                                                                                                |
 | --------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Public Visitor  | A person who has not logged in.                                              | Browse active events, search/filter events, view previews, register, and log in.                                                                                           |
-| Customer / User | A registered user who purchases and manages tickets.                         | View active events, top up DICKEN, buy tickets, receive Ticket NFTs, view My Tickets, transfer eligible tickets, resell ticket at Marketplace, and claim refunds.                                        |
+| Customer        | A registered customer who purchases and manages tickets.                     | View active events, top up DICKEN, buy tickets, view platform-managed Ticket NFTs, view My Tickets, transfer eligible tickets, resell tickets at Marketplace, and claim refunds.                                        |
 | Organizer       | A registered account that creates and manages concert events.                | Create events, upload banners, create ticket types, set ticket rules, view created events, check approval status, verify tickets, mark tickets as used, revenue analytics, and cancel events. |
 | Admin           | A platform management account that reviews organizers and event submissions. | View organizers, review pending events, approve or reject events, monitor event statuses, and later view transactions and verification logs.                               |
 
 ### Role Access Rules
 
 * Public Visitors can browse active events and access Login or Register pages.
-* New public registrations are assigned the `user` role by default.
+* New public registrations are assigned the `customer` role by default.
 * Only Organizers can create and manage events.
 * Only Admins can approve or reject pending events.
 * Only `active` events are shown to Public Visitors and Customers.
@@ -29,19 +29,21 @@ CornShirt is a web-based concert ticketing platform that uses DICKEN tokens and 
 
 ## 3. Functional Requirements
 
-### FR-01: User Authentication
+### FR-01: Account Authentication
 
-* The system shall allow users to register using name, email, and password.
-* The system shall allow users to log in using email and password.
-* The system shall redirect users based on their assigned role.
+* The system shall allow accounts to register using name, email, and password.
+* The system shall allow accounts to log in using email and password.
+* The system shall redirect accounts based on their assigned role.
 * The system shall store additional profile information in the `profiles` table.
-* The system shall not store user passwords in the `profiles` table.
+* The system shall store only the assigned platform-managed wallet address in `profiles.wallet_address`.
+* The system shall not store account passwords in the `profiles` table.
 
 ### FR-02: Event Browsing
 
-* The system shall display only events with an `active` status to public visitors and users.
+* The system shall display only events with an `active` status to public visitors and customers.
 * The system shall allow visitors to browse and filter active events.
 * The system shall redirect unauthenticated visitors to Login or Register before protected actions.
+* The system shall allow public visitors to view active event details and available ticket types.
 
 ### FR-03: Organizer Event Creation
 
@@ -60,23 +62,24 @@ CornShirt is a web-based concert ticketing platform that uses DICKEN tokens and 
 
 ### FR-05: DICKEN Top-Up
 
-* The system shall allow users to view their DICKEN balance.
-* The system shall allow users to top up DICKEN through Stripe Test Mode.
+* The system shall allow customers to view their DICKEN balance.
+* The system shall allow customers to top up DICKEN through Stripe Test Mode.
 * The system shall record top-up information in `topup_records` and `transactions`.
 
 ### FR-06: Ticket Purchase and NFT Minting
 
-* The system shall allow users with sufficient DICKEN balance to purchase an available ticket.
-* The system shall mint a Ticket NFT after successful purchase.
+* The system shall allow customers with sufficient DICKEN balance to purchase an available ticket.
+* The system shall mint a platform-managed Ticket NFT after successful purchase.
 * The system shall store ticket ownership, ticket status, NFT token ID, and transaction hash.
 * The system shall prevent ticket purchases when an event is cancelled or ticket supply is unavailable.
 
 ### FR-07: Ticket Management
 
-* The system shall allow users to view purchased tickets in My Tickets.
+* The system shall allow customers to view purchased tickets in My Tickets.
 * The system shall display ticket details, ticket status, QR code, and transaction hash.
-* The system shall allow transfer only when transfer permission is enabled. (what will happen if the person cannot go and want to give it to another person)
-* The system shall allow users to claim refunds after an event is cancelled.
+* The system shall allow customers to transfer an eligible ticket to another supported customer account or wallet address when transfer permission is enabled.
+* The system shall update the ticket ownership record after a successful transfer.
+* The system shall allow customers to claim refunds after an event is cancelled.
 
 ### FR-08: Ticket Verification
 
@@ -87,18 +90,20 @@ CornShirt is a web-based concert ticketing platform that uses DICKEN tokens and 
 
 ### FR-09: Ticket Resale Marketplace
 
-- The system shall allow users to list eligible tickets for resale.
-- The system shall allow users to set a resale price in DICKEN.
-- The system shall allow users to purchase listed resale tickets using DICKEN.
-- The system shall transfer Ticket NFT ownership to the resale buyer after successful payment.
+- The system shall allow customers to list eligible tickets for resale.
+- The system shall allow customers to set a resale price in DICKEN.
+- The system shall allow customers to purchase listed resale tickets using DICKEN.
+- The system shall transfer platform-managed Ticket NFT ownership to the resale buyer after successful payment.
 - The system shall prevent resale when ticket transfer permission is disabled.
+- The system shall allow ticket owners to cancel an active resale listing before it is purchased.
+- The system shall record resale payments and ownership transfers in the `transactions` table.
 
 ### FR-10: Organizer Revenue Analytics
 
 - The system shall allow organizers to view ticket sales for their own events.
 - The system shall display total tickets sold and remaining ticket supply.
 - The system shall display revenue by ticket type.
-- The system shall display total revenue earned in DICKEN.
+- The system shall display total DICKEN revenue generated from the organizer’s own events.
 - The system shall display refund amounts for cancelled events.
 
 ---
@@ -108,15 +113,15 @@ CornShirt is a web-based concert ticketing platform that uses DICKEN tokens and 
 ### Security
 
 * Password authentication shall be handled through Supabase Auth.
-* User passwords shall not be stored in custom application tables.
-* User private keys and seed phrases shall never be stored by CornShirt.
-* Supabase service-role keys and blockchain private keys shall remain server-only and stored in environment variables.
-* Role-based access shall restrict access to User, Organizer, and Admin dashboard functions.
+* Account passwords shall not be stored in custom application tables.
+* Customers shall not need to connect external wallets or provide private keys or seed phrases.
+* Supabase service-role keys, platform-wallet private keys, and backend signing secrets shall remain server-only and stored in environment variables.
+* Role-based access shall restrict access to Customer, Organizer, and Admin dashboard functions.
 
 ### Usability
 
 * The system shall provide responsive layouts for desktop and mobile screens.
-* Users shall receive clear success, error, loading, and empty-state messages.
+* Accounts shall receive clear success, error, loading, and empty-state messages.
 * The system shall use understandable labels for DICKEN balance, ticket purchase, and ticket verification.
 
 ### Performance
@@ -131,22 +136,23 @@ CornShirt is a web-based concert ticketing platform that uses DICKEN tokens and 
 
 | Rule ID | Rule                                                                    |
 | ------- | ----------------------------------------------------------------------- |
-| BR-01   | New public registrations are assigned the `user` role by default.       |
+| BR-01   | New public registrations are assigned the `customer` role by default.   |
 | BR-02   | Only organizers can create events.                                      |
 | BR-03   | New organizer events are saved as `pending`.                            |
 | BR-04   | Only admins can change an event from `pending` to `active`.             |
-| BR-05   | Public visitors and users can only browse `active` events.              |
+| BR-05   | Public visitors and customers can only browse `active` events.          |
 | BR-06   | Ticket types must belong to one event.                                  |
 | BR-07   | Ticket purchases cannot exceed the ticket supply or purchase limit.     |
 | BR-08   | Used, refunded, cancelled, or invalid tickets cannot be used for entry. |
 | BR-09   | A ticket can only be transferred when its ticket type allows transfer.  |
 | BR-10   | Refunds are only available after an event has been cancelled.           |
-
+| BR-11   | A ticket can only be listed for resale when its ticket type allows transfer. |
+| BR-12   | A resale listing becomes unavailable after it is cancelled or purchased. |
 ---
 
 ## 6. Out of Scope / Future Features
 
 * Platform fee calculation
-* Advanced admin user suspension controls
+* Advanced admin account suspension controls
 * Advanced transaction analytics
 * Multi-chain deployment
