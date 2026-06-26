@@ -198,6 +198,8 @@ Use `lucide-react` icons for UI controls when icons are needed.
 - Preserve role semantics: public visitor, customer, organizer, admin.
 - Use meaningful loading, empty, error, and success states for customer-facing and admin-facing flows.
 - When adding API routes, keep server secrets inside route handlers or server-only modules.
+- Do not modify `AGENTS.md` without explicit user confirmation.
+- Before changing project-wide rules, architecture decisions, user roles, routes, security rules, database rules, or feature scope, explain the proposed change and wait for confirmation.
 - Keep `docs/CLAUDE.md` and this file roughly in sync when changing repo-wide conventions.
 
 ## Git Workflow
