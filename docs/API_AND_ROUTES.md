@@ -1,29 +1,29 @@
-# API and Routes
+﻿# API and Routes
 
 ## Public Routes
-- `/` — Browse active events
-- `/login` — Login page
-- `/register` — Register page
-- `/events/[eventId]` — Event details
+- `/` - Browse active events
+- `/login` - Login page
+- `/register` - Register page
+- `/events/[eventId]` - Event details
 
-## User Routes
-- `/user` — User dashboard
-- `/user/tickets` — My Tickets
-- `/user/top-up` — DICKEN balance and top-up
-- `/user/transactions` — Transaction history
+## Customer Routes
+- `/customer` - Customer dashboard
+- `/customer/tickets` - My Tickets
+- `/customer/top-up` - DICKEN balance and top-up
+- `/customer/transactions` - Transaction history
 
 ## Organizer Routes
-- `/organizer` — Organizer dashboard
-- `/organizer/create-event` — Create event
-- `/organizer/events/[eventId]` — Manage event
-- `/organizer/events/[eventId]/edit` — Edit draft event
-- `/organizer/verify-ticket` — Verify ticket QR code
+- `/organizer` - Organizer dashboard
+- `/organizer/create-event` - Create event
+- `/organizer/events/[eventId]` - Manage event
+- `/organizer/events/[eventId]/edit` - Edit draft event
+- `/organizer/verify-ticket` - Verify ticket QR code
 
 ## Admin Routes
-- `/admin` — Admin dashboard
-- `/admin/pending-events` — Review event submissions
-- `/admin/organizers` — View organizers
-- `/admin/events` — Monitor all events
+- `/admin` - Admin dashboard
+- `/admin/pending-events` - Review event submissions
+- `/admin/organizers` - View organizers
+- `/admin/events` - Monitor all events
 
 ## Future API Routes
 - `/api/events`
