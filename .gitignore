@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Local OpenCode Configuration
 opencode.json
+
+# Local isolated feature worktrees
+.worktrees/
