@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function RegisterPage() {
@@ -13,171 +13,175 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleRegister(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-    setLoading(true);
     setErrorMessage("");
+    setSuccessMessage("");
 
-    {/*This saves the user's profile in the database (save in Supabase built-in Auth Users table) */}
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (error) {
-      setErrorMessage(error.message);
-      setLoading(false);
+    if (password.length < 6) {
+      setErrorMessage("Password must contain at least 6 characters.");
       return;
     }
 
-    const userId = data.user?.id; //Get the user ID from Supabase Auth after the user account is created
+    setIsLoading(true);
 
-    if (!userId) {
-      setErrorMessage("Registration failed. Please try again.");
-      setLoading(false);
-      return;
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+
+      const userId = data.user?.id;
+
+      if (!userId) {
+        setErrorMessage("Account creation failed. Please try again.");
+        return;
+      }
+
+      const { error: profileError } = await supabase.from("profiles").insert({
+        user_id: userId,
+        name: name.trim(),
+        email: email.trim(),
+        role: "customer",
+      });
+
+      if (profileError) {
+        setErrorMessage(
+          "Your account was created, but the customer profile could not be saved."
+        );
+        return;
+      }
+
+      setSuccessMessage(
+        "Account created successfully. Redirecting you to the login page..."
+      );
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 1500);
+    } catch {
+      setErrorMessage("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-
-    {/*After Supabase Auth creates the account, save the user’s extra details into profiles table */}
-    const { error: profileError } = await supabase.from("profiles").insert({
-      user_id: userId,
-      name,
-      email,
-      role: "user",
-    });
-
-    if (profileError) {
-      setErrorMessage(profileError.message);
-      setLoading(false);
-      return;
-    }
-
-    router.push("/login");
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 py-10 text-slate-950 sm:px-6 lg:px-8">
-      {/* Blurred background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: "url(/Background%20Login%20Image.png)",
-          filter: "blur(2px)",
-          transform: "scale(1.1)",
-        }}
-      />
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="register-title">
+        <Link href="/" className="auth-logo">
+          <Image
+            src="/CornShirt Hub.png"
+            alt="CornShirt logo"
+            width={300}
+            height={100}
+            priority
+          />
+        </Link>
 
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/30" />
+        <h1 id="register-title">Create your account</h1>
+        <p className="muted">
+          Please enter your details.
+        </p>
 
-      {/* Content */}
-      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full items-center justify-center">
-        <section className="mx-auto w-full max-w-md">
-          <div className="rounded-lg border border-white/20 bg-white/95 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.40)] backdrop-blur-sm sm:p-8">
-            <div className="mb-8 flex justify-center">
-              <Image
-                src="/CornShirt-Logo.png"
-                alt="CornShirt Logo"
-                width={200}
-                height={200}
-                priority
-              />
-            </div>
-
-            <form onSubmit={handleRegister} className="space-y-5">
-              {/* Full Name */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-800">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-                  placeholder="Enter your full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-800">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-800">
-                  Password
-                </label>
-
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-emerald-600"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Login Link */}
-              <p className="text-center text-sm text-slate-600">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
-                >
-                  Login
-                </Link>
-              </p>
-
-              {/* Error Message */}
-              {errorMessage && (
-                <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                  {errorMessage}
-                </p>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="h-12 w-full rounded-lg bg-slate-950 px-4 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-              >
-                {loading ? "Creating account..." : "Sign Up"}
-              </button>
-            </form>
+        <form className="form" onSubmit={handleRegister}>
+          <div className="field">
+            <label htmlFor="name">Full name</label>
+            <input
+              id="name"
+              type="text"
+              autoComplete="name"
+              placeholder="Jane Doe"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+            />
           </div>
-        </section>
-      </div>
+
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="password">Password</label>
+
+            <div className="password-field">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="Create a password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                minLength={6}
+                required
+              />
+
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {errorMessage ? (
+            <p className="form-error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          {successMessage ? (
+            <p className="form-success" role="status">
+              {successMessage}
+            </p>
+          ) : null}
+
+          <button className="button full" type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="button-spinner" size={18} />
+                Creating account...
+              </>
+            ) : (
+              "Create account"
+            )}
+          </button>
+        </form>
+
+        <p className="small-note">
+          By signing up, you agree to the CornShirt terms. DICKEN runs in Stripe
+          Test Mode.
+        </p>
+
+        <p className="auth-footer">
+          Already have an account? <Link href="/login">Log in</Link>
+        </p>
+      </section>
     </main>
   );
 }

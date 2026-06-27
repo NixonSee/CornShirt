@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
@@ -12,156 +12,149 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-  setLoading(true);
-  setErrorMessage("");
+    setErrorMessage("");
+    setIsLoading(true);
 
-  // Supabase receives the password, hashes it securely, and stores the hashed version in built-in auth.users system. (bcrypt + salt)
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-  if (error) {
-    setErrorMessage(error.message);
-    setLoading(false);
-    return;
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+
+      const userId = data.user?.id;
+
+      if (!userId) {
+        setErrorMessage("Unable to find your account. Please try again.");
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("user_id", userId)
+        .single();
+
+      if (profileError || !profile) {
+        setErrorMessage(
+          "Your account was found, but your profile could not be loaded."
+        );
+        return;
+      }
+
+      switch (profile.role) {
+        case "admin":
+          router.replace("/admin");
+          break;
+
+        case "organizer":
+          router.replace("/organizer");
+          break;
+
+        case "customer":
+        case "user":
+        default:
+          router.replace("/customer");
+          break;
+      }
+    } catch {
+      setErrorMessage("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
-
-  const userId = data.user?.id;
-
-  if (!userId) {
-    setErrorMessage("Login failed. Please try again.");
-    setLoading(false);
-    return;
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("user_id", userId)
-    .single();
-
-  if (profileError || !profile) {
-    setErrorMessage("Profile not found. Please contact admin.");
-    setLoading(false);
-    return;
-  }
-
-  if (profile.role === "admin") {
-    router.push("/admin");
-  } else if (profile.role === "organizer") {
-    router.push("/organizer");
-  } else {
-    router.push("/user");
-  }
-}
 
   return (
-    <main className="min-h-screen px-4 py-10 text-slate-950 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Blurred background image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: 'url(/Background%20Login%20Image.png)',
-          filter: 'blur(2px)',
-          transform: 'scale(1.1)'
-        }}
-      />
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/30" />
-      
-      {/* Content */}
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full items-center justify-center relative z-10">
-          <section className="mx-auto w-full max-w-md">
-            <div className="rounded-lg border border-white/20 bg-white/95 backdrop-blur-sm p-6 shadow-[0_24px_80px_rgba(0,0,0,0.40)] sm:p-8">
-              <div className="mb-8">
-                <div className="flex justify-center mb-6">
-                  <Image
-                    src="/CornShirt-Logo.png"
-                    alt="CornShirt Logo"
-                    width={200}
-                    height={200}
-                  />
-                </div>
-              </div>
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="login-title">
+        <Link href="/" className="auth-logo">
+          <Image
+            src="/CornShirt Hub.png"
+            alt="CornShirt logo"
+            width={300}
+            height={100}
+            priority
+          />
+        </Link>
 
-              <form onSubmit={handleLogin} className="space-y-5">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-800">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+        <h1 id="login-title">Welcome back</h1>
+        <p className="muted">
+          Please enter your details.
+        </p>
 
-                {/* Password */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-800">
-                  Password
-                </label>
+        <form className="form" onSubmit={handleLogin}>
+          <div className="field">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </div>
 
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    className="h-12 w-full rounded-lg border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+          <div className="field">
+            <label htmlFor="password">Password</label>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition hover:text-emerald-600"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-              </div>
+            <div className="password-field">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
 
-                <p className="text-center text-sm text-slate-600">
-                  Don&apos;t have an account?{" "}
-                  <Link
-                    href="/register"
-                    className="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
-                  >
-                    Sign up
-                  </Link>
-                </p>
-
-                {errorMessage && (
-                  <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                    {errorMessage}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="h-12 w-full rounded-lg bg-slate-950 px-4 text-sm font-bold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-                >
-                  {loading ? "Logging in..." : "Login"}
-                </button>
-              </form>
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((current) => !current)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
-          </section>
-      </div>
+          </div>
+
+          {errorMessage ? (
+            <p className="form-error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          <button className="button full" type="submit" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="button-spinner" size={18} />
+                Logging in...
+              </>
+            ) : (
+              "Log in"
+            )}
+          </button>
+        </form>
+
+        <p className="auth-footer">
+          No account? <Link href="/register">Sign up</Link>
+        </p>
+      </section>
     </main>
   );
 }
