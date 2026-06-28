@@ -262,11 +262,22 @@ p {
   box-shadow: var(--shadow-glow);
 }
 
-.button-secondary,
-.button-outline {
+.button-secondary {
   border-color: var(--border);
   background: var(--secondary);
   color: var(--secondary-foreground);
+}
+
+.button-outline {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.button-outline:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
 }
 
 .button.full {
@@ -598,9 +609,19 @@ tr:last-child td {
   min-height: 44px;
   border: 1px solid var(--input);
   border-radius: var(--radius-lg);
-  background: var(--secondary);
-  color: var(--foreground);
+  background: var(--card);
+  color: var(--primary);
   padding: 10px 12px 10px 38px;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px #f6a73033;
+}
+
+.search-box input::placeholder {
+  color: #888;
 }
 
 .category-row {
@@ -772,4 +793,179 @@ tr:last-child td {
   td {
     padding: 10px;
   }
+}
+
+.card-header {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.card-header .muted {
+  text-align: left;
+  font-size: 13px;
+  color: #a0a0a0;
+}
+
+.card-icon {
+  display: inline-flex;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.button-icon {
+  display: inline-flex;
+  margin-right: 6px;
+}
+
+.button-destructive {
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+}
+
+.button-destructive:hover {
+  background: oklch(0.5 0.22 27);
+}
+
+.button-success {
+  background: var(--success);
+  color: var(--success-foreground);
+}
+
+.button-success:hover {
+  background: oklch(0.6 0.17 150);
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.button-spinner {
+  animation: button-spin 1s linear infinite;
+}
+
+.metric .metric-title-primary,
+.card-header .metric-title-primary {
+  color: var(--primary);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  padding: 24px;
+  z-index: 100;
+}
+
+.modal-card {
+  width: min(100%, 420px);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.modal-card h2 {
+  color: var(--primary);
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.modal-card p {
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  color: #a0a0a0;
+  font-size: 13px;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-page {
+  min-width: 34px;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--foreground);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.pagination-page:hover:not(:disabled) {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.pagination-page.active,
+.pagination-page.active:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.pagination-page:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: end;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  padding-bottom: 6px;
 }
