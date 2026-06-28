@@ -1,7 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { OrganizersPageClient } from "@/components/admin/OrganizersPageClient";
+import { requireRole } from "@/lib/requireRole";
 
 export default async function OrganizersPage() {
+  await requireRole(["admin"]);
+
   const [profilesRes, eventsRes] = await Promise.all([
     supabaseAdmin
       .from("profiles")

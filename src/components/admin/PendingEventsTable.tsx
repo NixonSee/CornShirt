@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpDown } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/common/Button";
 import { Modal } from "@/components/common/Modal";
 
@@ -54,22 +53,11 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
 
     setIsSubmitting(true);
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const adminId = sessionData.session?.user?.id;
-
-    if (!adminId) {
-      alert("You must be logged in as admin.");
-      setIsSubmitting(false);
-      return;
-    }
-
     const res = await fetch(
       `/api/admin/events/${actionTarget.eventId}/${actionTarget.type}`,
       {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ admin_id: adminId }),
-      }
+      },
     );
 
     setIsSubmitting(false);

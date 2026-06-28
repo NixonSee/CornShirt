@@ -3,12 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import {
+  getSafeEventReturnTo,
+  withEventReturnTo,
+} from "@/lib/eventReturnTo";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = getSafeEventReturnTo(searchParams.get("returnTo"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +72,7 @@ export default function LoginPage() {
         case "customer":
         case "user":
         default:
-          router.replace("/customer");
+          router.replace(returnTo ?? "/customer");
           break;
       }
     } catch {
@@ -152,9 +158,26 @@ export default function LoginPage() {
         </form>
 
         <p className="auth-footer">
-          No account? <Link href="/register">Sign up</Link>
+          No account?{" "}
+          <Link href={withEventReturnTo("/register", returnTo)}>Sign up</Link>
         </p>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="auth-page">
+          <section className="auth-card" aria-live="polite">
+            <p className="muted">Loading login...</p>
+          </section>
+        </main>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

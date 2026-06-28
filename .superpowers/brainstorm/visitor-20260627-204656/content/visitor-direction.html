@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CornShirt Visitor Direction</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; padding:38px; background:#080808; color:#f6f6f6; font-family:Inter,system-ui,sans-serif; }
+  main { width:min(1180px,100%); margin:0 auto; }
+  h2 { margin:0 0 8px; font:900 clamp(28px,4vw,46px)/1 Archivo,Inter,sans-serif; }
+  .subtitle { margin:0; color:#999; line-height:1.6; }
+  .direction-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; margin-top:24px; }
+  .direction { overflow:hidden; border:1px solid #333; border-radius:16px; background:#111; cursor:pointer; transition:.2s ease; }
+  .direction:hover { transform:translateY(-3px); border-color:#ff9b28; }
+  .direction.selected { outline:3px solid rgba(255,155,40,.35); border-color:#ff9b28; }
+  .mini { min-height:340px; background:#0d0d0d; color:#f7f7f7; font-family:Inter,system-ui,sans-serif; }
+  .mini-nav { height:40px; display:flex; align-items:center; gap:8px; padding:0 12px; border-bottom:1px solid #292929; font-size:8px; color:#aaa; }
+  .mini-brand { margin-right:auto; font-size:11px; font-weight:900; color:#fff; }
+  .mini-brand span,.fire { color:#ff9b28; }
+  .pill { border:1px solid #444; border-radius:999px; padding:4px 7px; }
+  .primary { border-radius:5px; padding:5px 8px; background:linear-gradient(135deg,#ffb12b,#ef6b22); color:#16100a; font-weight:900; }
+  .photo-hero { min-height:155px; padding:24px 16px; display:flex; align-items:center; background:linear-gradient(90deg,rgba(8,8,8,.96),rgba(8,8,8,.3)),radial-gradient(circle at 80% 30%,#6d30b8,transparent 28%),linear-gradient(135deg,#071f45,#26104b 55%,#cc2c86); }
+  .text-hero { padding:28px 16px 18px; background:radial-gradient(circle at 50% 0,rgba(255,145,0,.17),transparent 65%); }
+  .compact-hero { min-height:126px; padding:19px 16px; display:flex; align-items:end; background:linear-gradient(90deg,rgba(8,8,8,.94),rgba(8,8,8,.55)),radial-gradient(circle at 76% 24%,#8b2cc0,transparent 30%),linear-gradient(135deg,#071f45,#30104d); }
+  .kicker { color:#ff9b28; font-size:7px; letter-spacing:.11em; text-transform:uppercase; font-weight:800; }
+  .headline { margin:7px 0; font-family:Archivo,Inter,sans-serif; font-size:23px; line-height:.95; font-weight:900; }
+  .copy { max-width:235px; color:#aaa; font-size:8px; line-height:1.5; }
+  .controls { display:flex; gap:6px; padding:12px 12px 6px; }
+  .search { flex:1; border:1px solid #343434; border-radius:6px; padding:6px; color:#777; font-size:7px; background:#191919; }
+  .chip { border:1px solid #343434; border-radius:999px; padding:5px 7px; color:#999; font-size:6px; }
+  .chip.on { border-color:#ff9b28; color:#ff9b28; }
+  .event-cards { display:grid; grid-template-columns:repeat(2,1fr); gap:7px; padding:7px 12px 14px; }
+  .event { overflow:hidden; border:1px solid #292929; border-radius:8px; background:#191919; }
+  .event-img { height:54px; background:linear-gradient(135deg,#6d2da8,#112b5b); position:relative; }
+  .badge { position:absolute; top:5px; right:5px; border-radius:999px; padding:2px 4px; background:#2ed083; color:#08150e; font-size:5px; font-weight:900; }
+  .event-info { padding:6px; }
+  .event-title { font-size:7px; font-weight:800; }
+  .meta { margin-top:2px; color:#777; font-size:5px; }
+  .inventory { height:2px; margin-top:5px; border-radius:2px; background:#333; overflow:hidden; }
+  .inventory:after { content:""; display:block; width:66%; height:100%; background:#ff9b28; }
+  .price { display:flex; justify-content:space-between; margin-top:4px; color:#f5a623; font-size:6px; font-weight:800; }
+  .direction-body { padding:15px; }
+  .direction-body h3 { margin:0 0 5px; }
+  .direction-body p { margin:0; color:#aaa; font-size:13px; line-height:1.45; }
+  .recommended { display:inline-block; margin-top:10px; border-radius:999px; padding:4px 8px; background:rgba(255,155,40,.13); color:#ffad42; font-size:11px; font-weight:800; }
+  @media (max-width:900px){ .direction-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<main>
+<h2>Choose the visitor-page direction</h2>
+<p class="subtitle">All three use the CornShirt dark concert theme. The difference is how closely we follow each prototype and how much event information appears above the fold.</p>
+
+<div class="direction-grid">
+  <div class="direction" data-choice="a-immersive" onclick="toggleSelect(this)">
+    <div class="mini">
+      <div class="mini-nav"><div class="mini-brand">Corn<span>Shirt</span></div><span>Events</span><span>Log in</span><span class="primary">Create account</span></div>
+      <div class="photo-hero"><div><div class="kicker">Powered by DICKEN & NFT tickets</div><div class="headline">Own the night.<br><span class="fire">Own your ticket.</span></div><div class="copy">A dramatic concert-first introduction with strong calls to action.</div></div></div>
+      <div class="controls"><div class="search">Search artists, cities…</div><div class="chip on">All</div><div class="chip">Rock</div></div>
+      <div class="event-cards"><div class="event"><div class="event-img"><span class="badge">ACTIVE</span></div><div class="event-info"><div class="event-title">Neon Corn Festival</div><div class="meta">Kuala Lumpur · Jul 18</div></div></div><div class="event"><div class="event-img"><span class="badge">ACTIVE</span></div><div class="event-info"><div class="event-title">Harvest Beats</div><div class="meta">Penang · Sep 12</div></div></div></div>
+    </div>
+    <div class="direction-body"><h3>A. Immersive prototype</h3><p>Faithfully follows <code>index.html</code>: large photographic hero, marketing message, then searchable event cards.</p></div>
+  </div>
+
+  <div class="direction" data-choice="b-compact" onclick="toggleSelect(this)">
+    <div class="mini">
+      <div class="mini-nav"><div class="mini-brand">Corn<span>Shirt</span></div><div class="search" style="max-width:110px">Search events…</div><span class="primary">Sign in</span><span class="pill">Register</span></div>
+      <div class="text-hero"><div class="kicker">Live events · Powered by DICKEN</div><div class="headline">Discover your<br>next <span class="fire">concert.</span></div><div class="copy">NFT-backed tickets. Verified ownership. Zero scalpers.</div></div>
+      <div class="controls"><div class="chip on">All Events</div><div class="chip">Electronic</div><div class="chip">Indie</div></div>
+      <div class="event-cards"><div class="event"><div class="event-img"></div><div class="event-info"><div class="event-title">AURORA LIVE</div><div class="meta">Aurora Nyx · KLCC</div><div class="inventory"></div><div class="price"><span>◆ 120</span><span style="color:#777">188 left</span></div></div></div><div class="event"><div class="event-img"></div><div class="event-info"><div class="event-title">SONIC BLOOM</div><div class="meta">The Midnight · Axiata</div><div class="inventory"></div><div class="price"><span>◆ 80</span><span style="color:#777">322 left</span></div></div></div></div>
+    </div>
+    <div class="direction-body"><h3>B. Compact bundled prototype</h3><p>Uses the denser public view from <code>CornShirt Prototype.html</code>, prioritizing search and ticket inventory over atmosphere.</p></div>
+  </div>
+
+  <div class="direction" data-choice="c-hybrid" onclick="toggleSelect(this)">
+    <div class="mini">
+      <div class="mini-nav"><div class="mini-brand">Corn<span>Shirt</span></div><span>Events</span><div class="search" style="max-width:95px">Search…</div><span>Log in</span><span class="primary">Create account</span></div>
+      <div class="compact-hero"><div><div class="kicker">Verifiable live experiences</div><div class="headline">Find your next<br><span class="fire">unforgettable night.</span></div><div class="copy">A shorter concert hero keeps the brand memorable while bringing live inventory into view sooner.</div></div></div>
+      <div class="controls"><div class="chip on">All</div><div class="chip">Electronic</div><div class="chip">Rock</div><div class="chip">Indie</div></div>
+      <div class="event-cards"><div class="event"><div class="event-img"><span class="badge">ACTIVE</span></div><div class="event-info"><div class="event-title">Neon Corn Festival</div><div class="meta">The Cob Lights · KL</div><div class="inventory"></div><div class="price"><span>From ◆ 42</span><span style="color:#777">188 left</span></div></div></div><div class="event"><div class="event-img"><span class="badge">ACTIVE</span></div><div class="event-info"><div class="event-title">Harvest Beats</div><div class="meta">Golden Husk · Penang</div><div class="inventory"></div><div class="price"><span>From ◆ 66</span><span style="color:#777">322 left</span></div></div></div></div>
+    </div>
+    <div class="direction-body"><h3>C. Hybrid</h3><p>Keeps <code>index.html</code> as the source of truth, while borrowing the bundled prototype’s compact search and inventory cues.</p><span class="recommended">Recommended</span></div>
+  </div>
+</div>
+<p style="margin:24px 0 0;color:#999">Return to Codex and tell me A, B, or C. My recommendation is C.</p>
+</main>
+<script>
+  function toggleSelect(element) {
+    document.querySelectorAll('.direction').forEach((item) => item.classList.remove('selected'));
+    element.classList.add('selected');
+  }
+</script>
+</body>
+</html>
