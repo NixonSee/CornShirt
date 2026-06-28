@@ -14,12 +14,16 @@
   - Variants: `metric` (stat cards), `panel` (content panels), `table` (table wrappers)
   - Props: `variant`, `title`, `description`, `icon`, `value`, `titleClassName`, `className`, `children`
 - Status Badge
-- Modal / Confirmation Dialog (Approve/reject event confirmation)
+- Modal ✅ — `src/components/common/Modal.tsx`
+  - Features: overlay backdrop, Escape key to close, click-outside to close
+  - Props: `isOpen`, `onClose`, `title`, `children`, `actions`
 - Input Field
 - Select Dropdown
 - Textarea
 - File Upload Field (Event banner upload)
-- Search Bar
+- SearchBar ✅ — `src/components/common/SearchBar.tsx`
+  - Dark-themed search input with primary-color entered text
+  - Props: `value`, `onChange`, `placeholder`
 - Empty State
 - Loading State
 - Error Alert / Success Alert
