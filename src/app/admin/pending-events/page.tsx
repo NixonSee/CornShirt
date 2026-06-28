@@ -1,7 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { PendingEventsPageClient } from "@/components/admin/PendingEventsPageClient";
+import { requireRole } from "@/lib/requireRole";
 
 export default async function PendingEventsPage() {
+  await requireRole(["admin"]);
+
   const [eventsRes, ticketTypesRes, profilesRes] = await Promise.all([
     supabaseAdmin
       .from("events")

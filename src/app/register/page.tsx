@@ -3,12 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import {
+  getSafeEventReturnTo,
+  withEventReturnTo,
+} from "@/lib/eventReturnTo";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = getSafeEventReturnTo(searchParams.get("returnTo"));
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -69,7 +75,7 @@ export default function RegisterPage() {
       );
 
       setTimeout(() => {
-        router.push("/login");
+        router.push(withEventReturnTo("/login", returnTo));
       }, 1500);
     } catch {
       setErrorMessage("Something went wrong. Please try again.");
@@ -179,9 +185,26 @@ export default function RegisterPage() {
         </p>
 
         <p className="auth-footer">
-          Already have an account? <Link href="/login">Log in</Link>
+          Already have an account?{" "}
+          <Link href={withEventReturnTo("/login", returnTo)}>Log in</Link>
         </p>
       </section>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="auth-page">
+          <section className="auth-card" aria-live="polite">
+            <p className="muted">Loading registration...</p>
+          </section>
+        </main>
+      }
+    >
+      <RegisterContent />
+    </Suspense>
   );
 }

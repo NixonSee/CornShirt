@@ -6,24 +6,35 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  inputId?: string;
+  ariaLabel?: string;
+  fluid?: boolean;
 }
 
 export function SearchBar({
   value,
   onChange,
   placeholder = "Search...",
+  inputId,
+  ariaLabel,
+  fluid = false,
 }: SearchBarProps) {
   return (
-    <div className="search-box" style={{ width: 360 }}>
+    <label
+      className="search-box"
+      style={fluid ? undefined : { width: 360 }}
+    >
       <span>
-        <Search size={16} />
+        <Search aria-hidden="true" size={16} />
       </span>
       <input
-        type="text"
+        id={inputId}
+        type="search"
+        aria-label={ariaLabel ?? placeholder}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-    </div>
+    </label>
   );
 }

@@ -2,8 +2,11 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { Card } from "@/components/common/Card";
 import { BarChart, PieChart, LineChart } from "@/components/admin/AdminCharts";
 import { PendingEventsTable } from "@/components/admin/PendingEventsTable";
+import { requireRole } from "@/lib/requireRole";
 
 export default async function AdminDashboardPage() {
+  await requireRole(["admin"]);
+
   const [
     userRes,
     orgRes,
