@@ -263,11 +263,22 @@ p {
   box-shadow: var(--shadow-glow);
 }
 
-.button-secondary,
-.button-outline {
+.button-secondary {
   border-color: var(--border);
   background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.button-outline {
+  border-color: var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.button-outline:hover {
+  background: var(--primary);
   color: var(--primary-foreground);
+  border-color: var(--primary);
 }
 
 .button.full {
@@ -788,6 +799,19 @@ tr:last-child td {
 
 .search-box input::placeholder {
   color: #777777;
+}
+
+/* Dark search box for admin/organizer dashboards */
+.app-shell .search-box input {
+  border: 1px solid var(--input);
+  background: var(--card);
+  color: var(--primary);
+  outline: none;
+}
+
+.app-shell .search-box input:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px #f6a73033;
 }
 
 .event-controls {
