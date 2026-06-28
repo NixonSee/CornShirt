@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { SearchBar } from "@/components/common";
+import { SearchBar, Pagination } from "@/components/common";
+
+const PAGE_SIZE = 5;
 
 interface Organizer {
   user_id: string;
@@ -20,12 +22,24 @@ const mutedStyle = { color: "#a0a0a0" };
 
 export function OrganizersPageClient({ organizers }: Props) {
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return organizers;
     const q = search.toLowerCase();
     return organizers.filter((org) => org.name.toLowerCase().includes(q));
   }, [organizers, search]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+
+  const displayData = useMemo(
+    () =>
+      filtered.slice(
+        (currentPage - 1) * PAGE_SIZE,
+        currentPage * PAGE_SIZE
+      ),
+    [filtered, currentPage]
+  );
 
   return (
     <>
@@ -39,14 +53,19 @@ export function OrganizersPageClient({ organizers }: Props) {
       >
         <SearchBar
           value={search}
-          onChange={setSearch}
+          onChange={(v) => {
+            setSearch(v);
+            setCurrentPage(1);
+          }}
           placeholder="Search by organizer name..."
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {displayData.length === 0 ? (
         <p style={{ textAlign: "left", padding: "20px 0", ...mutedStyle }}>
-          {search ? "No organizers match your search." : "No organizers registered yet."}
+          {search
+            ? "No organizers match your search."
+            : "No organizers registered yet."}
         </p>
       ) : (
         <div className="table-card" style={{ marginTop: 0 }}>
@@ -62,7 +81,7 @@ export function OrganizersPageClient({ organizers }: Props) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((org) => (
+              {displayData.map((org) => (
                 <tr key={org.user_id}>
                   <td>
                     <strong style={{ color: "var(--primary)" }}>
@@ -79,7 +98,8 @@ export function OrganizersPageClient({ organizers }: Props) {
                   </td>
                   <td>{org.stats.total}</td>
                   <td>
-                    <span className="status good">ACTIVE</span> {org.stats.active}
+                    <span className="status good">ACTIVE</span>{" "}
+                    {org.stats.active}
                   </td>
                   <td>
                     {org.stats.pending > 0 && (
@@ -100,6 +120,14 @@ export function OrganizersPageClient({ organizers }: Props) {
           </table>
         </div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={filtered.length}
+        pageSize={PAGE_SIZE}
+      />
     </>
   );
 }

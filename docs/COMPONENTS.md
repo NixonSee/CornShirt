@@ -30,7 +30,9 @@
 
 ## Data Display Components
 - Table
-- Pagination Controls
+- Pagination ✅ — `src/components/common/Pagination.tsx`
+  - Dark-themed page buttons with primary active/hover, auto-hides when single page
+  - Props: `currentPage`, `totalPages`, `onPageChange`, `totalItems`, `pageSize`
 - Event Card
 - Ticket Type Card
 - Ticket Card
