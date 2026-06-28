@@ -773,3 +773,63 @@ tr:last-child td {
     padding: 10px;
   }
 }
+
+.card-header {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.card-header .muted {
+  text-align: left;
+  font-size: 13px;
+}
+
+.card-icon {
+  display: inline-flex;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.button-icon {
+  display: inline-flex;
+  margin-right: 6px;
+}
+
+.button-destructive {
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+}
+
+.button-destructive:hover {
+  background: oklch(0.5 0.22 27);
+}
+
+.button-success {
+  background: var(--success);
+  color: var(--success-foreground);
+}
+
+.button-success:hover {
+  background: oklch(0.6 0.17 150);
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.button-spinner {
+  animation: button-spin 1s linear infinite;
+}
+
+.metric .metric-title-primary,
+.card-header .metric-title-primary {
+  color: var(--primary);
+}
