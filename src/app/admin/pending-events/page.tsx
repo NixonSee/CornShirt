@@ -1,10 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { PendingEventsPageClient } from "@/components/admin/PendingEventsPageClient";
-import { requireRole } from "@/lib/requireRole";
-
 export default async function PendingEventsPage() {
-  await requireRole(["admin"]);
-
   const [eventsRes, ticketTypesRes, profilesRes] = await Promise.all([
     supabaseAdmin
       .from("events")
@@ -52,31 +48,29 @@ export default async function PendingEventsPage() {
   }));
 
   return (
-    <main style={{ minHeight: "100vh" }}>
-      <div
-        className="main"
-        style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
-      >
-        <div className="top-row">
-          <div>
-            <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
-              Pending Events ({totalPending})
-            </h1>
-            <p
-              style={{
-                textAlign: "left",
-                marginTop: 8,
-                fontSize: 14,
-                color: "var(--foreground)",
-              }}
-            >
-              Review organizer event submissions and approve or reject them.
-            </p>
-          </div>
+    <div
+      className="main"
+      style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
+    >
+      <div className="top-row">
+        <div>
+          <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
+            Pending Events ({totalPending})
+          </h1>
+          <p
+            style={{
+              textAlign: "left",
+              marginTop: 8,
+              fontSize: 14,
+              color: "var(--foreground)",
+            }}
+          >
+            Review organizer event submissions and approve or reject them.
+          </p>
         </div>
-
-        <PendingEventsPageClient events={pendingEvents} />
       </div>
-    </main>
+
+      <PendingEventsPageClient events={pendingEvents} />
+    </div>
   );
 }

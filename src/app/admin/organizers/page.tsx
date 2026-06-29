@@ -1,10 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { OrganizersPageClient } from "@/components/admin/OrganizersPageClient";
-import { requireRole } from "@/lib/requireRole";
-
 export default async function OrganizersPage() {
-  await requireRole(["admin"]);
-
   const [profilesRes, eventsRes] = await Promise.all([
     supabaseAdmin
       .from("profiles")
@@ -41,31 +37,29 @@ export default async function OrganizersPage() {
   }));
 
   return (
-    <main style={{ minHeight: "100vh" }}>
-      <div
-        className="main"
-        style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
-      >
-        <div className="top-row">
-          <div>
-            <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
-              Organizers
-            </h1>
-            <p
-              style={{
-                textAlign: "left",
-                marginTop: 8,
-                fontSize: 14,
-                color: "var(--foreground)",
-              }}
-            >
-              View registered organizers and their events.
-            </p>
-          </div>
+    <div
+      className="main"
+      style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
+    >
+      <div className="top-row">
+        <div>
+          <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
+            Organizers
+          </h1>
+          <p
+            style={{
+              textAlign: "left",
+              marginTop: 8,
+              fontSize: 14,
+              color: "var(--foreground)",
+            }}
+          >
+            View registered organizers and their events.
+          </p>
         </div>
-
-        <OrganizersPageClient organizers={organizers} />
       </div>
-    </main>
+
+      <OrganizersPageClient organizers={organizers} />
+    </div>
   );
 }
