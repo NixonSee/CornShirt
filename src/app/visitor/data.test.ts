@@ -2,135 +2,146 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
-import { categories, events, filterEvents, getEventById } from "./data.ts";
+import * as eventData from "./data.ts";
 
-test("catalogue matches the five events and categories from index.html", () => {
-  assert.deepEqual(
-    events.map((event) => event.title),
-    [
-      "Neon Corn Festival",
-      "Harvest Beats Night",
-      "DICKEN Live Arena",
-      "Indie Kernel Sessions",
-      "Soul Silo Evening",
-    ],
-  );
-  assert.deepEqual(categories, [
-    "All",
-    "Rock",
-    "Electronic",
-    "Indie",
-    "Soul",
-    "Pop",
-  ]);
+const databaseRow = {
+  event_id: "7c216de0-dbcb-4131-8957-8ebbc952bdfe",
+  event_name: "Database Live Concert",
+  artist_name: "Live Artist",
+  venue: "National Arena",
+  event_date: "2026-07-18T12:00:00.000Z",
+  description: "Loaded directly from Supabase.",
+  banner_image: "https://example.supabase.co/storage/banner.jpg",
+  status: "active",
+  ticket_types: [
+    {
+      ticket_type_id: "ticket-type-1",
+      type_name: "VIP Admission",
+      price: 131,
+      total_supply: 476,
+      remaining_supply: 60,
+      purchase_limit: 4,
+      transfer_allowed: true,
+    },
+  ],
+};
+
+test("maps the live Supabase schema into the public event model", () => {
+  assert.equal(typeof eventData.mapEventRow, "function");
+
+  const event = eventData.mapEventRow(databaseRow);
+  assert.equal(event.id, databaseRow.event_id);
+  assert.equal(event.title, databaseRow.event_name);
+  assert.equal(event.artist, databaseRow.artist_name);
+  assert.equal(event.venue, databaseRow.venue);
+  assert.equal(event.description, databaseRow.description);
+  assert.equal(event.image, databaseRow.banner_image);
+  assert.equal(event.price, 131);
+  assert.equal(event.ticketTypes[0].name, "VIP Admission");
+  assert.equal(event.ticketTypes[0].remaining, 60);
+  assert.equal(event.ticketTypes[0].purchaseLimit, 4);
+  assert.equal(event.ticketTypes[0].transferAllowed, true);
 });
 
-test("search matches title, artist, city, and category without case sensitivity", () => {
-  assert.deepEqual(
-    filterEvents(events, "chain PULSE", "All").map((event) => event.title),
-    ["DICKEN Live Arena"],
-  );
-  assert.deepEqual(
-    filterEvents(events, "johor bahru", "All").map((event) => event.title),
-    ["Indie Kernel Sessions"],
-  );
-});
+test("uses a concert fallback when database values are absent", () => {
+  assert.equal(typeof eventData.mapEventRow, "function");
 
-test("category and search filters apply together", () => {
-  assert.deepEqual(
-    filterEvents(events, "kuala lumpur", "Electronic").map(
-      (event) => event.title,
-    ),
-    ["Neon Corn Festival"],
-  );
-  assert.deepEqual(filterEvents(events, "penang", "Rock"), []);
-});
-
-test("blank search with All returns the complete catalogue", () => {
-  assert.equal(filterEvents(events, "   ", "All").length, 5);
-});
-
-test("every public event exposes complete ticket options", () => {
-  events.forEach((event) => {
-    assert.ok(event.ticketTypes.length > 0);
-    event.ticketTypes.forEach((ticket) => {
-      assert.ok(ticket.name.length > 0);
-      assert.ok(ticket.price > 0);
-      assert.ok(ticket.remaining >= 0);
-      assert.ok(ticket.purchaseLimit > 0);
-      assert.equal(typeof ticket.transferAllowed, "boolean");
-    });
+  const event = eventData.mapEventRow({
+    ...databaseRow,
+    artist_name: null,
+    venue: null,
+    description: null,
+    banner_image: null,
+    ticket_types: [],
   });
+
+  assert.equal(event.artist, "Artist TBC");
+  assert.equal(event.venue, "Venue TBC");
+  assert.equal(event.image, "/Background Image.png");
+  assert.equal(event.price, 0);
+  assert.deepEqual(event.ticketTypes, []);
 });
 
-test("event lookup returns known events and omits unknown IDs", () => {
-  assert.equal(getEventById("neon-corn-festival")?.title, "Neon Corn Festival");
-  assert.equal(getEventById("not-an-event"), undefined);
+test("search filters live events by title, artist, venue, and category", () => {
+  assert.equal(typeof eventData.mapEventRow, "function");
+  const event = eventData.mapEventRow(databaseRow);
+
+  assert.deepEqual(eventData.filterEvents([event], "national arena", "All"), [
+    event,
+  ]);
+  assert.deepEqual(eventData.filterEvents([event], "live artist", "Concert"), [
+    event,
+  ]);
+  assert.deepEqual(eventData.filterEvents([event], "missing", "All"), []);
+  assert.deepEqual(eventData.getEventCategories([event]), ["All", "Concert"]);
 });
 
-test("visitor keeps feature markup inline without local component files", () => {
-  const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+test("production data module no longer contains the dummy catalogue", () => {
+  const source = readFileSync(new URL("./data.ts", import.meta.url), "utf8");
 
-  assert.equal(pageSource.includes('./components/'), false);
-  assert.equal(pageSource.includes('aria-label="Featured events"'), true);
-  assert.equal(
-    existsSync(new URL("./components/HeroCarousel.tsx", import.meta.url)),
-    false,
+  assert.doesNotMatch(source, /export const events/);
+  assert.doesNotMatch(source, /Neon Corn Festival|Harvest Beats Night/);
+});
+
+test("shared discovery loads active events once and passes them to both views", () => {
+  const base = new URL("../../components/visitor&customer/", import.meta.url);
+  const discoverySource = readFileSync(
+    new URL("EventDiscovery.tsx", base),
+    "utf8",
   );
-  assert.equal(
-    existsSync(new URL("./components/EventBrowser.tsx", import.meta.url)),
-    false,
+  const carouselSource = readFileSync(
+    new URL("HeroCarousel.tsx", base),
+    "utf8",
   );
-});
-
-test("visitor reuses the accessible shared search component", () => {
-  const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
-  const searchBarSource = readFileSync(
-    new URL("../../components/common/SearchBar.tsx", import.meta.url),
+  const browserSource = readFileSync(
+    new URL("EventBrowser.tsx", base),
     "utf8",
   );
 
-  assert.equal(
-    pageSource.includes(
-      'import { SearchBar } from "@/components/common";',
-    ),
-    true,
-  );
-  assert.match(
-    pageSource,
-    /<SearchBar[\s\S]*?inputId="eventSearch"[\s\S]*?ariaLabel="Search events"[\s\S]*?fluid/,
-  );
-  assert.equal(searchBarSource.includes("fluid?: boolean"), true);
-  assert.equal(searchBarSource.includes("inputId?: string"), true);
-  assert.equal(searchBarSource.includes("ariaLabel?: string"), true);
+  assert.match(discoverySource, /fetch\("\/api\/public\/events"/);
+  assert.match(discoverySource, /<HeroCarousel events=\{events\}/);
+  assert.match(discoverySource, /<EventBrowser events=\{events\}/);
+  assert.match(discoverySource, /Loading live events/);
+  assert.match(discoverySource, /Unable to load live events/);
+  assert.doesNotMatch(carouselSource, /import \{ events \}/);
+  assert.doesNotMatch(browserSource, /categories, events/);
+  assert.match(carouselSource, /events: readonly Event\[\]/);
+  assert.match(browserSource, /events: readonly Event\[\]/);
 });
 
-test("event section uses compact filters and purchase-focused cards", () => {
+test("public API and details query only active Supabase events", () => {
+  const apiUrl = new URL("../api/public/events/route.ts", import.meta.url);
+  const serverDataUrl = new URL("../../lib/publicEvents.ts", import.meta.url);
+  const detailUrl = new URL("../events/[eventId]/page.tsx", import.meta.url);
+
+  assert.equal(existsSync(apiUrl), true);
+  assert.equal(existsSync(serverDataUrl), true);
+
+  const apiSource = readFileSync(apiUrl, "utf8");
+  const serverDataSource = readFileSync(serverDataUrl, "utf8");
+  const detailSource = readFileSync(detailUrl, "utf8");
+
+  assert.match(apiSource, /getActiveEvents/);
+  assert.match(serverDataSource, /supabaseAdmin/);
+  assert.match(serverDataSource, /\.eq\("status", "active"\)/);
+  assert.match(serverDataSource, /ticket_types/);
+  assert.match(detailSource, /getActiveEventById/);
+  assert.doesNotMatch(detailSource, /getEventById|generateStaticParams/);
+});
+
+test("visitor keeps the shared role-navbar dimensions", () => {
   const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
 
-  assert.equal(pageSource.includes('className="event-controls"'), true);
-  assert.equal(pageSource.includes('aria-label="Filter events"'), true);
-  assert.equal(pageSource.includes('className="category-row"'), false);
-  assert.equal(pageSource.includes(">Details<"), false);
-  assert.equal(pageSource.includes('className="event-place"'), true);
-  assert.equal(pageSource.includes('className="event-date"'), true);
-  assert.equal(
-    pageSource.includes('className="button full event-buy-button"'),
-    true,
-  );
-  assert.match(
-    pageSource,
-    /className="button full event-buy-button"\s+href=\{`\/events\/\$\{event\.id\}`\}/,
-  );
+  assert.match(pageSource, /<header className="app-topbar">/);
+  assert.match(pageSource, /className="app-topbar-brand"/);
+  assert.match(pageSource, /className="app-topbar-actions"/);
+  assert.match(pageSource, /width=\{140\}[\s\S]*height=\{40\}/);
 });
 
-test("event section uses the dark reference treatment with adjacent controls", () => {
+test("event section retains its compact dark responsive treatment", () => {
   const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
 
-  assert.match(
-    styles,
-    /\.events-section\s*\{[^}]*background:\s*#000000/s,
-  );
+  assert.match(styles, /\.events-section\s*\{[^}]*background:\s*#000000/s);
   assert.match(
     styles,
     /\.event-controls\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:/s,
@@ -139,45 +150,9 @@ test("event section uses the dark reference treatment with adjacent controls", (
     styles,
     /\.event-body\s*\{[^}]*background:\s*#292929;[^}]*color:\s*#ffffff;/s,
   );
-  assert.doesNotMatch(
-    styles,
-    /@media \(max-width: 560px\)[\s\S]*?\.event-controls\s*\{[^}]*flex-direction:\s*column;/,
-  );
 });
 
-test("hero is minimal and every event exposes its public detail route", () => {
-  const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
-  const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
-
-  assert.equal(pageSource.includes('className="hero-eyebrow"'), false);
-  assert.equal(pageSource.includes('className="hero-description"'), false);
-  assert.equal(pageSource.includes('className="hero-event-meta"'), false);
-  assert.equal(pageSource.includes("<h1>{activeEvent.title}</h1>"), true);
-  assert.equal(
-    pageSource.includes('href={`/events/${activeEvent.id}`}'),
-    true,
-  );
-  assert.equal(pageSource.includes('className="event-card-link"'), true);
-  assert.match(
-    styles,
-    /\.home-hero-inner\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*flex-end;/s,
-  );
-  assert.match(
-    styles,
-    /\.hero-slide::after\s*\{[^}]*background:\s*#0000004d;/s,
-  );
-  assert.doesNotMatch(styles, /\.hero-slide-(gold|red|violet|teal)::after/);
-  assert.match(
-    styles,
-    /\.home-hero-copy\s*\{[^}]*max-width:\s*960px;/s,
-  );
-  assert.match(
-    styles,
-    /\.home-hero h1\s*\{[^}]*max-width:\s*960px;[^}]*font-size:\s*clamp\(36px, 5vw, 60px\);/s,
-  );
-});
-
-test("public event details render ticket types and protected return links", () => {
+test("public event details keep protected purchase return links", () => {
   const routeUrl = new URL("../events/[eventId]/page.tsx", import.meta.url);
   const notFoundUrl = new URL("../events/[eventId]/not-found.tsx", import.meta.url);
 
@@ -185,9 +160,6 @@ test("public event details render ticket types and protected return links", () =
   assert.equal(existsSync(notFoundUrl), true);
 
   const routeSource = readFileSync(routeUrl, "utf8");
-  assert.equal(routeSource.includes("params: Promise<{ eventId: string }>"), true);
-  assert.equal(routeSource.includes("const { eventId } = await params"), true);
-  assert.equal(routeSource.includes("notFound()"), true);
-  assert.equal(routeSource.includes("event.ticketTypes.map"), true);
-  assert.equal(routeSource.includes('withEventReturnTo("/login"'), true);
+  assert.match(routeSource, /event\.ticketTypes\.map/);
+  assert.match(routeSource, /withEventReturnTo\("\/login"/);
 });

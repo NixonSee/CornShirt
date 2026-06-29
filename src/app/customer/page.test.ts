@@ -5,33 +5,30 @@ import test from "node:test";
 const source = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
 
-test("customer route protects account data and supports logout", () => {
+test("customer route protects account data and uses the role navigation", () => {
   assert.match(source, /supabase\.auth\.getUser\(\)/);
   assert.match(source, /\.select\("name,wallet_address,role"\)/);
   assert.match(source, /router\.replace\("\/login"\)/);
   assert.match(source, /router\.replace\("\/admin"\)/);
   assert.match(source, /router\.replace\("\/organizer"\)/);
-  assert.match(source, /supabase\.auth\.signOut\(\)/);
-  assert.match(source, /router\.replace\("\/visitor"\)/);
+  assert.match(source, /import RoleNav from "@\/components\/RoleNav"/);
+  assert.match(source, /<RoleNav role="customer"\s*\/>/);
   assert.doesNotMatch(source, />\s*Log In\s*</);
 });
 
 test("customer route matches visitor discovery and reuses common components", () => {
-  assert.match(source, /import \{ Button, Modal, SearchBar \}/);
+  assert.match(source, /import \{ Button, Modal \}/);
+  assert.match(source, /import Footer from "@\/components\/Footer"/);
   assert.match(
     source,
-    /import \{ categories, events, filterEvents \} from "@\/app\/visitor\/data"/,
+    /import \{ EventDiscovery \} from "@\/components\/visitor&customer"/,
   );
-  assert.match(source, /className="home-hero hero-carousel"/);
-  assert.match(source, /className="events-section"/);
-  assert.match(source, /className="event-controls"/);
-  assert.match(source, /className="event-grid"/);
-  assert.match(source, /<SearchBar/);
-  assert.match(source, /href=\{`\/events\/\$\{event\.id\}`\}/);
+  assert.match(source, /<EventDiscovery\s*\/>/);
+  assert.doesNotMatch(source, /className="home-hero hero-carousel"/);
+  assert.doesNotMatch(source, /className="events-section"/);
+  assert.match(source, /<Footer\s*\/>/);
   assert.match(source, /id="my-tickets"/);
   assert.match(source, />\s*My Tickets\s*</);
-  assert.match(source, />\s*Top Up\s*</);
-  assert.match(source, /Wallet pending/);
   assert.match(source, /<Modal/);
   assert.match(source, /DICKEN top-up is not connected yet/);
   assert.match(source, /Ticket services are not connected yet/);
