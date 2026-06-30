@@ -1,10 +1,8 @@
 "use client";
 
-import { Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Button, Modal } from "@/components/common";
 import Footer from "@/components/Footer";
 import RoleNav from "@/components/RoleNav";
 import { EventDiscovery } from "@/components/visitor&customer";
@@ -16,14 +14,11 @@ interface CustomerProfile {
   role: string | null;
 }
 
-type CustomerModal = "tickets" | "topup" | null;
-
 export default function CustomerPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [activeModal, setActiveModal] = useState<CustomerModal>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -128,55 +123,9 @@ export default function CustomerPage() {
 
       <main>
         <EventDiscovery />
-
-        <section id="my-tickets" className="customer-tools-section">
-          <div className="customer-tools-heading">
-            <div>
-              <p className="section-kicker">Customer tools</p>
-              <h2>My Tickets</h2>
-            </div>
-            <Ticket aria-hidden="true" size={34} />
-          </div>
-
-          <div className="customer-ticket-state">
-            <Ticket aria-hidden="true" size={42} />
-            <h3>Your ticket collection will appear here</h3>
-            <p>
-              Ticket services are not connected yet. No ticket ownership or NFT
-              information has been created for this preview.
-            </p>
-            <Button
-              variant="secondary"
-              onClick={() => setActiveModal("tickets")}
-            >
-              View service status
-            </Button>
-          </div>
-        </section>
       </main>
 
       <Footer />
-
-      <Modal
-        isOpen={activeModal === "topup"}
-        onClose={() => setActiveModal(null)}
-        title="DICKEN Top Up"
-        actions={<Button onClick={() => setActiveModal(null)}>Got it</Button>}
-      >
-        DICKEN top-up is not connected yet. Stripe Test Mode and transaction
-        recording must be implemented before funds can be added safely.
-      </Modal>
-
-      <Modal
-        isOpen={activeModal === "tickets"}
-        onClose={() => setActiveModal(null)}
-        title="My Tickets"
-        actions={<Button onClick={() => setActiveModal(null)}>Got it</Button>}
-      >
-        Ticket services are not connected yet. Purchased Ticket NFTs, QR codes,
-        transfers, resale, and refunds will appear only after their backend is
-        available.
-      </Modal>
     </div>
   );
 }
