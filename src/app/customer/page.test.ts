@@ -16,8 +16,7 @@ test("customer route protects account data and uses the role navigation", () => 
   assert.doesNotMatch(source, />\s*Log In\s*</);
 });
 
-test("customer route matches visitor discovery and reuses common components", () => {
-  assert.match(source, /import \{ Button, Modal \}/);
+test("customer route keeps event discovery without duplicate ticket or top-up previews", () => {
   assert.match(source, /import Footer from "@\/components\/Footer"/);
   assert.match(
     source,
@@ -27,19 +26,16 @@ test("customer route matches visitor discovery and reuses common components", ()
   assert.doesNotMatch(source, /className="home-hero hero-carousel"/);
   assert.doesNotMatch(source, /className="events-section"/);
   assert.match(source, /<Footer\s*\/>/);
-  assert.match(source, /id="my-tickets"/);
-  assert.match(source, />\s*My Tickets\s*</);
-  assert.match(source, /<Modal/);
-  assert.match(source, /DICKEN top-up is not connected yet/);
-  assert.match(source, /Ticket services are not connected yet/);
+  assert.doesNotMatch(source, /id="my-tickets"/);
+  assert.doesNotMatch(source, />\s*My Tickets\s*</);
+  assert.doesNotMatch(source, /<Modal/);
+  assert.doesNotMatch(source, /activeModal|CustomerModal/);
 });
 
 test("customer account controls extend the visitor design responsively", () => {
   assert.match(styles, /\.customer-site-nav\s*\{/);
   assert.match(styles, /\.customer-identity\s*\{/);
   assert.match(styles, /\.customer-wallet\s*\{/);
-  assert.match(styles, /\.customer-tools-section\s*\{/);
-  assert.match(styles, /\.customer-ticket-state\s*\{/);
   assert.match(
     styles,
     /@media \(max-width: 900px\)[\s\S]*?\.customer-site-nav\s*\{/,
