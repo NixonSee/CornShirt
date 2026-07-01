@@ -1680,7 +1680,7 @@ tr:last-child td {
   margin-bottom: 12px;
 }
 
-.modal-card p {
+.modal-card .modal-body {
   color: var(--foreground);
   font-size: 14px;
   line-height: 1.5;

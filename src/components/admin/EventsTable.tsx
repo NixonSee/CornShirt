@@ -94,10 +94,10 @@ export function EventsTable({ events, sortOrder, onSortChange }: Props) {
                 "Event"
               )}
             </th>
-            <th style={thStyle}>Organizer</th>
-            <th style={thStyle}>Status</th>
-            <th style={thStyle}>Date</th>
-            <th style={thStyle}>Details</th>
+            <th style={{ ...thStyle, textAlign: "center" }}>Organizer</th>
+            <th style={{ ...thStyle, textAlign: "center" }}>Status</th>
+            <th style={{ ...thStyle, textAlign: "center" }}>Date</th>
+            <th style={{ ...thStyle, textAlign: "center" }}>Details</th>
           </tr>
         </thead>
         <tbody>
@@ -118,7 +118,7 @@ export function EventsTable({ events, sortOrder, onSortChange }: Props) {
                   {daysAgo(ev.created_at)}
                 </span>
               </td>
-              <td>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                 {ev.organizer_name ? (
                   <strong style={{ color: "var(--primary)" }}>
                     {ev.organizer_name}
@@ -129,17 +129,17 @@ export function EventsTable({ events, sortOrder, onSortChange }: Props) {
                   </span>
                 )}
               </td>
-              <td>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                 <span className={statusClass(ev.status)}>
                   {ev.status.toUpperCase()}
                 </span>
               </td>
-              <td>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                 <span style={{ fontSize: 12, ...mutedStyle }}>
                   {formatDate(ev.event_date)}
                 </span>
               </td>
-              <td>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                 <span
                   style={{
                     color: "var(--primary)",
