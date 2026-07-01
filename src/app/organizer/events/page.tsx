@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireRole } from "@/lib/requireRole";
+import { Card } from "@/components/common/Card";
 
 const DICKEN = new Intl.NumberFormat("en-US");
 
@@ -92,7 +93,7 @@ export default async function MyEventsPage() {
           </p>
         </div>
       ) : (
-        <section className="table-card">
+        <Card variant="table">
           <table>
             <thead>
               <tr>
@@ -145,7 +146,7 @@ export default async function MyEventsPage() {
               })}
             </tbody>
           </table>
-        </section>
+        </Card>
       )}
     </>
   );

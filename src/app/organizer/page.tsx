@@ -24,6 +24,8 @@ import {
   Tooltip,
 } from "recharts";
 import { supabase } from "@/lib/supabaseClient";
+import { Card } from "@/components/common/Card";
+import { Pagination } from "@/components/common/Pagination";
 
 interface EventRow {
   event_id: string;
@@ -70,6 +72,7 @@ interface EventSummary extends EventRow {
 type EventFilter = "all" | "live" | "draft";
 
 const DICKEN = new Intl.NumberFormat("en-US");
+const TRANSACTIONS_PAGE_SIZE = 10;
 
 const STATUS_COLORS: Record<string, string> = {
   active: "#36b56a",
@@ -145,6 +148,7 @@ export default function OrganizerDashboardPage() {
 
   const [filter, setFilter] = useState<EventFilter>("all");
   const [carousel, setCarousel] = useState(0);
+  const [txPage, setTxPage] = useState(1);
 
   useEffect(() => {
     let active = true;
@@ -227,7 +231,7 @@ export default function OrganizerDashboardPage() {
             )
             .eq("tickets.events.organizer_id", user.id)
             .order("created_at", { ascending: false })
-            .limit(8);
+            .limit(50);
           txRows = (tx ?? []) as unknown as TransactionRow[];
         }
 
@@ -235,6 +239,7 @@ export default function OrganizerDashboardPage() {
           setEvents(summaries);
           setRevenueSeries(revSeries);
           setTransactions(txRows);
+          setTxPage(1);
         }
       } catch (loadError) {
         if (active) {
@@ -294,6 +299,19 @@ export default function OrganizerDashboardPage() {
     return events;
   }, [events, filter]);
 
+  const txTotalPages = Math.max(
+    1,
+    Math.ceil(transactions.length / TRANSACTIONS_PAGE_SIZE)
+  );
+  const pagedTransactions = useMemo(
+    () =>
+      transactions.slice(
+        (txPage - 1) * TRANSACTIONS_PAGE_SIZE,
+        txPage * TRANSACTIONS_PAGE_SIZE
+      ),
+    [transactions, txPage]
+  );
+
   function cycle(direction: 1 | -1) {
     if (carouselEvents.length === 0) return;
     setCarousel(
@@ -336,19 +354,18 @@ export default function OrganizerDashboardPage() {
             Track and manage your blockchain-secured ticket inventory.
           </p>
         </div>
-        <Link className="button" href="/organizer/create-event">
-          <PlusCircle size={18} />
-          Create Event
-        </Link>
       </div>
 
       {/* Top metric row: three equal cards */}
       <section className="stat-grid">
         {/* 1. Tickets sold — swipeable per-event gauge */}
-        <article className="stat-card">
-          <div className="stat-card-head">
-            <span className="stat-label">Tickets Sold</span>
-            {carouselEvents.length > 1 && (
+        <Card
+          variant="panel"
+          className="stat-card"
+          title="Tickets Sold"
+          titleClassName="stat-label"
+          headerAction={
+            carouselEvents.length > 1 ? (
               <div className="stat-nav">
                 <button
                   type="button"
@@ -365,9 +382,9 @@ export default function OrganizerDashboardPage() {
                   <ChevronRight size={16} />
                 </button>
               </div>
-            )}
-          </div>
-
+            ) : undefined
+          }
+        >
           {current ? (
             <div className="gauge-row">
               <div className="gauge-figure">
@@ -393,13 +410,15 @@ export default function OrganizerDashboardPage() {
           ) : (
             <p className="muted stat-empty">No ticket capacity yet.</p>
           )}
-        </article>
+        </Card>
 
         {/* 2. Total revenue — area/line chart */}
-        <article className="stat-card">
-          <div className="stat-card-head">
-            <span className="stat-label">Total Revenue</span>
-          </div>
+        <Card
+          variant="panel"
+          className="stat-card"
+          title="Total Revenue"
+          titleClassName="stat-label"
+        >
           <strong className="stat-figure">{DICKEN.format(totalRevenue)} DICKEN</strong>
           <div className="spark-figure">
             <ResponsiveContainer width="100%" height="100%">
@@ -433,13 +452,15 @@ export default function OrganizerDashboardPage() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </article>
+        </Card>
 
         {/* 3. Events overview — status donut (my idea) */}
-        <article className="stat-card">
-          <div className="stat-card-head">
-            <span className="stat-label">Events Overview</span>
-          </div>
+        <Card
+          variant="panel"
+          className="stat-card"
+          title="Events Overview"
+          titleClassName="stat-label"
+        >
           {events.length > 0 ? (
             <div className="gauge-row">
               <div className="gauge-figure">
@@ -480,7 +501,7 @@ export default function OrganizerDashboardPage() {
           ) : (
             <p className="muted stat-empty">No events yet.</p>
           )}
-        </article>
+        </Card>
       </section>
 
       {/* Managed events */}
@@ -594,7 +615,7 @@ export default function OrganizerDashboardPage() {
           </p>
         </div>
       ) : (
-        <section className="table-card">
+        <Card variant="table">
           <table>
             <thead>
               <tr>
@@ -606,7 +627,7 @@ export default function OrganizerDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((tx) => (
+              {pagedTransactions.map((tx) => (
                 <tr key={tx.transaction_id}>
                   <td className="mono">{shortHash(tx.transaction_hash)}</td>
                   <td>{tx.tickets?.events?.event_name ?? "—"}</td>
@@ -619,7 +640,14 @@ export default function OrganizerDashboardPage() {
               ))}
             </tbody>
           </table>
-        </section>
+          <Pagination
+            currentPage={txPage}
+            totalPages={txTotalPages}
+            onPageChange={setTxPage}
+            totalItems={transactions.length}
+            pageSize={TRANSACTIONS_PAGE_SIZE}
+          />
+        </Card>
       )}
     </>
   );

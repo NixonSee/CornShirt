@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card } from "@/components/common/Card";
 
 export default async function EditEventPage({
   params,
@@ -21,13 +22,12 @@ export default async function EditEventPage({
         </Link>
       </div>
 
-      <article className="panel">
-        <h2>Edit form coming soon</h2>
+      <Card variant="panel" title="Edit form coming soon">
         <p className="muted dashboard-panel-text">
           The edit form for event <span className="mono">{eventId}</span> — details,
           banner, and ticket types — will live here.
         </p>
-      </article>
+      </Card>
     </>
   );
 }

@@ -1,3 +1,5 @@
+import { Card } from "@/components/common/Card";
+
 export default function VerifyTicketPage() {
   return (
     <>
@@ -10,13 +12,12 @@ export default function VerifyTicketPage() {
         </div>
       </div>
 
-      <article className="panel">
-        <h2>QR scanner coming soon</h2>
+      <Card variant="panel" title="QR scanner coming soon">
         <p className="muted dashboard-panel-text">
           The QR verification flow — valid / invalid / used / refunded result and
           mark-as-used action — will live here.
         </p>
-      </article>
+      </Card>
     </>
   );
 }
