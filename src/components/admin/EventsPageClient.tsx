@@ -33,7 +33,7 @@ const STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
   { value: "active", label: "Active" },
   { value: "pending", label: "Pending" },
-  { value: "draft", label: "Draft" },
+
   { value: "rejected", label: "Rejected" },
   { value: "cancelled", label: "Cancelled" },
 ];

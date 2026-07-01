@@ -14,7 +14,7 @@ export default async function EditEventPage({
         <div>
           <h1>Edit Event</h1>
           <p className="muted dashboard-subtitle">
-            Update draft event details before submitting for approval.
+            Update event details before submitting for approval.
           </p>
         </div>
         <Link className="button-secondary" href={`/organizer/events/${eventId}`}>

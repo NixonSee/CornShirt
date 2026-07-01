@@ -219,7 +219,7 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
       >
         {actionTarget?.type === "approve"
           ? `Approve "${actionTarget?.eventName}"? This will make the event visible to all users.`
-          : `Reject "${actionTarget?.eventName}"? The event will be returned to draft status.`}
+          : `Reject "${actionTarget?.eventName}"? The event will be set to rejected status.`}
       </Modal>
     </>
   );

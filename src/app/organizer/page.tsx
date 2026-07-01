@@ -69,7 +69,7 @@ interface EventSummary extends EventRow {
   minPrice: number | null;
 }
 
-type EventFilter = "all" | "live" | "draft";
+type EventFilter = "all" | "live" | "rejected";
 
 const DICKEN = new Intl.NumberFormat("en-US");
 const TRANSACTIONS_PAGE_SIZE = 10;
@@ -77,7 +77,6 @@ const TRANSACTIONS_PAGE_SIZE = 10;
 const STATUS_COLORS: Record<string, string> = {
   active: "#36b56a",
   pending: "#f2be3e",
-  draft: "#a3a3a3",
   rejected: "#d84a4a",
   cancelled: "#d84a4a",
 };
@@ -88,7 +87,6 @@ function statusVariant(status: string | null): string {
       return "good";
     case "pending":
       return "warn";
-    case "draft":
     case "rejected":
     case "cancelled":
     case "canceled":
@@ -293,8 +291,8 @@ export default function OrganizerDashboardPage() {
     if (filter === "live") {
       return events.filter((e) => (e.status ?? "").toLowerCase() === "active");
     }
-    if (filter === "draft") {
-      return events.filter((e) => (e.status ?? "").toLowerCase() === "draft");
+    if (filter === "rejected") {
+      return events.filter((e) => (e.status ?? "").toLowerCase() === "rejected");
     }
     return events;
   }, [events, filter]);
@@ -515,7 +513,7 @@ export default function OrganizerDashboardPage() {
         </div>
         <div className="section-actions">
           <div className="filter-tabs" role="tablist" aria-label="Filter events">
-            {(["all", "live", "draft"] as EventFilter[]).map((key) => (
+            {(["all", "live", "rejected"] as EventFilter[]).map((key) => (
               <button
                 key={key}
                 type="button"

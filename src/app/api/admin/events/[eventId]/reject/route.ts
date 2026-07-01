@@ -12,7 +12,7 @@ export async function PUT(
   const { eventId } = await params;
   const { error: updateError } = await supabaseAdmin
     .from("events")
-    .update({ status: "draft" })
+    .update({ status: "rejected" })
     .eq("event_id", eventId);
 
   if (updateError) {
