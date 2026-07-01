@@ -11,8 +11,12 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import RoleNav from "@/components/RoleNav";
 import { withEventReturnTo } from "@/lib/eventReturnTo";
 import { getActiveEventById } from "@/lib/publicEvents";
+import { getVerifiedRole } from "@/lib/requireRole";
+
+import PurchaseButton from "./PurchaseButton";
 
 export async function generateMetadata({
   params,
@@ -36,33 +40,46 @@ export default async function EventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const event = await getActiveEventById(eventId);
+  const [event, roleResult] = await Promise.all([
+    getActiveEventById(eventId),
+    getVerifiedRole(),
+  ]);
 
   if (!event) notFound();
 
+  const role =
+    roleResult.status === "authenticated"
+      ? roleResult.identity.profile.role
+      : null;
+  const isCustomer = role === "customer" || role === "user";
+  const eventsHref = isCustomer ? "/customer#events" : "/visitor#events";
   const returnPath = `/events/${event.id}`;
 
   return (
     <>
-      <header className="site-header">
-        <Link className="auth-logo" href="/visitor">
-          <Image
-            src="/CornShirt Hub.png"
-            alt="CornShirt logo"
-            width={190}
-            height={50}
-            priority
-          />
-        </Link>
-
-        <nav className="site-nav" aria-label="Main navigation">
-          <Link href="/visitor#events">Events</Link>
-          <Link href="/login">Log in</Link>
-          <Link className="button" href="/register">
-            Create account
+      {isCustomer ? (
+        <RoleNav role="customer" />
+      ) : (
+        <header className="site-header">
+          <Link className="auth-logo" href="/visitor">
+            <Image
+              src="/CornShirt Hub.png"
+              alt="CornShirt logo"
+              width={190}
+              height={50}
+              priority
+            />
           </Link>
-        </nav>
-      </header>
+
+          <nav className="site-nav" aria-label="Main navigation">
+            <Link href={eventsHref}>Events</Link>
+            <Link href="/login">Log in</Link>
+            <Link className="button" href="/register">
+              Create account
+            </Link>
+          </nav>
+        </header>
+      )}
 
       <main className="event-detail-page">
         <section
@@ -93,15 +110,6 @@ export default async function EventDetailPage({
         </section>
 
         <section className="event-detail-content">
-          <article className="event-detail-panel event-about-panel">
-            <p className="section-kicker">About the event</p>
-            <h2>Experience {event.title}</h2>
-            <p>{event.description}</p>
-            <Link className="detail-back-link" href="/visitor#events">
-              Back to all events
-            </Link>
-          </article>
-
           <aside
             className="event-detail-panel ticket-options-panel"
             aria-labelledby="ticket-options-title"
@@ -138,16 +146,24 @@ export default async function EventDetailPage({
                     </span>
                   </div>
 
-                  <Link
-                    className="button full"
-                    href={withEventReturnTo("/login", returnPath)}
-                  >
-                    Buy ticket
-                  </Link>
+                  <PurchaseButton
+                    isCustomer={isCustomer}
+                    loginHref={withEventReturnTo("/login", returnPath)}
+                    ticketTypeName={ticketType.name}
+                  />
                 </article>
               ))}
             </div>
           </aside>
+
+          <article className="event-detail-panel event-about-panel">
+            <p className="section-kicker">About the event</p>
+            <h2>Experience {event.title}</h2>
+            <p>{event.description}</p>
+            <Link className="detail-back-link" href={eventsHref}>
+              Back to all events
+            </Link>
+          </article>
         </section>
       </main>
 

@@ -163,3 +163,62 @@ test("public event details keep protected purchase return links", () => {
   assert.match(routeSource, /event\.ticketTypes\.map/);
   assert.match(routeSource, /withEventReturnTo\("\/login"/);
 });
+
+test("event details preserve the authenticated customer navigation context", () => {
+  const routeUrl = new URL("../events/[eventId]/page.tsx", import.meta.url);
+  const routeSource = readFileSync(routeUrl, "utf8");
+
+  assert.match(routeSource, /getVerifiedRole\(\)/);
+  assert.match(routeSource, /const isCustomer/);
+  assert.match(routeSource, /<RoleNav role="customer"\s*\/>/);
+  assert.match(
+    routeSource,
+    /const eventsHref = isCustomer \? "\/customer#events" : "\/visitor#events"/,
+  );
+  assert.match(routeSource, /href=\{eventsHref\}/);
+});
+
+test("event details place ticket options before the about section", () => {
+  const routeSource = readFileSync(
+    new URL("../events/[eventId]/page.tsx", import.meta.url),
+    "utf8",
+  );
+  const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
+
+  assert.ok(
+    routeSource.indexOf('className="event-detail-panel ticket-options-panel"') <
+      routeSource.indexOf('className="event-detail-panel event-about-panel"'),
+  );
+  assert.match(
+    styles,
+    /\.event-detail-content\s*\{[^}]*grid-template-columns:\s*1fr;/s,
+  );
+  assert.match(
+    styles,
+    /\.event-detail-content\s*\{[^}]*width:\s*min\(900px,\s*calc\(100% - 32px\)\);/s,
+  );
+});
+
+test("logged-in customer purchases stay on the event page", () => {
+  const routeSource = readFileSync(
+    new URL("../events/[eventId]/page.tsx", import.meta.url),
+    "utf8",
+  );
+  const purchaseUrl = new URL(
+    "../events/[eventId]/PurchaseButton.tsx",
+    import.meta.url,
+  );
+  const purchaseSource = existsSync(purchaseUrl)
+    ? readFileSync(purchaseUrl, "utf8")
+    : "";
+
+  assert.match(routeSource, /import PurchaseButton/);
+  assert.match(routeSource, /<PurchaseButton/);
+  assert.match(routeSource, /isCustomer=\{isCustomer\}/);
+  assert.match(routeSource, /withEventReturnTo\("\/login", returnPath\)/);
+  assert.match(purchaseSource, /if \(!isCustomer\)/);
+  assert.match(purchaseSource, /<Link className="button full" href=\{loginHref\}>/);
+  assert.match(purchaseSource, /<Modal/);
+  assert.match(purchaseSource, /Purchase service coming soon/);
+  assert.match(purchaseSource, /setIsOpen\(true\)/);
+});
