@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Pencil, ArrowLeft } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireRole } from "@/lib/requireRole";
+import { Card } from "@/components/common/Card";
 
 const DICKEN = new Intl.NumberFormat("en-US");
 
@@ -115,30 +116,32 @@ export default async function ManageEventPage({
       </div>
 
       <section className="grid-3" style={{ marginBottom: 24 }}>
-        <div className="metric">
-          <strong>{DICKEN.format(totalSold)}</strong>
-          <span>Sold / {DICKEN.format(totalSupply)} total</span>
-        </div>
-        <div className="metric">
-          <strong>{DICKEN.format(totalSupply - totalSold)}</strong>
-          <span>Remaining supply</span>
-        </div>
-        <div className="metric">
-          <strong>{DICKEN.format(totalRevenue)} DICKEN</strong>
-          <span>Total revenue</span>
-        </div>
+        <Card
+          variant="metric"
+          value={DICKEN.format(totalSold)}
+          title={`Sold / ${DICKEN.format(totalSupply)} total`}
+        />
+        <Card
+          variant="metric"
+          value={DICKEN.format(totalSupply - totalSold)}
+          title="Remaining supply"
+        />
+        <Card
+          variant="metric"
+          value={`${DICKEN.format(totalRevenue)} DICKEN`}
+          title="Total revenue"
+        />
       </section>
 
       {types.length === 0 ? (
-        <article className="panel">
-          <h2>Ticket Types</h2>
+        <Card variant="panel" title="Ticket Types">
           <p className="muted dashboard-panel-text">
             No ticket types defined yet. Add at least one ticket type before
             submitting for approval.
           </p>
-        </article>
+        </Card>
       ) : (
-        <section className="table-card">
+        <Card variant="table">
           <table>
             <thead>
               <tr>
@@ -169,7 +172,7 @@ export default async function ManageEventPage({
               ))}
             </tbody>
           </table>
-        </section>
+        </Card>
       )}
     </>
   );

@@ -61,8 +61,8 @@ export default function RoleNav({ role }: RoleNavProps) {
           <Image
             src="/CornShirt Hub.png"
             alt="CornShirt"
-            width={140}
-            height={40}
+            width={190}
+            height={50}
             priority
           />
         </Link>
@@ -76,7 +76,7 @@ export default function RoleNav({ role }: RoleNavProps) {
             aria-controls="role-nav-drawer"
             onClick={() => setOpen(true)}
           >
-            <Menu size={22} />
+            <Menu size={26} />
           </button>
         </div>
       </header>
@@ -100,7 +100,7 @@ export default function RoleNav({ role }: RoleNavProps) {
             aria-label="Close navigation menu"
             onClick={close}
           >
-            <X size={20} />
+            <X size={22} />
           </button>
         </div>
 
@@ -113,7 +113,7 @@ export default function RoleNav({ role }: RoleNavProps) {
               tabIndex={open ? 0 : -1}
               onClick={close}
             >
-              <Icon size={18} />
+              <Icon size={20} />
               {label}
             </Link>
           ))}
@@ -125,7 +125,7 @@ export default function RoleNav({ role }: RoleNavProps) {
           onClick={handleSignOut}
           tabIndex={open ? 0 : -1}
         >
-          <LogOut size={18} />
+          <LogOut size={20} />
           Sign out
         </button>
       </aside>
