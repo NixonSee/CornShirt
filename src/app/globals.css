@@ -805,7 +805,7 @@ tr:last-child td {
 .app-shell .search-box input {
   border: 1px solid var(--input);
   background: var(--card);
-  color: var(--primary);
+  color: var(--foreground);
   outline: none;
 }
 
