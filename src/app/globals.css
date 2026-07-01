@@ -814,6 +814,111 @@ tr:last-child td {
   box-shadow: 0 0 0 3px #f6a73033;
 }
 
+.filter-select {
+  min-height: 44px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  color: var(--foreground);
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.filter-select option {
+  background: var(--card);
+  color: var(--foreground);
+}
+
+@supports (selector(option:hover)) {
+  .filter-select option:hover,
+  .filter-select option:checked {
+    background: var(--primary) !important;
+    color: #ffffff;
+  }
+}
+
+.filter-select:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px #f6a73033;
+}
+
+/* Custom dropdown (replaces native select) */
+.dropdown-wrapper {
+  position: relative;
+  min-width: 160px;
+}
+
+.dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  color: var(--foreground);
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.dropdown-trigger:focus-visible {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px #f6a73033;
+}
+
+.dropdown-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.dropdown-chevron.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.dropdown-item.selected {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+}
+
 .event-controls {
   display: grid;
   width: min(100%, 492px);
