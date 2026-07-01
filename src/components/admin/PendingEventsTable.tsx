@@ -104,10 +104,10 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
                   "Event"
                 )}
               </th>
-              <th style={thStyle}>Organizer</th>
-              <th style={thStyle}>Status</th>
+              <th style={{ ...thStyle, textAlign: "center" }}>Organizer</th>
+              <th style={{ ...thStyle, textAlign: "center" }}>Status</th>
               <th style={thStyle}>Decision</th>
-              <th style={thStyle}>Details</th>
+              <th style={{ ...thStyle, textAlign: "center" }}>Details</th>
             </tr>
           </thead>
           <tbody>
@@ -128,7 +128,7 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
                     {daysAgo(ev.created_at)}
                   </span>
                 </td>
-                <td>
+                <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                   {ev.organizer_name ? (
                     <strong style={{ color: "var(--primary)" }}>
                       {ev.organizer_name}
@@ -139,7 +139,7 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
                     </span>
                   )}
                 </td>
-                <td>
+                <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                   <span className="status warn">PENDING</span>
                 </td>
                 <td>
@@ -170,7 +170,7 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
                     </Button>
                   </div>
                 </td>
-                <td>
+                <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                   <span
                     style={{
                       color: "var(--primary)",
