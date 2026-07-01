@@ -1,26 +1,26 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { PendingEventsPageClient } from "@/components/admin/PendingEventsPageClient";
-export default async function PendingEventsPage() {
+import { EventsPageClient } from "@/components/admin/EventsPageClient";
+
+export default async function EventsPage() {
   const [eventsRes, ticketTypesRes, profilesRes] = await Promise.all([
     supabaseAdmin
       .from("events")
       .select("*")
-      .eq("status", "pending")
       .order("created_at", { ascending: false }),
     supabaseAdmin
       .from("ticket_types")
       .select("event_id, ticket_type_id, total_supply"),
     supabaseAdmin
       .from("profiles")
-      .select("user_id, name"),
+      .select("user_id, name")
+      .eq("role", "organizer"),
   ]);
 
   const events = eventsRes.data ?? [];
   const ticketTypes = ticketTypesRes.data ?? [];
   const profiles = profilesRes.data ?? [];
 
-  const ticketCountByEvent: Record<string, { count: number; supply: number }> =
-    {};
+  const ticketCountByEvent: Record<string, { count: number; supply: number }> = {};
   for (const tt of ticketTypes) {
     if (!ticketCountByEvent[tt.event_id]) {
       ticketCountByEvent[tt.event_id] = { count: 0, supply: 0 };
@@ -34,17 +34,18 @@ export default async function PendingEventsPage() {
     profileMap[p.user_id] = p.name;
   }
 
-  const totalPending = events.length;
-
-  const pendingEvents = events.map((ev) => ({
+  const displayEvents = events.map((ev) => ({
     event_id: ev.event_id,
     event_name: ev.event_name,
     organizer_name: ev.organizer_id
       ? profileMap[ev.organizer_id] ?? "Unknown"
       : undefined,
+    organizer_id: ev.organizer_id,
+    status: ev.status ?? "unknown",
     ticket_type_count: ticketCountByEvent[ev.event_id]?.count ?? 0,
     total_supply: ticketCountByEvent[ev.event_id]?.supply ?? 0,
     created_at: ev.created_at,
+    event_date: ev.event_date,
   }));
 
   return (
@@ -55,7 +56,7 @@ export default async function PendingEventsPage() {
       <div className="top-row">
         <div>
           <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
-            Pending Events ({totalPending})
+            All Events ({events.length})
           </h1>
           <p
             style={{
@@ -65,12 +66,12 @@ export default async function PendingEventsPage() {
               color: "var(--foreground)",
             }}
           >
-            Review organizer event submissions and approve or reject them.
+            Browse all events. Filter by status or organizer.
           </p>
         </div>
       </div>
 
-      <PendingEventsPageClient events={pendingEvents} />
+      <EventsPageClient events={displayEvents} organizers={profiles} />
     </div>
   );
 }

@@ -2,11 +2,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { Card } from "@/components/common/Card";
 import { BarChart, PieChart, LineChart } from "@/components/admin/AdminCharts";
 import { PendingEventsTable } from "@/components/admin/PendingEventsTable";
-import { requireRole } from "@/lib/requireRole";
-
 export default async function AdminDashboardPage() {
-  await requireRole(["admin"]);
-
   const [
     userRes,
     orgRes,
@@ -102,128 +98,126 @@ export default async function AdminDashboardPage() {
   }));
 
   return (
-    <main style={{ minHeight: "100vh" }}>
+    <div
+      className="main"
+      style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
+    >
+      <div className="top-row">
+        <div>
+          <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
+            Admin Dashboard
+          </h1>
+          <p
+            style={{
+              textAlign: "left",
+              marginTop: 8,
+              fontSize: 14,
+              color: "var(--foreground)",
+            }}
+          >
+            Review organizers, approve event submissions, and monitor platform
+            activity.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid-3">
+        <Card
+          variant="metric"
+          value={totalUsers}
+          title="Total Users"
+          titleClassName="metric-title-primary"
+        />
+        <Card
+          variant="metric"
+          value={totalOrganizers}
+          title="Organizers"
+          titleClassName="metric-title-primary"
+        />
+        <Card
+          variant="metric"
+          value={totalEvents}
+          title="Total Events"
+          titleClassName="metric-title-primary"
+        />
+        <Card
+          variant="metric"
+          value={totalPending}
+          title="Pending Events"
+          titleClassName="metric-title-primary"
+        />
+        <Card
+          variant="metric"
+          value={totalTransactions}
+          title="Transactions"
+          titleClassName="metric-title-primary"
+        />
+      </div>
+
       <div
-        className="main"
-        style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
+        style={{
+          marginTop: 24,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 18,
+        }}
       >
-        <div className="top-row">
-          <div>
-            <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
-              Admin Dashboard
-            </h1>
-            <p
-              style={{
-                textAlign: "left",
-                marginTop: 8,
-                fontSize: 14,
-                color: "var(--foreground)",
-              }}
-            >
-              Review organizers, approve event submissions, and monitor platform
-              activity.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid-3">
-          <Card
-            variant="metric"
-            value={totalUsers}
-            title="Total Users"
-            titleClassName="metric-title-primary"
-          />
-          <Card
-            variant="metric"
-            value={totalOrganizers}
-            title="Organizers"
-            titleClassName="metric-title-primary"
-          />
-          <Card
-            variant="metric"
-            value={totalEvents}
-            title="Total Events"
-            titleClassName="metric-title-primary"
-          />
-          <Card
-            variant="metric"
-            value={totalPending}
-            title="Pending Events"
-            titleClassName="metric-title-primary"
-          />
-          <Card
-            variant="metric"
-            value={totalTransactions}
-            title="Transactions"
-            titleClassName="metric-title-primary"
-          />
-        </div>
-
-        <div
-          style={{
-            marginTop: 24,
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 18,
-          }}
-        >
-          <Card
-            variant="panel"
-            title="Events by Status"
-            titleClassName="metric-title-primary"
-          >
-            <BarChart data={statusCounts} />
-          </Card>
-          <Card
-            variant="panel"
-            title="Event Distribution"
-            titleClassName="metric-title-primary"
-          >
-            <PieChart data={statusCounts} />
-          </Card>
-        </div>
-
         <Card
           variant="panel"
-          title="Transaction Trends"
+          title="Events by Status"
           titleClassName="metric-title-primary"
-          style={{ marginTop: 18 }}
         >
-          <LineChart data={monthlyData} />
+          <BarChart data={statusCounts} />
         </Card>
-
         <Card
           variant="panel"
-          title="Pending Review"
+          title="Event Distribution"
           titleClassName="metric-title-primary"
-          titleBadge={
-            <span
-              className="status warn"
-              style={{ padding: "4px 10px", fontSize: 13 }}
-            >
-              {totalPending} pending
-            </span>
-          }
-          headerAction={
-            totalPending > 5 && (
-              <a
-                href="/admin/pending-events"
-                style={{
-                  color: "var(--primary)",
-                  fontWeight: 800,
-                  fontSize: 13,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                View all pending events →
-              </a>
-            )
-          }
-          style={{ marginTop: 24 }}
         >
-          <PendingEventsTable events={pendingEvents} limit={5} />
+          <PieChart data={statusCounts} />
         </Card>
       </div>
-    </main>
+
+      <Card
+        variant="panel"
+        title="Transaction Trends"
+        titleClassName="metric-title-primary"
+        style={{ marginTop: 18 }}
+      >
+        <LineChart data={monthlyData} />
+      </Card>
+
+      <Card
+        variant="panel"
+        title="Pending Review"
+        titleClassName="metric-title-primary"
+        titleBadge={
+          <span
+            className="status warn"
+            style={{ padding: "4px 10px", fontSize: 13 }}
+          >
+            {totalPending} pending
+          </span>
+        }
+        headerAction={
+          totalPending > 5 && (
+            <a
+              href="/admin/pending-events"
+              style={{
+                color: "var(--primary)",
+                fontWeight: 800,
+                fontSize: 13,
+                whiteSpace: "nowrap",
+              }}
+            >
+              View all pending events →
+            </a>
+          )
+        }
+        style={{ marginTop: 24 }}
+      >
+        <PendingEventsTable events={pendingEvents} limit={5} />
+      </Card>
+    </div>
   );
 }

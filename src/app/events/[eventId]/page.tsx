@@ -11,12 +11,8 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 
-import { events, getEventById } from "@/app/visitor/data";
 import { withEventReturnTo } from "@/lib/eventReturnTo";
-
-export function generateStaticParams() {
-  return events.map((event) => ({ eventId: event.id }));
-}
+import { getActiveEventById } from "@/lib/publicEvents";
 
 export async function generateMetadata({
   params,
@@ -24,7 +20,7 @@ export async function generateMetadata({
   params: Promise<{ eventId: string }>;
 }): Promise<Metadata> {
   const { eventId } = await params;
-  const event = getEventById(eventId);
+  const event = await getActiveEventById(eventId);
 
   return event
     ? {
@@ -40,7 +36,7 @@ export default async function EventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const event = getEventById(eventId);
+  const event = await getActiveEventById(eventId);
 
   if (!event) notFound();
 
@@ -90,7 +86,7 @@ export default async function EventDetailPage({
               </span>
               <span>
                 <MapPin aria-hidden="true" size={19} />
-                {event.city}
+                {event.venue}
               </span>
             </div>
           </div>

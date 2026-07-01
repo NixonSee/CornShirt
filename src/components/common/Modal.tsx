@@ -28,7 +28,7 @@ export function Modal({ isOpen, onClose, title, children, actions }: ModalProps)
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <h2>{title}</h2>
-        <p>{children}</p>
+        <div className="modal-body">{children}</div>
         <div className="modal-actions">{actions}</div>
       </div>
     </div>
