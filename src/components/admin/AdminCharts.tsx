@@ -28,7 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: COLORS[1],
   cancelled: COLORS[2],
   completed: COLORS[3],
-  draft: COLORS[4],
+  rejected: COLORS[4],
 };
 
 const tooltipStyle = {
