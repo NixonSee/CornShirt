@@ -10,6 +10,7 @@ import {
   Users,
   ListChecks,
   Contact,
+  Inbox,
   type LucideIcon,
 } from "lucide-react";
 
@@ -54,6 +55,7 @@ export const NAV_BY_ROLE: Record<Role, RoleNavConfig> = {
       { href: "/admin/pending-events", label: "Pending Events", icon: ClipboardCheck },
       { href: "/admin/organizers", label: "Organizers", icon: Users },
       { href: "/admin/users", label: "Users", icon: Contact },
+      { href: "/admin/partner-applications", label: "Applications", icon: Inbox },
       { href: "/admin/events", label: "All Events", icon: ListChecks },
     ],
   },
