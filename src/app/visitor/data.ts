@@ -1,3 +1,9 @@
+import type {
+  MapStage,
+  SeatZone,
+  ZoneShape,
+} from "@/components/seatmap/types";
+
 export type EventStatus = "ACTIVE" | "SELLING FAST";
 
 export type TicketType = {
@@ -22,6 +28,10 @@ export type Event = {
   image: string;
   accent: string;
   ticketTypes: readonly TicketType[];
+  /** Fixed stage from the picked venue, or null for legacy free-text venues. */
+  stage: MapStage | null;
+  /** The venue's fixed zones (read-only in Phase 2; unpriced until wired). */
+  zones: readonly SeatZone[];
 };
 
 export type TicketTypeRow = {
@@ -32,6 +42,37 @@ export type TicketTypeRow = {
   remaining_supply: number | null;
   purchase_limit: number | null;
   transfer_allowed: boolean | null;
+  venue_zone_id?: string | null;
+  zone_ref?: string | null;
+};
+
+export type LayoutCustomZone = {
+  id: string;
+  shape: ZoneShape;
+  label: string;
+  category: string;
+};
+
+export type EventLayout = {
+  version?: number;
+  customZones?: LayoutCustomZone[];
+  pricing?: Record<string, { price: number; capacity: number }>;
+};
+
+export type VenueZoneRow = {
+  zone_id: string;
+  code: string | null;
+  label: string | null;
+  capacity: number | null;
+  category: string | null;
+  shape: ZoneShape | null;
+};
+
+export type VenueEmbed = {
+  name: string | null;
+  venue_type: string | null;
+  layout: { stage?: MapStage } | null;
+  venue_zones: readonly VenueZoneRow[] | null;
 };
 
 export type EventRow = {
@@ -39,10 +80,13 @@ export type EventRow = {
   event_name: string;
   artist_name: string | null;
   venue: string | null;
+  venue_id?: string | null;
   event_date: string | null;
   description: string | null;
   banner_image: string | null;
   status: string | null;
+  layout?: EventLayout | null;
+  venue_data?: VenueEmbed | null;
   ticket_types: readonly TicketTypeRow[] | null;
 };
 
@@ -94,11 +138,68 @@ export function mapEventRow(row: EventRow): Event {
   const isSellingFast =
     totalSupply > 0 && remainingSupply / totalSupply <= 0.2;
 
+  const venueData = row.venue_data ?? null;
+  const stage = venueData?.layout?.stage ?? null;
+
+  // Map each priced ticket type back to its zone via zone_ref so a zone click
+  // on the buyer map can select the matching ticket type.
+  const ticketByZoneRef = new Map(
+    (row.ticket_types ?? [])
+      .filter((t) => t.zone_ref)
+      .map((t) => [
+        t.zone_ref as string,
+        {
+          id: t.ticket_type_id,
+          price: numericValue(t.price),
+          total: t.total_supply ?? 0,
+          remaining: t.remaining_supply ?? 0,
+        },
+      ]),
+  );
+
+  const fixedZones = (venueData?.venue_zones ?? [])
+    .filter((z) => z.shape != null)
+    .map((z) => ({
+      id: z.zone_id,
+      kind: "fixed" as const,
+      shape: z.shape as ZoneShape,
+      label: z.label?.trim() || z.code?.trim() || "Zone",
+      category: (z.category === "standing" ? "standing" : "seated") as
+        | "seated"
+        | "standing",
+      capacity: z.capacity ?? 0,
+    }));
+
+  const customZonesRaw = row.layout?.customZones ?? [];
+  const customZones = customZonesRaw
+    .filter((z) => z.shape != null)
+    .map((z) => ({
+      id: z.id,
+      kind: "custom" as const,
+      shape: z.shape,
+      label: z.label?.trim() || "Zone",
+      category: (z.category === "seated" ? "seated" : "standing") as
+        | "seated"
+        | "standing",
+      capacity: 0,
+    }));
+
+  const zones: SeatZone[] = [...fixedZones, ...customZones].map((z) => {
+    const ticket = ticketByZoneRef.get(z.id);
+    return {
+      ...z,
+      price: ticket ? ticket.price : null,
+      capacity: ticket ? ticket.total : z.capacity,
+      ticketTypeId: ticket?.id,
+      soldOut: ticket ? ticket.remaining <= 0 : false,
+    };
+  });
+
   return {
     id: row.event_id,
     title: row.event_name,
     artist: row.artist_name?.trim() || "Artist TBC",
-    venue: row.venue?.trim() || "Venue TBC",
+    venue: venueData?.name?.trim() || row.venue?.trim() || "Venue TBC",
     category: "Concert",
     date: formatEventDate(row.event_date),
     price: availablePrices.length ? Math.min(...availablePrices) : 0,
@@ -108,6 +209,8 @@ export function mapEventRow(row: EventRow): Event {
     image: row.banner_image?.trim() || "/Background Image.png",
     accent: eventAccent(row.event_id),
     ticketTypes,
+    stage,
+    zones,
   };
 }
 
