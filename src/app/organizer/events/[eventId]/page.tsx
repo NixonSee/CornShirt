@@ -105,13 +105,15 @@ export default async function ManageEventPage({
             <ArrowLeft size={16} />
             Back
           </Link>
-          <Link
-            className="button"
-            href={`/organizer/events/${eventId}/edit`}
-          >
-            <Pencil size={16} />
-            Edit
-          </Link>
+          {event.status === "pending" && (
+            <Link
+              className="button"
+              href={`/organizer/events/${eventId}/edit`}
+            >
+              <Pencil size={16} />
+              Edit
+            </Link>
+          )}
         </div>
       </div>
 
@@ -157,7 +159,7 @@ export default async function ManageEventPage({
                 <tr key={tt.ticket_type_id as string}>
                   <td>
                     <strong>
-                      {(tt.name as string) ??
+                      {(tt.type_name as string) ||
                         `${DICKEN.format(tt.price as number)} DICKEN`}
                     </strong>
                   </td>
