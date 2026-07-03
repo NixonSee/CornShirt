@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { FormEvent, Suspense, useState } from "react";
+import { FormEvent, Suspense, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import {
@@ -19,14 +19,18 @@ function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [recoverySent, setRecoverySent] = useState(false);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setErrorMessage("");
+    setRecoverySent(false);
     setIsLoading(true);
 
     try {
@@ -82,6 +86,36 @@ function LoginContent() {
     }
   }
 
+  async function handleForgotPassword() {
+    setErrorMessage("");
+    setRecoverySent(false);
+
+    if (!email.trim() || !emailInputRef.current?.checkValidity()) {
+      setErrorMessage("Enter a valid email address to reset your password.");
+      emailInputRef.current?.focus();
+      return;
+    }
+
+    setIsResetting(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth/set-password`,
+      });
+
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+
+      setRecoverySent(true);
+    } catch {
+      setErrorMessage("Unable to send the reset email. Please try again.");
+    } finally {
+      setIsResetting(false);
+    }
+  }
+
   return (
     <main className="auth-page">
       <section className="auth-card" aria-labelledby="login-title">
@@ -104,18 +138,32 @@ function LoginContent() {
           <div className="field">
             <label htmlFor="email">Email</label>
             <input
+              ref={emailInputRef}
               id="email"
               type="email"
               autoComplete="email"
               placeholder="you@example.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setRecoverySent(false);
+              }}
               required
             />
           </div>
 
           <div className="field">
-            <label htmlFor="password">Password</label>
+            <div className="login-password-heading">
+              <label htmlFor="password">Password</label>
+              <button
+                type="button"
+                className="login-forgot-password"
+                onClick={handleForgotPassword}
+                disabled={isLoading || isResetting}
+              >
+                {isResetting ? "Sending..." : "Forgot password?"}
+              </button>
+            </div>
 
             <div className="password-field">
               <input
@@ -138,6 +186,12 @@ function LoginContent() {
               </button>
             </div>
           </div>
+
+          {recoverySent ? (
+            <p className="login-recovery-success" role="status">
+              Check your email for a secure password-reset link.
+            </p>
+          ) : null}
 
           {errorMessage ? (
             <p className="form-error" role="alert">

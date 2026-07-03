@@ -1,67 +1,148 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import {
+  useRef,
+  useState,
+  type DragEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/common";
-import { ArrowLeft, UploadCloud, X, CheckCircle, Building2, User, MapPin, FileText, Send } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  Check,
+  CheckCircle2,
+  ChevronLeft,
+  CircleCheck,
+  FileText,
+  MapPin,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  UploadCloud,
+  User,
+  X,
+} from "lucide-react";
+
+const initialForm = {
+  applicant_name: "",
+  applicant_email: "",
+  phone: "",
+  company_name: "",
+  business_reg_no: "",
+  tax_id: "",
+  website: "",
+  description: "",
+  address: "",
+  city: "",
+  state: "",
+  postal_code: "",
+};
+
+type ApplicationForm = typeof initialForm;
+type ApplicationField = keyof ApplicationForm;
+type DocumentType = "business_license" | "owner_id_proof" | "tax_certificate";
+type ApplicationFiles = Record<DocumentType, File | null>;
+
+const steps = [
+  { label: "Your details", shortLabel: "You", icon: User },
+  { label: "Business profile", shortLabel: "Business", icon: Building2 },
+  { label: "Location & story", shortLabel: "Profile", icon: MapPin },
+  { label: "Documents & review", shortLabel: "Review", icon: FileText },
+] as const;
+
+const documentLabels: Record<DocumentType, string> = {
+  business_license: "Business License",
+  owner_id_proof: "Owner ID / Passport",
+  tax_certificate: "Tax Certificate",
+};
 
 export default function ApplyPage() {
   const router = useRouter();
+  const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-
-  const [form, setForm] = useState({
-    applicant_name: "",
-    applicant_email: "",
-    phone: "",
-    company_name: "",
-    business_reg_no: "",
-    tax_id: "",
-    website: "",
-    description: "",
-    address: "",
-    city: "",
-    state: "",
-    postal_code: "",
-  });
-
-  const [files, setFiles] = useState<Record<string, File | null>>({
+  const [form, setForm] = useState<ApplicationForm>(initialForm);
+  const [files, setFiles] = useState<ApplicationFiles>({
     business_license: null,
     owner_id_proof: null,
     tax_certificate: null,
   });
 
-  function setField(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  function setField(field: ApplicationField, value: string) {
+    setForm((previous) => ({ ...previous, [field]: value }));
   }
 
-  function setFileField(type: string, file: File | null) {
-    setFiles((prev) => ({ ...prev, [type]: file }));
+  function setFileField(type: DocumentType, file: File | null) {
+    setFiles((previous) => ({ ...previous, [type]: file }));
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  function scrollToFormTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goForward() {
+    setError("");
+
+    if (
+      step === 0 &&
+      (!form.applicant_name.trim() || !form.applicant_email.trim())
+    ) {
+      setError("Add your full name and email before continuing.");
+      return;
+    }
+
+    if (step === 1 && !form.company_name.trim()) {
+      setError("Add your company name before continuing.");
+      return;
+    }
+
+    setStep((current) => Math.min(current + 1, steps.length - 1));
+    scrollToFormTop();
+  }
+
+  function goBack() {
+    setError("");
+    setStep((current) => Math.max(current - 1, 0));
+    scrollToFormTop();
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+
+    if (step < steps.length - 1) {
+      goForward();
+      return;
+    }
+
+    const missingDocument = Object.values(files).some((file) => !file);
+    if (missingDocument) {
+      setError("Upload all three verification documents before submitting.");
+      return;
+    }
+
     setError("");
     setSubmitting(true);
 
     const body = new FormData();
-    for (const [key, val] of Object.entries(form)) {
-      body.append(key, val);
-    }
+    for (const [key, value] of Object.entries(form)) body.append(key, value);
     for (const [type, file] of Object.entries(files)) {
       if (file) body.append(type, file);
     }
 
     try {
-      const res = await fetch("/api/apply", { method: "POST", body });
-      if (res.ok) {
+      const response = await fetch("/api/apply", { method: "POST", body });
+      if (response.ok) {
         setSuccess(true);
       } else {
-        const err = await res.json();
-        setError(err.error || "Something went wrong");
+        const responseError = await response.json();
+        setError(responseError.error || "Something went wrong");
       }
     } catch {
       setError("Network error. Please try again.");
@@ -72,51 +153,32 @@ export default function ApplyPage() {
 
   if (success) {
     return (
-      <main className="auth-page" style={{ padding: 24 }}>
-        <section
-          className="auth-card"
-          style={{
-            textAlign: "center",
-            padding: "48px 32px",
-            width: "min(100%, 500px)",
-          }}
-        >
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              background: "var(--success)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 20px",
-            }}
-          >
-            <CheckCircle size={32} style={{ color: "#ffffff" }} />
+      <main className="partner-apply-success-page">
+        <section className="partner-apply-success-card">
+          <div className="partner-apply-success-icon" aria-hidden="true">
+            <CircleCheck size={34} strokeWidth={2.2} />
           </div>
-          <h1 style={{ fontSize: 28, color: "var(--primary)", marginBottom: 12 }}>
-            Application Submitted!
-          </h1>
-          <p
-            style={{
-              color: "var(--foreground)",
-              lineHeight: 1.7,
-              marginBottom: 28,
-              fontSize: 14,
-            }}
-          >
-            Thank you for your interest in becoming a CornShirt Partner!
-            <br />
-            Your application has been received and is pending review.
-            <br />
-            We will get back to you via email once a decision has been made.
+          <span className="partner-apply-eyebrow">Application received</span>
+          <h1>You&apos;re one step closer to the stage.</h1>
+          <p>
+            Thanks for applying to become a CornShirt partner. Our team will
+            review your details and supporting documents, then contact you by
+            email.
           </p>
-          <Button onClick={() => router.push("/visitor")}>Back to Browse</Button>
+          <div className="partner-apply-success-timeline">
+            <SuccessStep label="Submitted" detail="Your application is safely with us." />
+            <SuccessStep label="Under review" detail="Our team checks your information." />
+            <SuccessStep label="Decision by email" detail="We will send you the next steps." />
+          </div>
+          <Button onClick={() => router.push("/visitor")} fullWidth>
+            Back to Browse
+          </Button>
         </section>
       </main>
     );
   }
+
+  const ActiveStepIcon = steps[step].icon;
 
   return (
     <>
@@ -131,360 +193,493 @@ export default function ApplyPage() {
             priority
           />
         </Link>
-        <nav className="app-topbar-actions">
+        <nav className="app-topbar-actions" aria-label="Application actions">
           <Button variant="outline" onClick={() => router.push("/visitor")}>
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={16} /> Back to events
           </Button>
         </nav>
       </header>
 
-      <div className="main" style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
-        <div style={{ textAlign: "center", marginBottom: 32, marginTop: 32 }}>
-          <h1 style={{ fontSize: 30, color: "var(--primary)", marginBottom: 8 }}>
-            Become a Partner
-          </h1>
-          <p style={{ color: "var(--foreground)", fontSize: 14, maxWidth: 480, margin: "0 auto", lineHeight: 1.6 }}>
-            Fill in the details below to apply as an event organizer on CornShirt.
-            Your application will be reviewed by our team.
-          </p>
-        </div>
-
-        {error && (
-          <div
-            style={{
-              marginBottom: 20,
-              padding: "12px 16px",
-              border: "1px solid var(--destructive)",
-              borderRadius: 8,
-              background: "var(--destructive-foreground)",
-              color: "var(--destructive)",
-              fontSize: 13,
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: 24 }}
-        >
-          <Section icon={User} title="Personal Information">
-            <div className="grid-2" style={{ gap: 16 }}>
-              <div className="field">
-                <label>Full name <span style={{ color: "var(--destructive)" }}>*</span></label>
-                <input value={form.applicant_name} onChange={(e) => setField("applicant_name", e.target.value)} required placeholder="e.g. John Doe" />
-              </div>
-              <div className="field">
-                <label>Email <span style={{ color: "var(--destructive)" }}>*</span></label>
-                <input type="email" value={form.applicant_email} onChange={(e) => setField("applicant_email", e.target.value)} required placeholder="e.g. john@example.com" />
-              </div>
-              <div className="field">
-                <label>Phone</label>
-                <input value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder="e.g. +6012-345 6789" />
-              </div>
-            </div>
-          </Section>
-
-          <Section icon={Building2} title="Business Information">
-            <div className="grid-2" style={{ gap: 16 }}>
-              <div className="field">
-                <label>Company name <span style={{ color: "var(--destructive)" }}>*</span></label>
-                <input value={form.company_name} onChange={(e) => setField("company_name", e.target.value)} required placeholder="e.g. CornShirt Sdn Bhd" />
-              </div>
-              <div className="field">
-                <label>Business registration no.</label>
-                <input value={form.business_reg_no} onChange={(e) => setField("business_reg_no", e.target.value)} placeholder="e.g. 202501000001" />
-              </div>
-              <div className="field">
-                <label>Tax ID</label>
-                <input value={form.tax_id} onChange={(e) => setField("tax_id", e.target.value)} placeholder="e.g. C-12345678" />
-              </div>
-              <div className="field">
-                <label>Website</label>
-                <input value={form.website} onChange={(e) => setField("website", e.target.value)} placeholder="e.g. https://example.com" />
-              </div>
-            </div>
-          </Section>
-
-          <Section icon={MapPin} title="Address">
-            <div className="field" style={{ marginBottom: 16 }}>
-              <label>Address</label>
-              <input value={form.address} onChange={(e) => setField("address", e.target.value)} placeholder="e.g. 123, Jalan Merdeka" />
-            </div>
-            <div className="grid-3" style={{ gap: 16 }}>
-              <div className="field">
-                <label>City</label>
-                <input value={form.city} onChange={(e) => setField("city", e.target.value)} placeholder="e.g. Kuala Lumpur" />
-              </div>
-              <div className="field">
-                <label>State</label>
-                <input value={form.state} onChange={(e) => setField("state", e.target.value)} placeholder="e.g. Wilayah Persekutuan" />
-              </div>
-              <div className="field">
-                <label>Postal code</label>
-                <input value={form.postal_code} onChange={(e) => setField("postal_code", e.target.value)} placeholder="e.g. 50450" />
-              </div>
-            </div>
-          </Section>
-
-          <Section icon={FileText} title="About You">
-            <div className="field">
-              <label>Tell us about yourself / your business</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setField("description", e.target.value)}
-                rows={4}
-                placeholder="Describe your experience organizing events, your target audience, and why you'd like to partner with CornShirt..."
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "var(--radius-lg)",
-                  border: "1px solid var(--input)",
-                  background: "var(--secondary)",
-                  color: "var(--primary-foreground)",
-                  fontSize: 14,
-                  resize: "vertical",
-                  boxSizing: "border-box",
-                  outline: "none",
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = "var(--ring)";
-                  e.target.style.boxShadow = "0 0 0 3px #f6a73033";
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = "var(--input)";
-                  e.target.style.boxShadow = "none";
-                }}
-              />
-            </div>
-          </Section>
-
-          <Section icon={UploadCloud} title="Documents">
-            <p style={{ fontSize: 13, color: "var(--foreground)", marginBottom: 16, lineHeight: 1.5 }}>
-              Upload the following documents to verify your identity and business.
-              Only one file per document type. Accepted formats: PDF, JPG, PNG.
+      <main className="partner-apply-page">
+        <section className="partner-apply-intro">
+          <div className="partner-apply-intro-copy">
+            <span className="partner-apply-eyebrow">
+              <Sparkles size={14} aria-hidden="true" /> Partner with CornShirt
+            </span>
+            <h1>Bring remarkable live experiences to life.</h1>
+            <p>
+              Tell us about you and your business. The application takes about
+              five minutes, and you&apos;ll always know what comes next.
             </p>
-            <div className="grid-3" style={{ gap: 16 }}>
-              <FileUpload
-                label="Business License"
-                required
-                file={files.business_license}
-                onChange={(f) => setFileField("business_license", f)}
-              />
-              <FileUpload
-                label="Owner ID / Passport"
-                required
-                file={files.owner_id_proof}
-                onChange={(f) => setFileField("owner_id_proof", f)}
-              />
-              <FileUpload
-                label="Tax Certificate"
-                required
-                file={files.tax_certificate}
-                onChange={(f) => setFileField("tax_certificate", f)}
-              />
-            </div>
-          </Section>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 12,
-              marginBottom: 40,
-            }}
-          >
-            <Button variant="outline" onClick={() => router.push("/visitor")} disabled={submitting}>
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit" loading={submitting} icon={<Send size={16} />}>
-              Submit Application
-            </Button>
           </div>
-        </form>
-      </div>
+          <div className="partner-apply-trust-card">
+            <ShieldCheck size={22} aria-hidden="true" />
+            <div>
+              <strong>Your information stays protected</strong>
+              <span>Documents are used only to verify your organizer account.</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="partner-apply-layout">
+          <aside className="partner-apply-sidebar" aria-label="Application progress">
+            <div className="partner-apply-sidebar-heading">
+              <span>Application progress</span>
+              <strong>{Math.round(((step + 1) / steps.length) * 100)}%</strong>
+            </div>
+            <div className="partner-apply-sidebar-track" aria-hidden="true">
+              <span style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
+            </div>
+            <ol className="partner-apply-step-list">
+              {steps.map((item, index) => {
+                const StepIcon = item.icon;
+                const isComplete = index < step;
+                const isActive = index === step;
+                return (
+                  <li
+                    key={item.label}
+                    className={`${isActive ? "is-active" : ""} ${
+                      isComplete ? "is-complete" : ""
+                    }`}
+                    aria-current={isActive ? "step" : undefined}
+                  >
+                    <span className="partner-apply-step-icon">
+                      {isComplete ? <Check size={16} /> : <StepIcon size={16} />}
+                    </span>
+                    <span>
+                      <small>0{index + 1}</small>
+                      <strong>{item.label}</strong>
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="partner-apply-sidebar-note">
+              <CheckCircle2 size={18} aria-hidden="true" />
+              <span>You can review everything before submitting.</span>
+            </div>
+          </aside>
+
+          <form className="partner-apply-form" onSubmit={handleSubmit}>
+            <div className="partner-apply-mobile-progress">
+              <div>
+                <span>Step {step + 1} of {steps.length}</span>
+                <strong>{steps[step].shortLabel}</strong>
+              </div>
+              <div className="partner-apply-sidebar-track" aria-hidden="true">
+                <span style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
+              </div>
+            </div>
+
+            <section className="partner-apply-panel">
+              <header className="partner-apply-panel-header">
+                <div className="partner-apply-panel-icon" aria-hidden="true">
+                  <ActiveStepIcon size={21} />
+                </div>
+                <div>
+                  <span>Step {step + 1}</span>
+                  <h2>{steps[step].label}</h2>
+                </div>
+              </header>
+
+              {error && (
+                <div className="partner-apply-alert" role="alert">
+                  {error}
+                </div>
+              )}
+
+              {step === 0 && <PersonalStep form={form} setField={setField} />}
+              {step === 1 && <BusinessStep form={form} setField={setField} />}
+              {step === 2 && <ProfileStep form={form} setField={setField} />}
+              {step === 3 && (
+                <DocumentsStep
+                  form={form}
+                  files={files}
+                  setFileField={setFileField}
+                />
+              )}
+            </section>
+
+            <div className="partner-apply-actions">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={step === 0 ? () => router.push("/visitor") : goBack}
+                disabled={submitting}
+              >
+                <ChevronLeft size={17} /> {step === 0 ? "Cancel" : "Back"}
+              </Button>
+              {step < steps.length - 1 ? (
+                <Button type="button" onClick={goForward}>
+                  Continue <ArrowRight size={17} />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  loading={submitting}
+                  icon={<Send size={16} />}
+                >
+                  Submit application
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
+      </main>
     </>
   );
 }
 
-function Section({
-  icon: Icon,
-  title,
-  children,
+function PersonalStep({
+  form,
+  setField,
 }: {
-  icon: React.ComponentType<{ size?: number }>;
-  title: string;
-  children: React.ReactNode;
+  form: ApplicationForm;
+  setField: (field: ApplicationField, value: string) => void;
 }) {
   return (
-    <section
-      style={{
-        border: "1px solid var(--input)",
-        borderRadius: "var(--radius-lg)",
-        background: "var(--card)",
-        padding: 28,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: 20,
-          paddingBottom: 14,
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              background: "var(--primary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ffffff",
-            }}
-          >
-            <Icon size={18} />
-          </div>
-        <h2 style={{ fontSize: 17, color: "var(--primary)", margin: 0 }}>
-          {title}
-        </h2>
+    <div className="partner-apply-step-content">
+      <StepIntro
+        title="Let’s start with you."
+        description="Use the contact details you would like our review team to use."
+      />
+      <div className="partner-apply-field-grid">
+        <Field label="Full name" required>
+          <input
+            id="applicant-name"
+            value={form.applicant_name}
+            onChange={(event) => setField("applicant_name", event.target.value)}
+            autoComplete="name"
+            placeholder="e.g. Aisha Rahman"
+            required
+          />
+        </Field>
+        <Field label="Email address" required>
+          <input
+            id="applicant-email"
+            type="email"
+            value={form.applicant_email}
+            onChange={(event) => setField("applicant_email", event.target.value)}
+            autoComplete="email"
+            placeholder="e.g. aisha@example.com"
+            required
+          />
+        </Field>
+        <Field label="Phone number" hint="Optional">
+          <input
+            id="applicant-phone"
+            type="tel"
+            value={form.phone}
+            onChange={(event) => setField("phone", event.target.value)}
+            autoComplete="tel"
+            placeholder="e.g. +60 12-345 6789"
+          />
+        </Field>
       </div>
+    </div>
+  );
+}
+
+function BusinessStep({
+  form,
+  setField,
+}: {
+  form: ApplicationForm;
+  setField: (field: ApplicationField, value: string) => void;
+}) {
+  return (
+    <div className="partner-apply-step-content">
+      <StepIntro
+        title="Tell us about the business."
+        description="These details help us verify who will be organizing events on CornShirt."
+      />
+      <div className="partner-apply-field-grid">
+        <Field label="Company name" required>
+          <input
+            id="company-name"
+            value={form.company_name}
+            onChange={(event) => setField("company_name", event.target.value)}
+            autoComplete="organization"
+            placeholder="e.g. Midnight Events Sdn Bhd"
+            required
+          />
+        </Field>
+        <Field label="Business registration no." hint="Optional">
+          <input
+            id="business-registration"
+            value={form.business_reg_no}
+            onChange={(event) => setField("business_reg_no", event.target.value)}
+            placeholder="e.g. 202501000001"
+          />
+        </Field>
+        <Field label="Tax ID" hint="Optional">
+          <input
+            id="tax-id"
+            value={form.tax_id}
+            onChange={(event) => setField("tax_id", event.target.value)}
+            placeholder="e.g. C-12345678"
+          />
+        </Field>
+        <Field label="Website" hint="Optional">
+          <input
+            id="website"
+            type="url"
+            value={form.website}
+            onChange={(event) => setField("website", event.target.value)}
+            autoComplete="url"
+            placeholder="e.g. https://example.com"
+          />
+        </Field>
+      </div>
+    </div>
+  );
+}
+
+function ProfileStep({
+  form,
+  setField,
+}: {
+  form: ApplicationForm;
+  setField: (field: ApplicationField, value: string) => void;
+}) {
+  return (
+    <div className="partner-apply-step-content">
+      <StepIntro
+        title="Where are you based?"
+        description="Share your operating address and the kind of live experiences you create."
+      />
+      <div className="partner-apply-field-grid">
+        <Field label="Street address" className="is-wide" hint="Optional">
+          <input
+            id="business-address"
+            value={form.address}
+            onChange={(event) => setField("address", event.target.value)}
+            autoComplete="street-address"
+            placeholder="e.g. 123, Jalan Merdeka"
+          />
+        </Field>
+        <Field label="City" hint="Optional">
+          <input
+            id="business-city"
+            value={form.city}
+            onChange={(event) => setField("city", event.target.value)}
+            autoComplete="address-level2"
+            placeholder="e.g. Kuala Lumpur"
+          />
+        </Field>
+        <Field label="State" hint="Optional">
+          <input
+            id="business-state"
+            value={form.state}
+            onChange={(event) => setField("state", event.target.value)}
+            autoComplete="address-level1"
+            placeholder="e.g. Wilayah Persekutuan"
+          />
+        </Field>
+        <Field label="Postal code" hint="Optional">
+          <input
+            id="business-postal-code"
+            value={form.postal_code}
+            onChange={(event) => setField("postal_code", event.target.value)}
+            autoComplete="postal-code"
+            placeholder="e.g. 50450"
+          />
+        </Field>
+        <Field label="Your organizer story" className="is-wide" hint="Optional">
+          <textarea
+            id="organizer-description"
+            value={form.description}
+            onChange={(event) => setField("description", event.target.value)}
+            rows={5}
+            placeholder="Tell us about your experience, your audience, and the events you want to bring to CornShirt."
+          />
+        </Field>
+      </div>
+    </div>
+  );
+}
+
+function DocumentsStep({
+  form,
+  files,
+  setFileField,
+}: {
+  form: ApplicationForm;
+  files: ApplicationFiles;
+  setFileField: (type: DocumentType, file: File | null) => void;
+}) {
+  return (
+    <div className="partner-apply-step-content">
+      <StepIntro
+        title="Verify and review."
+        description="Upload one file for each document, then check the summary before submitting."
+      />
+      <div className="partner-upload-grid">
+        {(Object.keys(documentLabels) as DocumentType[]).map((type) => (
+          <FileUpload
+            key={type}
+            label={documentLabels[type]}
+            file={files[type]}
+            onChange={(file) => setFileField(type, file)}
+          />
+        ))}
+      </div>
+      <div className="partner-apply-review">
+        <div className="partner-apply-review-heading">
+          <div>
+            <span className="partner-apply-eyebrow">Final check</span>
+            <h3>Your application summary</h3>
+          </div>
+          <span className="partner-apply-review-badge">
+            <ShieldCheck size={15} /> Secure submission
+          </span>
+        </div>
+        <dl>
+          <ReviewItem label="Applicant" value={form.applicant_name} />
+          <ReviewItem label="Email" value={form.applicant_email} />
+          <ReviewItem label="Company" value={form.company_name} />
+          <ReviewItem
+            label="Location"
+            value={[form.city, form.state].filter(Boolean).join(", ")}
+          />
+        </dl>
+      </div>
+    </div>
+  );
+}
+
+function StepIntro({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="partner-apply-step-intro">
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  required,
+  className = "",
+  children,
+}: {
+  label: string;
+  hint?: string;
+  required?: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className={`partner-apply-field ${className}`.trim()}>
+      <span>
+        <strong>{label}</strong>
+        {required ? <em>Required</em> : hint ? <small>{hint}</small> : null}
+      </span>
       {children}
-    </section>
+    </label>
   );
 }
 
 function FileUpload({
   label,
-  required,
   file,
   onChange,
 }: {
   label: string;
-  required?: boolean;
   file: File | null;
   onChange: (file: File | null) => void;
 }) {
-  const [drag, setDrag] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
 
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setDrag(false);
-    const f = e.dataTransfer.files[0];
-    if (f) onChange(f);
-  }
-
-  function openPicker() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".pdf,.jpg,.jpeg,.png";
-    input.onchange = () => {
-      if (input.files?.[0]) onChange(input.files[0]);
-    };
-    input.click();
-  }
-
-  if (file) {
-    return (
-      <div
-        style={{
-          border: "1px solid var(--input)",
-          borderRadius: "var(--radius-lg)",
-          padding: 16,
-          background: "var(--secondary)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--primary)" }}>
-            {label}
-          </span>
-          <button
-            type="button"
-            onClick={() => onChange(null)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--destructive)",
-              padding: 4,
-              display: "flex",
-            }}
-          >
-            <X size={16} />
-          </button>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 12,
-            color: "var(--foreground)",
-          }}
-        >
-          <FileText size={14} />
-          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {file.name}
-          </span>
-          <span style={{ color: "var(--muted-foreground)" }}>
-            {(file.size / 1024).toFixed(0)} KB
-          </span>
-        </div>
-      </div>
-    );
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(false);
+    const droppedFile = event.dataTransfer.files[0];
+    if (droppedFile) onChange(droppedFile);
   }
 
   return (
     <div
-      onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-      onDragLeave={() => setDrag(false)}
-      onDrop={handleDrop}
-      onClick={openPicker}
-      style={{
-        border: `2px dashed ${drag ? "var(--primary)" : "var(--input)"}`,
-        borderRadius: "var(--radius-lg)",
-        padding: "24px 16px",
-        textAlign: "center",
-        cursor: "pointer",
-        transition: "all 0.15s",
-        background: drag ? "var(--secondary)" : "transparent",
+      className={`partner-upload ${dragging ? "is-dragging" : ""} ${
+        file ? "has-file" : ""
+      }`}
+      onDragOver={(event) => {
+        event.preventDefault();
+        setDragging(true);
       }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={handleDrop}
     >
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: "var(--primary)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          margin: "0 auto 10px",
-          opacity: 0.85,
-        }}
-      >
-        <UploadCloud size={20} style={{ color: "#ffffff" }} />
-      </div>
-      <p style={{ fontSize: 13, fontWeight: 700, color: "var(--primary)", margin: 0 }}>
-        {label}{required ? " *" : ""}
-      </p>
-      <p style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 4 }}>
-        Click or drag PDF, JPG, PNG
-      </p>
+      <input
+        ref={inputRef}
+        className="partner-upload-input"
+        type="file"
+        accept=".pdf,.jpg,.jpeg,.png"
+        aria-label={`Upload ${label}`}
+        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+      />
+      {file ? (
+        <>
+          <div className="partner-upload-file-icon" aria-hidden="true">
+            <FileText size={20} />
+          </div>
+          <div className="partner-upload-file-copy">
+            <strong>{label}</strong>
+            <span title={file.name}>{file.name}</span>
+            <small>{formatFileSize(file.size)}</small>
+          </div>
+          <button
+            type="button"
+            className="partner-upload-remove"
+            onClick={() => onChange(null)}
+            aria-label={`Remove ${label}`}
+          >
+            <X size={16} />
+          </button>
+        </>
+      ) : (
+        <button
+          type="button"
+          className="partner-upload-picker"
+          onClick={() => inputRef.current?.click()}
+        >
+          <span className="partner-upload-picker-icon">
+            <UploadCloud size={20} />
+          </span>
+          <strong>{label}</strong>
+          <span>Click to browse or drag a file</span>
+          <small>PDF, JPG or PNG</small>
+        </button>
+      )}
     </div>
   );
+}
+
+function ReviewItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{value || "Not provided"}</dd>
+    </div>
+  );
+}
+
+function SuccessStep({ label, detail }: { label: string; detail: string }) {
+  return (
+    <div>
+      <span><Check size={14} /></span>
+      <div>
+        <strong>{label}</strong>
+        <small>{detail}</small>
+      </div>
+    </div>
+  );
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
