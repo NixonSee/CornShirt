@@ -13,7 +13,6 @@ function statusVariant(status: string | null): string {
       return "good";
     case "pending":
       return "warn";
-    case "draft":
     case "rejected":
     case "cancelled":
     case "canceled":

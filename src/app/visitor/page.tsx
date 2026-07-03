@@ -31,6 +31,9 @@ export default function VisitorPage() {
         </Link>
 
         <nav className="app-topbar-actions" aria-label="Main navigation">
+          <Button variant="outline" onClick={() => router.push("/visitor/apply")}>
+            Become an Organizer
+          </Button>
           <Button onClick={() => router.push("/login")}>Log In</Button>
         </nav>
       </header>

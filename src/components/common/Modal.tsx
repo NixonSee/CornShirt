@@ -8,9 +8,10 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   actions: ReactNode;
+  wide?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, children, actions }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, actions, wide = false }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return;
 
@@ -26,7 +27,10 @@ export function Modal({ isOpen, onClose, title, children, actions }: ModalProps)
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal-card${wide ? " wide" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2>{title}</h2>
         <div className="modal-body">{children}</div>
         <div className="modal-actions">{actions}</div>
