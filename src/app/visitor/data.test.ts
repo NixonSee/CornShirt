@@ -178,6 +178,25 @@ test("event details preserve the authenticated customer navigation context", () 
   assert.match(routeSource, /href=\{eventsHref\}/);
 });
 
+test("event details show visitor partner and return-aware login actions", () => {
+  const routeSource = readFileSync(
+    new URL("../events/[eventId]/page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    routeSource,
+    /const isStaff = role === "admin" \|\| role === "organizer"/,
+  );
+  assert.match(routeSource, /href="\/visitor\/apply"/);
+  assert.match(
+    routeSource,
+    /href=\{withEventReturnTo\("\/login", returnPath\)\}/,
+  );
+  assert.match(routeSource, /Become an Organizer/);
+  assert.match(routeSource, /<RoleNav role="customer"\s*\/>/);
+});
+
 test("event details place ticket options before the about section", () => {
   const routeSource = readFileSync(
     new URL("../events/[eventId]/page.tsx", import.meta.url),

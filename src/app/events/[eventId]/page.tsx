@@ -45,6 +45,7 @@ export default async function EventDetailPage({
       ? roleResult.identity.profile.role
       : null;
   const isCustomer = role === "customer" || role === "user";
+  const isStaff = role === "admin" || role === "organizer";
   const eventsHref = isCustomer ? "/customer#events" : "/visitor#events";
   const returnPath = `/events/${event.id}`;
 
@@ -65,11 +66,27 @@ export default async function EventDetailPage({
           </Link>
 
           <nav className="site-nav" aria-label="Main navigation">
-            <Link href={eventsHref}>Events</Link>
-            <Link href="/login">Log in</Link>
-            <Link className="button" href="/register">
-              Create account
-            </Link>
+            {isStaff ? (
+              <>
+                <Link href={eventsHref}>Events</Link>
+                <Link href="/login">Log in</Link>
+                <Link className="button" href="/register">
+                  Create account
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link className="button-outline" href="/visitor/apply">
+                  Become an Organizer
+                </Link>
+                <Link
+                  className="button"
+                  href={withEventReturnTo("/login", returnPath)}
+                >
+                  Log In
+                </Link>
+              </>
+            )}
           </nav>
         </header>
       )}
