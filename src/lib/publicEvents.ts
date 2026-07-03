@@ -14,10 +14,25 @@ const PUBLIC_EVENT_SELECT = `
   event_name,
   artist_name,
   venue,
+  venue_id,
   event_date,
   description,
   banner_image,
   status,
+  layout,
+  venue_data:venues (
+    name,
+    venue_type,
+    layout,
+    venue_zones (
+      zone_id,
+      code,
+      label,
+      capacity,
+      category,
+      shape
+    )
+  ),
   ticket_types (
     ticket_type_id,
     type_name,
@@ -25,7 +40,9 @@ const PUBLIC_EVENT_SELECT = `
     total_supply,
     remaining_supply,
     purchase_limit,
-    transfer_allowed
+    transfer_allowed,
+    venue_zone_id,
+    zone_ref
   )
 `;
 

@@ -1,14 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  CalendarDays,
-  MapPin,
-  ShieldCheck,
-  ShieldX,
-  Ticket,
-  Users,
-} from "lucide-react";
+import { CalendarDays, MapPin } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import RoleNav from "@/components/RoleNav";
@@ -16,7 +9,7 @@ import { withEventReturnTo } from "@/lib/eventReturnTo";
 import { getActiveEventById } from "@/lib/publicEvents";
 import { getVerifiedRole } from "@/lib/requireRole";
 
-import PurchaseButton from "./PurchaseButton";
+import EventTicketing from "./EventTicketing";
 
 export async function generateMetadata({
   params,
@@ -110,51 +103,11 @@ export default async function EventDetailPage({
         </section>
 
         <section className="event-detail-content">
-          <aside
-            className="event-detail-panel ticket-options-panel"
-            aria-labelledby="ticket-options-title"
-          >
-            <p className="section-kicker">Choose your entry</p>
-            <h2 id="ticket-options-title">Available ticket types</h2>
-
-            <div className="ticket-option-list">
-              {event.ticketTypes.map((ticketType) => (
-                <article className="ticket-option-card" key={ticketType.id}>
-                  <div className="ticket-option-heading">
-                    <div>
-                      <Ticket aria-hidden="true" size={20} />
-                      <h3>{ticketType.name}</h3>
-                    </div>
-                    <strong>{ticketType.price} DICKEN</strong>
-                  </div>
-
-                  <div className="ticket-option-meta">
-                    <span>
-                      <Users aria-hidden="true" size={17} />
-                      {ticketType.remaining} remaining
-                    </span>
-                    <span>Limit {ticketType.purchaseLimit} per customer</span>
-                    <span>
-                      {ticketType.transferAllowed ? (
-                        <ShieldCheck aria-hidden="true" size={17} />
-                      ) : (
-                        <ShieldX aria-hidden="true" size={17} />
-                      )}
-                      {ticketType.transferAllowed
-                        ? "Transfer allowed"
-                        : "Transfer disabled"}
-                    </span>
-                  </div>
-
-                  <PurchaseButton
-                    isCustomer={isCustomer}
-                    loginHref={withEventReturnTo("/login", returnPath)}
-                    ticketTypeName={ticketType.name}
-                  />
-                </article>
-              ))}
-            </div>
-          </aside>
+          <EventTicketing
+            event={event}
+            isCustomer={isCustomer}
+            loginHref={withEventReturnTo("/login", returnPath)}
+          />
 
           <article className="event-detail-panel event-about-panel">
             <p className="section-kicker">About the event</p>
