@@ -122,7 +122,7 @@ export default function CustomerPage() {
       ) : null}
 
       <main>
-        <EventDiscovery />
+        <EventDiscovery detailBasePath="/customer/events" />
       </main>
 
       <Footer />
