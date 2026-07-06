@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpDown } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/common/Button";
 import { Modal } from "@/components/common/Modal";
 
@@ -171,16 +172,12 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
                   </div>
                 </td>
                 <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                  <span
-                    style={{
-                      color: "var(--primary)",
-                      fontWeight: 800,
-                      fontSize: 13,
-                      cursor: "default",
-                    }}
+                  <Link
+                    href={`/admin/events/${ev.event_id}`}
+                    className="view-detail-link"
                   >
                     View detail
-                  </span>
+                  </Link>
                 </td>
               </tr>
             ))}

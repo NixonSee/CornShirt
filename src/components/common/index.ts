@@ -4,3 +4,4 @@ export { Modal } from "./Modal";
 export { SearchBar } from "./SearchBar";
 export { Pagination } from "./Pagination";
 export { Dropdown } from "./Dropdown";
+export { BackButton } from "./BackButton";

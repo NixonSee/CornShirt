@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpDown } from "lucide-react";
+import Link from "next/link";
 
 interface EventDisplay {
   event_id: string;
@@ -140,16 +141,12 @@ export function EventsTable({ events, sortOrder, onSortChange }: Props) {
                 </span>
               </td>
               <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                <span
-                  style={{
-                    color: "var(--primary)",
-                    fontWeight: 800,
-                    fontSize: 13,
-                    cursor: "default",
-                  }}
+                <Link
+                  href={`/admin/events/${ev.event_id}`}
+                  className="view-detail-link"
                 >
                   View detail
-                </span>
+                </Link>
               </td>
             </tr>
           ))}

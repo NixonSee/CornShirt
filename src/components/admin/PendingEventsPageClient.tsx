@@ -5,7 +5,7 @@ import { ArrowUpDown } from "lucide-react";
 import { Button, SearchBar, Pagination } from "@/components/common";
 import { PendingEventsTable } from "./PendingEventsTable";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 interface PendingEvent {
   event_id: string;

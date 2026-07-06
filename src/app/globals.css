@@ -928,6 +928,17 @@ tr:last-child td {
   font-weight: 700;
 }
 
+.view-detail-link {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.view-detail-link:hover {
+  text-decoration: underline;
+}
+
 .event-controls {
   display: grid;
   width: min(100%, 492px);
