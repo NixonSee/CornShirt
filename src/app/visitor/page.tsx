@@ -31,6 +31,19 @@ export default function VisitorPage() {
         </Link>
 
         <nav className="app-topbar-actions" aria-label="Main navigation">
+          <Link
+            href="/visitor/about"
+            style={{
+              color: "var(--muted-foreground)",
+              fontSize: 14,
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+          >
+            About Us
+          </Link>
           <Button variant="outline" onClick={() => router.push("/visitor/apply")}>
             Become an Organizer
           </Button>
