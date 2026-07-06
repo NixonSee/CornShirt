@@ -54,6 +54,7 @@ export default async function AdminDashboardPage() {
   const statusCounts: Record<string, number> = {};
   eventsRes.data?.forEach((e) => {
     const s = e.status || "unknown";
+    if (s === "draft") return;
     statusCounts[s] = (statusCounts[s] || 0) + 1;
   });
 

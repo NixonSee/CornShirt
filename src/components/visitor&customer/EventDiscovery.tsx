@@ -13,7 +13,7 @@ type PublicEventsResponse = {
   error?: string;
 };
 
-export default function EventDiscovery() {
+export default function EventDiscovery({ detailBasePath }: { detailBasePath?: string }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
