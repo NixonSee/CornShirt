@@ -1,278 +1,248 @@
-"use client";
-
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/common";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Coins,
+  RadioTower,
+  RefreshCcw,
+  ShieldCheck,
+  Sparkles,
+  TicketCheck,
+} from "lucide-react";
+
 import Footer from "@/components/Footer";
+import VisitorNav from "@/components/VisitorNav";
+
+export const metadata: Metadata = {
+  title: "About Us | CornShirt",
+  description:
+    "Meet the CornShirt team and learn how we make live-event ticketing more transparent, secure, and accessible.",
+};
+
+const promises = [
+  {
+    icon: BadgeCheck,
+    title: "Verified ownership",
+    copy: "Every ticket carries a clear digital record, helping fans know what they own.",
+  },
+  {
+    icon: RefreshCcw,
+    title: "Transparent transfers",
+    copy: "Ticket movement stays traceable, reducing uncertainty across the event journey.",
+  },
+  {
+    icon: Coins,
+    title: "DICKEN checkout",
+    copy: "A purpose-built token connects discovery, purchase, and event access in one ecosystem.",
+  },
+];
+
+const values = [
+  {
+    icon: ShieldCheck,
+    title: "Trust by design",
+    copy: "Security and clarity are foundations, not optional extras.",
+  },
+  {
+    icon: TicketCheck,
+    title: "Access made simple",
+    copy: "The technology works behind the scenes so ticketing feels natural.",
+  },
+  {
+    icon: RadioTower,
+    title: "Built for live culture",
+    copy: "Every decision starts with the people who make events worth attending.",
+  },
+];
 
 export default function AboutPage() {
-  const router = useRouter();
   return (
     <>
-      <title>About Us — CornShirt</title>
-      <meta
-        name="description"
-        content="Learn about CornShirt Hub and the team behind the platform."
-      />
+      <VisitorNav active="about" />
 
-      <header className="app-topbar">
-        <Link className="app-topbar-brand" href="/visitor">
-          <Image
-            src="/CornShirt Hub.png"
-            alt="CornShirt logo"
-            width={140}
-            height={40}
-            priority
-          />
-        </Link>
+      <main className="about-page">
+        <section className="about-hero">
+          <div className="about-shell about-hero-grid">
+            <div className="about-hero-copy">
+              <span className="about-eyebrow">
+                <Sparkles size={15} aria-hidden="true" /> Built for the live
+                moment
+              </span>
+              <h1>
+                Tickets people can <span>actually trust.</span>
+              </h1>
+              <p>
+                CornShirt turns blockchain-powered ownership into a clear,
+                confident ticketing experience for fans and organizers.
+              </p>
+              <div className="about-hero-actions">
+                <Link className="button" href="/visitor#events">
+                  Browse events <ArrowRight size={17} aria-hidden="true" />
+                </Link>
+                <Link className="button-outline" href="/visitor/apply">
+                  Become an Organizer
+                </Link>
+              </div>
+            </div>
 
-        <nav className="app-topbar-actions" aria-label="Main navigation">
-          <Link
-            href="/visitor/about"
-            style={{
-              color: "var(--primary)",
-              fontSize: 14,
-              fontWeight: 700,
-              textDecoration: "none",
-            }}
-          >
-            About Us
-          </Link>
-          <Button variant="outline" onClick={() => router.push("/visitor/apply")}>
-            Become an Organizer
-          </Button>
-          <Button onClick={() => router.push("/login")}>
-            Log In
-          </Button>
-        </nav>
-      </header>
+            <div className="about-ticket-visual" aria-hidden="true">
+              <div className="about-ticket-card about-ticket-card-back" />
+              <div className="about-ticket-card about-ticket-card-front">
+                <span>CORNSHIRT VERIFIED</span>
+                <strong>LIVE / OWNED / YOURS</strong>
+                <i>01</i>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      {/* Hero */}
-      <section
-        className=""
-        style={{
-          textAlign: "center",
-          padding: "72px 24px",
-          background:
-            "linear-gradient(160deg, #1a1a1af0, #1f1f1f)",
-        }}
-      >
-        <div style={{ maxWidth: 640, margin: "0 auto" }}>
-          <h1
-            style={{
-              fontSize: 36,
-              color: "var(--primary)",
-              margin: "0 0 16px",
-            }}
-          >
-            About CornShirt Hub
-          </h1>
-          <p
-            style={{
-              fontSize: 15,
-              color: "var(--foreground)",
-              lineHeight: 1.7,
-              margin: 0,
-            }}
-          >
-            Empowering live events through blockchain-powered NFT ticketing.
-            CornShirt Hub connects organizers, artists, and audiences with
-            secure, transparent, and immersive event experiences.
-          </p>
-        </div>
-      </section>
-
-      {/* Mission */}
-      <div className="main" style={{ maxWidth: 800, margin: "0 auto", width: "100%" }}>
-        <div
-          style={{
-            marginTop: 48,
-            padding: 32,
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-lg)",
-            background: "var(--card)",
-          }}
+        <section
+          className="about-promise-strip"
+          aria-label="CornShirt product promises"
         >
-          <h2
-            style={{
-              fontSize: 22,
-              color: "var(--primary)",
-              margin: "0 0 16px",
-            }}
-          >
-            Our Mission
-          </h2>
-          <p
-            style={{
-              fontSize: 14,
-              color: "var(--foreground)",
-              lineHeight: 1.8,
-              margin: 0,
-            }}
-          >
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-        </div>
+          <div className="about-shell about-promise-grid">
+            {promises.map(({ icon: Icon, title, copy }) => (
+              <article className="about-promise" key={title}>
+                <Icon size={22} aria-hidden="true" />
+                <div>
+                  <h2>{title}</h2>
+                  <p>{copy}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-        {/* Team */}
-        <h2
-          style={{
-            fontSize: 22,
-            color: "var(--primary)",
-            textAlign: "center",
-            marginTop: 56,
-            marginBottom: 32,
-          }}
-        >
-          The Developers Behind CornShirt Hub
-        </h2>
+        <section className="about-section about-shell about-mission-grid">
+          <div>
+            <p className="about-section-label">Our mission</p>
+            <h2>Make every entry feel certain.</h2>
+          </div>
+          <div>
+            <p>
+              Live events should begin with anticipation, not doubt. CornShirt
+              makes ticket ownership verifiable while keeping the customer
+              journey simple.
+            </p>
+            <p>
+              We give organizers clearer control and fans a more confident path
+              from discovery to the door.
+            </p>
+          </div>
+        </section>
 
-        <div
-          className="grid-3"
-          style={{ gap: 20, marginBottom: 56 }}
-        >
-          <TeamCard
-            name="Nixon See"
-            role="Team Leader"
-            roleVariant="good"
-            intro="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt."
-          >
-            <Image
-              src="/Nixon pic.jpeg"
-              alt="Nixon See"
-              width={120}
-              height={120}
-              style={{
-                width: 120,
-                height: 120,
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "3px solid var(--primary)",
-              }}
-            />
-          </TeamCard>
+        <section className="about-section about-shell">
+          <div className="about-section-heading">
+            <p className="about-section-label">What guides us</p>
+            <h2>Built around the people in the crowd.</h2>
+          </div>
+          <div className="about-values-grid">
+            {values.map(({ icon: Icon, title, copy }, index) => (
+              <article className="about-value-card" key={title}>
+                <span>0{index + 1}</span>
+                <Icon size={24} aria-hidden="true" />
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </article>
+            ))}
+          </div>
+        </section>
 
-          <TeamCard
-            name="Max"
-            role="Team Member"
-            roleVariant="warn"
-            intro="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt."
-          >
-            <video
-              src="/Max.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              style={{
-                width: 120,
-                height: 120,
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "3px solid var(--primary)",
-              }}
-            />
-          </TeamCard>
+        <section className="about-section about-shell">
+          <div className="about-section-heading">
+            <p className="about-section-label">The builders</p>
+            <h2>Meet the team</h2>
+            <p>
+              Three collaborators building a more trustworthy live-event
+              experience.
+            </p>
+          </div>
 
-          <TeamCard
-            name="Jeng Siang"
-            role="Team Member"
-            roleVariant="warn"
-            intro="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt."
-          >
-            <video
-              src="/Js.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              style={{
-                width: 120,
-                height: 120,
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "3px solid var(--primary)",
-              }}
-            />
-          </TeamCard>
-        </div>
-      </div>
+          <div className="about-team-grid">
+            <article className="about-team-card about-team-card-lead">
+              <div className="about-team-media">
+                <Image
+                  src="/Nixon pic.jpeg"
+                  alt="Nixon See"
+                  fill
+                  sizes="(max-width: 760px) 100vw, 33vw"
+                />
+              </div>
+              <div className="about-team-copy">
+                <span>Team Leader</span>
+                <h3>Nixon See</h3>
+                <p>
+                  Guides the product vision and brings the platform&apos;s
+                  technical and event experience together.
+                </p>
+              </div>
+            </article>
+
+            <article className="about-team-card">
+              <div className="about-team-media">
+                <video
+                  src="/Max.mp4"
+                  aria-label="Max"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+              </div>
+              <div className="about-team-copy">
+                <span>Team Member</span>
+                <h3>Max</h3>
+                <p>
+                  Shapes reliable product flows that make complex ticketing
+                  interactions feel straightforward.
+                </p>
+              </div>
+            </article>
+
+            <article className="about-team-card">
+              <div className="about-team-media">
+                <video
+                  src="/Js.mp4"
+                  aria-label="Jeng Siang"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+              </div>
+              <div className="about-team-copy">
+                <span>Team Member</span>
+                <h3>Jeng Siang</h3>
+                <p>
+                  Builds the connected experiences that help fans and organizers
+                  move confidently through CornShirt.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section className="about-cta">
+          <div className="about-shell about-cta-inner">
+            <div>
+              <p className="about-section-label">The next event starts here</p>
+              <h2>Find your place in the crowd.</h2>
+            </div>
+            <div className="about-hero-actions">
+              <Link className="button" href="/visitor#events">
+                Explore events <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+              <Link className="button-outline" href="/visitor/apply">
+                Partner with us
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
 
       <Footer />
     </>
-  );
-}
-
-function TeamCard({
-  name,
-  role,
-  roleVariant,
-  intro,
-  children,
-}: {
-  name: string;
-  role: string;
-  roleVariant: "good" | "warn";
-  intro: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className="team-card"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 12,
-        padding: 32,
-        border: "1px solid var(--border)",
-        borderRadius: "var(--radius-lg)",
-        background: "var(--card)",
-        textAlign: "center",
-        transition: "transform 0.2s, box-shadow 0.2s",
-        cursor: "default",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px)";
-        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.25)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "";
-        e.currentTarget.style.boxShadow = "";
-      }}
-    >
-      {children}
-
-      <div>
-        <strong
-          style={{
-            fontSize: 16,
-            color: "var(--primary)",
-            display: "block",
-          }}
-        >
-          {name}
-        </strong>
-        <span className={`status ${roleVariant}`}>{role.toUpperCase()}</span>
-      </div>
-
-      <p
-        style={{
-          fontSize: 13,
-          color: "var(--muted-foreground)",
-          lineHeight: 1.5,
-          margin: 0,
-        }}
-      >
-        {intro}
-      </p>
-    </div>
   );
 }

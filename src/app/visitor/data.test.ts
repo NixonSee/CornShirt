@@ -129,13 +129,19 @@ test("public API and details query only active Supabase events", () => {
   assert.doesNotMatch(detailSource, /getEventById|generateStaticParams/);
 });
 
-test("visitor keeps the shared role-navbar dimensions", () => {
+test("visitor keeps the shared public-navbar dimensions", () => {
   const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
+  const navSource = readFileSync(
+    new URL("../../components/VisitorNav.tsx", import.meta.url),
+    "utf8",
+  );
 
-  assert.match(pageSource, /<header className="app-topbar">/);
-  assert.match(pageSource, /className="app-topbar-brand"/);
-  assert.match(pageSource, /className="app-topbar-actions"/);
-  assert.match(pageSource, /width=\{140\}[\s\S]*height=\{40\}/);
+  assert.match(pageSource, /import VisitorNav from "@\/components\/VisitorNav"/);
+  assert.match(pageSource, /<VisitorNav\s*\/>/);
+  assert.match(navSource, /className="app-topbar visitor-nav"/);
+  assert.match(navSource, /className="app-topbar-brand visitor-nav-brand"/);
+  assert.match(navSource, /className="app-topbar-actions visitor-nav-actions"/);
+  assert.match(navSource, /width=\{190\}[\s\S]*height=\{50\}/);
 });
 
 test("event section retains its compact dark responsive treatment", () => {
@@ -152,54 +158,55 @@ test("event section retains its compact dark responsive treatment", () => {
   );
 });
 
-test("public event details keep protected purchase return links", () => {
-  const routeUrl = new URL("../events/[eventId]/page.tsx", import.meta.url);
-  const notFoundUrl = new URL("../events/[eventId]/not-found.tsx", import.meta.url);
-
-  assert.equal(existsSync(routeUrl), true);
-  assert.equal(existsSync(notFoundUrl), true);
-
-  const routeSource = readFileSync(routeUrl, "utf8");
-  assert.match(routeSource, /event\.ticketTypes\.map/);
-  assert.match(routeSource, /withEventReturnTo\("\/login"/);
-});
-
-test("event details preserve the authenticated customer navigation context", () => {
-  const routeUrl = new URL("../events/[eventId]/page.tsx", import.meta.url);
-  const routeSource = readFileSync(routeUrl, "utf8");
-
-  assert.match(routeSource, /getVerifiedRole\(\)/);
-  assert.match(routeSource, /const isCustomer/);
-  assert.match(routeSource, /<RoleNav role="customer"\s*\/>/);
-  assert.match(
-    routeSource,
-    /const eventsHref = isCustomer \? "\/customer#events" : "\/visitor#events"/,
+test("visitor and customer event routes own separate navigation", () => {
+  const publicUrl = new URL("../events/[eventId]/page.tsx", import.meta.url);
+  const customerUrl = new URL(
+    "../customer/events/[eventId]/page.tsx",
+    import.meta.url,
   );
-  assert.match(routeSource, /href=\{eventsHref\}/);
+
+  assert.equal(existsSync(publicUrl), true);
+  assert.equal(existsSync(customerUrl), true);
+
+  const publicSource = readFileSync(publicUrl, "utf8");
+  const customerSource = readFileSync(customerUrl, "utf8");
+  const visitorNavSource = readFileSync(
+    new URL("../../components/VisitorNav.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.doesNotMatch(publicSource, /getVerifiedRole|RoleNav/);
+  assert.match(publicSource, /<VisitorNav loginHref=\{loginHref\}\s*\/>/);
+  assert.match(visitorNavSource, /href="\/visitor\/apply"/);
+  assert.match(visitorNavSource, /href="\/visitor\/about"/);
+  assert.match(publicSource, /withEventReturnTo\("\/login"/);
+  assert.match(customerSource, /requireRole\(\["customer", "user"\]\)/);
+  assert.match(customerSource, /<RoleNav role="customer"\s*\/>/);
 });
 
-test("event details show visitor partner and return-aware login actions", () => {
-  const routeSource = readFileSync(
-    new URL("../events/[eventId]/page.tsx", import.meta.url),
+test("shared discovery receives a customer-specific event prefix", () => {
+  const customerPage = readFileSync(
+    new URL("../customer/page.tsx", import.meta.url),
+    "utf8",
+  );
+  const discovery = readFileSync(
+    new URL(
+      "../../components/visitor&customer/EventDiscovery.tsx",
+      import.meta.url,
+    ),
     "utf8",
   );
 
   assert.match(
-    routeSource,
-    /const isStaff = role === "admin" \|\| role === "organizer"/,
+    customerPage,
+    /<EventDiscovery detailBasePath="\/customer\/events"/,
   );
-  assert.match(routeSource, /href="\/visitor\/apply"/);
-  assert.match(
-    routeSource,
-    /href=\{withEventReturnTo\("\/login", returnPath\)\}/,
-  );
-  assert.match(routeSource, /Become an Organizer/);
-  assert.match(routeSource, /<RoleNav role="customer"\s*\/>/);
+  assert.match(discovery, /detailBasePath = "\/events"/);
 });
 
-test("event details place ticket options before the about section", () => {
+test("shared event details place ticket options before the about section", () => {
   const routeSource = readFileSync(
-    new URL("../events/[eventId]/page.tsx", import.meta.url),
+    new URL("../../components/events/EventDetailContent.tsx", import.meta.url),
     "utf8",
   );
   const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
@@ -216,28 +223,4 @@ test("event details place ticket options before the about section", () => {
     styles,
     /\.event-detail-content\s*\{[^}]*width:\s*min\(900px,\s*calc\(100% - 32px\)\);/s,
   );
-});
-
-test("logged-in customer purchases stay on the event page", () => {
-  const routeSource = readFileSync(
-    new URL("../events/[eventId]/page.tsx", import.meta.url),
-    "utf8",
-  );
-  const purchaseUrl = new URL(
-    "../events/[eventId]/PurchaseButton.tsx",
-    import.meta.url,
-  );
-  const purchaseSource = existsSync(purchaseUrl)
-    ? readFileSync(purchaseUrl, "utf8")
-    : "";
-
-  assert.match(routeSource, /import PurchaseButton/);
-  assert.match(routeSource, /<PurchaseButton/);
-  assert.match(routeSource, /isCustomer=\{isCustomer\}/);
-  assert.match(routeSource, /withEventReturnTo\("\/login", returnPath\)/);
-  assert.match(purchaseSource, /if \(!isCustomer\)/);
-  assert.match(purchaseSource, /<Link className="button full" href=\{loginHref\}>/);
-  assert.match(purchaseSource, /<Modal/);
-  assert.match(purchaseSource, /Purchase service coming soon/);
-  assert.match(purchaseSource, /setIsOpen\(true\)/);
 });

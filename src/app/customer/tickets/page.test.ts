@@ -48,7 +48,16 @@ test("maps live ticket ownership rows into display tickets", async () => {
   assert.equal(result[0].tokenId, "#4821");
   assert.equal(result[0].status, "VALID");
   assert.equal(result[0].transferAllowed, true);
+  assert.equal(result[0].hasActiveListing, false);
   assert.equal(result[0].qrValue, "cornshirt:ticket-1");
+});
+
+test("eligible tickets expose a resale listing modal", () => {
+  const source = readFileSync(listUrl, "utf8");
+  assert.match(source, /List for resale/);
+  assert.match(source, /parseResalePrice/);
+  assert.match(source, /\/api\/customer\/marketplace/);
+  assert.match(source, /This ticket type does not allow resale/);
 });
 
 test("customer ticket page loads only the authenticated wallet tickets", () => {

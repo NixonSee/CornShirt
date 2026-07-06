@@ -54,7 +54,10 @@ export default async function CustomerTicketsPage() {
         ),
       ];
 
-      const [eventsResult, ticketTypesResult] = await Promise.all([
+      const ticketIds = ticketRows
+        .map((ticket) => recordString(ticket, "ticket_id"))
+        .filter((id): id is string => Boolean(id));
+      const [eventsResult, ticketTypesResult, listingsResult] = await Promise.all([
         eventIds.length
           ? supabaseAdmin.from("events").select("*").in("event_id", eventIds)
           : Promise.resolve({ data: [], error: null }),
@@ -64,15 +67,27 @@ export default async function CustomerTicketsPage() {
               .select("*")
               .in("ticket_type_id", ticketTypeIds)
           : Promise.resolve({ data: [], error: null }),
+        ticketIds.length
+          ? supabaseAdmin
+              .from("resale_listings")
+              .select("ticket_id")
+              .in("ticket_id", ticketIds)
+              .eq("status", "active")
+          : Promise.resolve({ data: [], error: null }),
       ]);
 
-      if (eventsResult.error || ticketTypesResult.error) {
+      if (eventsResult.error || ticketTypesResult.error || listingsResult.error) {
         errorMessage = "Ticket event details could not be loaded right now.";
       } else {
         tickets = mapCustomerTickets(
           ticketRows,
           (eventsResult.data ?? []) as DatabaseRecord[],
           (ticketTypesResult.data ?? []) as DatabaseRecord[],
+          new Set(
+            ((listingsResult.data ?? []) as DatabaseRecord[])
+              .map((listing) => recordString(listing, "ticket_id"))
+              .filter((id): id is string => Boolean(id)),
+          ),
         );
       }
     }

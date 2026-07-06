@@ -14,9 +14,13 @@ import { Button, SearchBar } from "@/components/common";
 
 interface EventBrowserProps {
   events: readonly Event[];
+  detailBasePath?: string;
 }
 
-export default function EventBrowser({ events }: EventBrowserProps) {
+export default function EventBrowser({
+  events,
+  detailBasePath = "/events",
+}: EventBrowserProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -64,7 +68,7 @@ export default function EventBrowser({ events }: EventBrowserProps) {
             <article className="event-card" key={event.id}>
               <Link
                 className="event-card-link"
-                href={`/events/${event.id}`}
+                href={`${detailBasePath}/${event.id}`}
                 aria-label={`View details for ${event.title}`}
               >
                 <div
@@ -81,7 +85,7 @@ export default function EventBrowser({ events }: EventBrowserProps) {
 
               <div className="event-body">
                 <h3>
-                  <Link href={`/events/${event.id}`}>{event.title}</Link>
+                  <Link href={`${detailBasePath}/${event.id}`}>{event.title}</Link>
                 </h3>
                 <p className="event-place">
                   <MapPin aria-hidden="true" size={18} />
@@ -95,7 +99,7 @@ export default function EventBrowser({ events }: EventBrowserProps) {
                 <Button
                   className="event-buy-button"
                   fullWidth
-                  onClick={() => router.push(`/events/${event.id}`)}
+                  onClick={() => router.push(`${detailBasePath}/${event.id}`)}
                 >
                   View Details
                 </Button>

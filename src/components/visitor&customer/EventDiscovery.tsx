@@ -13,7 +13,13 @@ type PublicEventsResponse = {
   error?: string;
 };
 
-export default function EventDiscovery({ detailBasePath }: { detailBasePath?: string }) {
+interface EventDiscoveryProps {
+  detailBasePath?: string;
+}
+
+export default function EventDiscovery({
+  detailBasePath = "/events",
+}: EventDiscoveryProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -80,8 +86,8 @@ export default function EventDiscovery({ detailBasePath }: { detailBasePath?: st
 
   return (
     <>
-      <HeroCarousel events={events} />
-      <EventBrowser events={events} />
+      <HeroCarousel events={events} detailBasePath={detailBasePath} />
+      <EventBrowser events={events} detailBasePath={detailBasePath} />
     </>
   );
 }

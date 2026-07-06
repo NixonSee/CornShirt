@@ -24,6 +24,52 @@ function RegisterContent() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isProvisioningWallet, setIsProvisioningWallet] = useState(false);
+  const [walletRetryAvailable, setWalletRetryAvailable] = useState(false);
+
+  async function provisionWallet(): Promise<boolean> {
+    setIsProvisioningWallet(true);
+    setWalletRetryAvailable(false);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/customer/wallet/provision", {
+        method: "POST",
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setErrorMessage(
+          body.error ??
+            "Your account was created, but wallet setup needs another attempt.",
+        );
+        setWalletRetryAvailable(true);
+        return false;
+      }
+
+      return true;
+    } catch {
+      setErrorMessage(
+        "Your account was created, but wallet setup needs another attempt.",
+      );
+      setWalletRetryAvailable(true);
+      return false;
+    } finally {
+      setIsProvisioningWallet(false);
+    }
+  }
+
+  function finishRegistration() {
+    setSuccessMessage(
+      "Account and managed wallet created. Redirecting you to the login page...",
+    );
+
+    setTimeout(() => {
+      router.push(withEventReturnTo("/login", returnTo));
+    }, 1500);
+  }
 
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,11 +102,13 @@ function RegisterContent() {
         return;
       }
 
+      //After signup, registration creates the profile with wallet_status "pending" and calls the wallet API
       const { error: profileError } = await supabase.from("profiles").insert({
         user_id: userId,
         name: name.trim(),
         email: email.trim(),
         role: "customer",
+        wallet_status: "pending",
       });
 
       if (profileError) {
@@ -70,13 +118,9 @@ function RegisterContent() {
         return;
       }
 
-      setSuccessMessage(
-        "Account created successfully. Redirecting you to the login page..."
-      );
-
-      setTimeout(() => {
-        router.push(withEventReturnTo("/login", returnTo));
-      }, 1500);
+      const walletReady = await provisionWallet();
+      if (!walletReady) return;
+      finishRegistration();
     } catch {
       setErrorMessage("Something went wrong. Please try again.");
     } finally {
@@ -167,11 +211,38 @@ function RegisterContent() {
             </p>
           ) : null}
 
-          <button className="button full" type="submit" disabled={isLoading}>
-            {isLoading ? (
+          {isProvisioningWallet ? (
+            <p className="form-success" role="status">
+              Creating your CornShirt wallet...
+            </p>
+          ) : null}
+
+          {walletRetryAvailable ? (
+            <button
+              className="button-secondary full"
+              type="button"
+              disabled={isProvisioningWallet}
+              onClick={async () => {
+                if (await provisionWallet()) finishRegistration();
+              }}
+            >
+              Retry wallet setup
+            </button>
+          ) : null}
+
+          <button
+            className="button full"
+            type="submit"
+            disabled={
+              isLoading || isProvisioningWallet || walletRetryAvailable
+            }
+          >
+            {isLoading || isProvisioningWallet ? (
               <>
                 <Loader2 className="button-spinner" size={18} />
-                Creating account...
+                {isProvisioningWallet
+                  ? "Creating your CornShirt wallet..."
+                  : "Creating account..."}
               </>
             ) : (
               "Create account"

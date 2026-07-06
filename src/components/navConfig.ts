@@ -11,6 +11,7 @@ import {
   ListChecks,
   Contact,
   Inbox,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 
@@ -65,6 +66,7 @@ export const NAV_BY_ROLE: Record<Role, RoleNavConfig> = {
       { href: "/customer", label: "Dashboard", icon: LayoutDashboard },
       { href: "/customer/tickets", label: "My Tickets", icon: Ticket },
       { href: "/customer/top-up", label: "Top Up DICKEN", icon: Wallet },
+      { href: "/customer/marketplace", label: "Marketplace", icon: Store },
       { href: "/customer/transactions", label: "Transactions", icon: Receipt },
     ],
   },

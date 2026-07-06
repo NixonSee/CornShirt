@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabaseClient";
 interface CustomerProfile {
   name: string | null;
   wallet_address: string | null;
+  wallet_status: "pending" | "ready" | "failed" | null;
   role: string | null;
 }
 
@@ -18,7 +19,46 @@ export default function CustomerPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProvisioningWallet, setIsProvisioningWallet] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  async function retryWalletSetup() {
+    setIsProvisioningWallet(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetch("/api/customer/wallet/provision", {
+        method: "POST",
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        walletAddress?: string;
+        walletStatus?: "ready";
+        error?: string;
+      };
+
+      if (!response.ok || !body.walletAddress) {
+        setErrorMessage(
+          body.error ?? "Wallet setup could not be completed.",
+        );
+        return;
+      }
+
+      const walletAddress = body.walletAddress;
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              wallet_address: walletAddress,
+              wallet_status: "ready",
+            }
+          : current,
+      );
+    } catch {
+      setErrorMessage("Wallet setup could not be completed.");
+    } finally {
+      setIsProvisioningWallet(false);
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -37,7 +77,7 @@ export default function CustomerPage() {
 
         const { data: customerProfile, error: profileError } = await supabase
           .from("profiles")
-          .select("name,wallet_address,role")
+          .select("name,wallet_address,wallet_status,role")
           .eq("user_id", data.user.id)
           .single();
 
@@ -114,6 +154,30 @@ export default function CustomerPage() {
       />
 
       <RoleNav role="customer" /> {/* For stating that its customer role and show navbar */}
+
+      {profile?.wallet_status !== "ready" ? (
+        <section
+          className="customer-wallet-setup state-card"
+          aria-live="polite"
+        >
+          <h2>Finish wallet setup</h2>
+          <p className="muted">
+            Your customer account is ready, but its CornShirt-managed wallet
+            still needs to be created before top-ups, purchases, or resale
+            settlement.
+          </p>
+          <button
+            className="button"
+            type="button"
+            disabled={isProvisioningWallet}
+            onClick={retryWalletSetup}
+          >
+            {isProvisioningWallet
+              ? "Creating wallet..."
+              : "Retry wallet setup"}
+          </button>
+        </section>
+      ) : null}
 
       {errorMessage ? (
         <p className="customer-account-error" role="alert">
