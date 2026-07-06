@@ -1,8 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpDown, Download } from "lucide-react";
+import {
+  AlignLeft,
+  ArrowUpDown,
+  Building2,
+  CalendarDays,
+  Download,
+  ExternalLink,
+  FileCheck2,
+  MapPin,
+  TriangleAlert,
+  UserRound,
+} from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Modal } from "@/components/common/Modal";
 
@@ -243,11 +254,7 @@ export function PartnerApplicationsTable({
       <Modal
         isOpen={!!detailApp}
         onClose={() => setDetailApp(null)}
-        title={
-          detailApp
-            ? `Application — ${detailApp.applicant_name}`
-            : ""
-        }
+        title="Application details"
         wide
         actions={
           <Button variant="primary" onClick={() => setDetailApp(null)}>
@@ -256,213 +263,125 @@ export function PartnerApplicationsTable({
         }
       >
         {detailApp && (
-          <>
-            {/* Top status bar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: 20,
-                paddingBottom: 14,
-                borderBottom: "1px solid var(--border)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="application-detail">
+            <header className="application-detail-hero">
+              <div className="application-detail-identity">
+                <span className="application-detail-eyebrow">
+                  Partner application
+                </span>
+                <h3>{detailApp.company_name || detailApp.applicant_name}</h3>
+                <p>
+                  {detailApp.applicant_name}
+                  <span aria-hidden="true">·</span>
+                  {detailApp.applicant_email}
+                </p>
+              </div>
+              <div className="application-detail-status">
                 <span className={statusClass(detailApp.status)}>
                   {detailApp.status.toUpperCase()}
                 </span>
-                <span style={{ fontSize: 14, color: "var(--foreground)" }}>
-                  {detailApp.applicant_name}
+                <span className="application-detail-date">
+                  <CalendarDays size={14} aria-hidden="true" />
+                  Applied {formatDate(detailApp.created_at)}
                 </span>
               </div>
-              <span style={{ fontSize: 12, color: "var(--muted-foreground)" }}>
-                Applied {formatDate(detailApp.created_at)}
-              </span>
-            </div>
+            </header>
 
-            {/* Rejection reason */}
             {detailApp.status === "rejected" && detailApp.review_notes && (
-              <div
-                style={{
-                  padding: "14px 16px",
-                  borderRadius: 8,
-                  borderLeft: "4px solid var(--destructive)",
-                  background: "var(--card)",
-                  marginBottom: 20,
-                }}
-              >
-                <span
-                  style={{
-                    color: "var(--destructive)",
-                    fontSize: 12,
-                    fontWeight: 900,
-                    display: "block",
-                    marginBottom: 4,
-                  }}
-                >
-                  REJECTION REASON
+              <div className="application-detail-rejection" role="note">
+                <span aria-hidden="true">
+                  <TriangleAlert size={18} />
                 </span>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 13,
-                    color: "var(--foreground)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {detailApp.review_notes}
-                </p>
+                <div>
+                  <strong>Rejection reason</strong>
+                  <p>{detailApp.review_notes}</p>
+                </div>
               </div>
             )}
 
-            {/* 2-column grid for fields */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "0 24px",
-                marginBottom: 20,
-              }}
-            >
-              <DetailGroup title="Personal Information" fields={[
-                { label: "Full Name", value: detailApp.applicant_name },
-                { label: "Email", value: detailApp.applicant_email },
-                { label: "Phone", value: detailApp.phone },
-              ]} />
-
-              <DetailGroup title="Business Information" fields={[
-                { label: "Company", value: detailApp.company_name },
-                { label: "Reg. No.", value: detailApp.business_reg_no },
-                { label: "Tax ID", value: detailApp.tax_id },
-                { label: "Website", value: detailApp.website },
-              ]} />
-
-              <DetailGroup title="Address" fields={[
-                { label: "Street", value: detailApp.address },
-                { label: "City", value: detailApp.city },
-                { label: "State", value: detailApp.state },
-                { label: "Postal Code", value: detailApp.postal_code },
-              ]} />
-
-              <div>
-                <h3
-                  style={{
-                    fontSize: 13,
-                    color: "var(--primary)",
-                    margin: "0 0 8px",
-                    paddingBottom: 6,
-                    borderBottom: "1px solid var(--border)",
-                  }}
-                >
-                  About
-                </h3>
-                <p
-                  style={{
-                    fontSize: 13,
-                    margin: 0,
-                    lineHeight: 1.6,
-                    color: "var(--foreground)",
-                  }}
-                >
-                  {detailApp.description}
-                </p>
-              </div>
+            <div className="application-detail-grid">
+              <DetailCard
+                icon={UserRound}
+                title="Personal information"
+                fields={[
+                  { label: "Full name", value: detailApp.applicant_name },
+                  { label: "Email", value: detailApp.applicant_email },
+                  { label: "Phone", value: detailApp.phone },
+                ]}
+              />
+              <DetailCard
+                icon={Building2}
+                title="Business information"
+                fields={[
+                  { label: "Company", value: detailApp.company_name },
+                  { label: "Registration no.", value: detailApp.business_reg_no },
+                  { label: "Tax ID", value: detailApp.tax_id },
+                  { label: "Website", value: detailApp.website },
+                ]}
+              />
+              <DetailCard
+                icon={MapPin}
+                title="Address"
+                fields={[
+                  { label: "Street", value: detailApp.address },
+                  { label: "City", value: detailApp.city },
+                  { label: "State", value: detailApp.state },
+                  { label: "Postal code", value: detailApp.postal_code },
+                ]}
+              />
+              <DetailCard
+                icon={AlignLeft}
+                title="About"
+                description={detailApp.description}
+              />
             </div>
 
-            {/* Documents — full width */}
-            <div>
-              <h3
-                style={{
-                  fontSize: 13,
-                  color: "var(--primary)",
-                  margin: "0 0 10px",
-                  paddingBottom: 6,
-                  borderBottom: "1px solid var(--border)",
-                }}
-              >
-                Documents
-              </h3>
+            <section className="application-detail-documents">
+              <div className="application-detail-section-heading">
+                <span aria-hidden="true"><FileCheck2 size={18} /></span>
+                <div>
+                  <h3>Submitted documents</h3>
+                  <p>{detailApp.documents.length} verification files attached</p>
+                </div>
+              </div>
               {detailApp.documents.length === 0 ? (
-                <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>
+                <p className="application-detail-empty">
                   No documents uploaded.
                 </p>
               ) : (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: 10,
-                  }}
-                >
+                <div className="application-detail-document-grid">
                   {detailApp.documents.map((doc) => (
-                    <div
+                    <article
+                      className="application-detail-document"
                       key={doc.document_id}
-                      style={{
-                        padding: "12px 14px",
-                        border: "1px solid var(--input)",
-                        borderRadius: 8,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 8,
-                      }}
                     >
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 12,
-                            fontWeight: 700,
-                            color: "var(--primary)",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {docTypeLabel(doc.document_type)}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "var(--muted-foreground)",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {doc.file_name}{" "}
-                          {doc.file_size ? `(${formatFileSize(doc.file_size)})"` : ""}
-                        </div>
+                      <span className="application-detail-document-icon" aria-hidden="true">
+                        <FileCheck2 size={17} />
+                      </span>
+                      <div className="application-detail-document-copy">
+                        <strong>{docTypeLabel(doc.document_type)}</strong>
+                        <span title={doc.file_name}>{doc.file_name}</span>
+                        {doc.file_size ? <small>{formatFileSize(doc.file_size)}</small> : null}
                       </div>
                       {doc.download_url && (
                         <a
                           href={doc.download_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                            color: "var(--primary)",
-                            fontWeight: 700,
-                            fontSize: 11,
-                            textDecoration: "none",
-                            padding: "5px 10px",
-                            borderRadius: 6,
-                            border: "1px solid var(--primary)",
-                            whiteSpace: "nowrap",
-                            flexShrink: 0,
-                          }}
+                          className="application-detail-download"
+                          aria-label={`Download ${docTypeLabel(doc.document_type)}`}
                         >
-                          <Download size={12} /> Download
+                          <Download size={13} />
+                          <span>Download</span>
+                          <ExternalLink size={11} aria-hidden="true" />
                         </a>
                       )}
-                    </div>
+                    </article>
                   ))}
                 </div>
               )}
-            </div>
-          </>
+            </section>
+          </div>
         )}
       </Modal>
 
@@ -572,50 +491,39 @@ export function PartnerApplicationsTable({
   );
 }
 
-function DetailGroup({
-  title,
-  fields,
-}: {
+interface DetailCardProps {
+  icon: ComponentType<{ size?: number }>;
   title: string;
-  fields: { label: string; value: string }[];
-}) {
+  fields?: { label: string; value: string }[];
+  description?: string;
+}
+
+function DetailCard({
+  icon: Icon,
+  title,
+  fields = [],
+  description,
+}: DetailCardProps) {
   return (
-    <div>
-      <h3
-        style={{
-          fontSize: 13,
-          color: "var(--primary)",
-          margin: "0 0 8px",
-          paddingBottom: 6,
-          borderBottom: "1px solid var(--border)",
-        }}
-      >
-        {title}
-      </h3>
-      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-        {fields.map((f) => (
-          <div
-            key={f.label}
-            style={{
-              display: "flex",
-              gap: 6,
-              fontSize: 13,
-              alignItems: "baseline",
-            }}
-          >
-            <span
-              style={{
-                color: "var(--muted-foreground)",
-                fontSize: 11,
-                minWidth: 50,
-              }}
-            >
-              {f.label}
-            </span>
-            <span style={{ color: "var(--foreground)" }}>{f.value}</span>
-          </div>
-        ))}
+    <section className="application-detail-card">
+      <div className="application-detail-card-title">
+        <span aria-hidden="true"><Icon size={16} /></span>
+        <h3>{title}</h3>
       </div>
-    </div>
+      {description !== undefined ? (
+        <p className="application-detail-description">
+          {description || "Not provided"}
+        </p>
+      ) : (
+        <dl>
+          {fields.map((field) => (
+            <div key={field.label}>
+              <dt>{field.label}</dt>
+              <dd>{field.value || "Not provided"}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
   );
 }

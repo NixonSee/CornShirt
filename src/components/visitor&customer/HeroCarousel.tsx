@@ -9,9 +9,13 @@ import { Button } from "@/components/common";
 
 interface HeroCarouselProps {
   events: readonly Event[];
+  detailBasePath?: string;
 }
 
-export default function HeroCarousel({ events }: HeroCarouselProps) {
+export default function HeroCarousel({
+  events,
+  detailBasePath = "/events",
+}: HeroCarouselProps) {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -67,7 +71,9 @@ export default function HeroCarousel({ events }: HeroCarouselProps) {
           <h1>{activeEvent.title}</h1>
           <div className="button-row">
             <Button
-              onClick={() => router.push(`/events/${activeEvent.id}`)}
+              onClick={() =>
+                router.push(`${detailBasePath}/${activeEvent.id}`)
+              }
             >
               Details
             </Button>

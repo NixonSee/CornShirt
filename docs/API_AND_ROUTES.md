@@ -10,7 +10,9 @@
 - `/customer` - Customer dashboard
 - `/customer/tickets` - My Tickets
 - `/customer/top-up` - DICKEN balance and top-up
+- `/customer/marketplace` - Browse, list, and cancel active resale listings
 - `/customer/transactions` - Transaction history
+- `/customer/events/[eventId]` - Customer event details and purchase controls
 
 ## Organizer Routes
 - `/organizer` - Organizer dashboard
@@ -24,6 +26,15 @@
 - `/admin/pending-events` - Review event submissions
 - `/admin/organizers` - View organizers
 - `/admin/events` - Monitor all events
+
+## API Routes
+- `POST /api/customer/wallet/provision` - Idempotently create the authenticated customer's CornShirt-managed wallet. Returns only the public address and provisioning status.
+- `/api/customer/marketplace` - Create an eligible resale listing
+- `/api/customer/marketplace/[listingId]` - Cancel the authenticated seller's active listing
+
+Wallet provisioning is customer-only. Organizer and admin accounts do not receive managed wallets automatically. Encrypted private-key material remains server-only and is never returned by this API.
+
+Resale purchase remains unavailable until DICKEN settlement and Ticket NFT ownership transfer services are connected.
 
 ## Future API Routes
 - `/api/events`

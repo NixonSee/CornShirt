@@ -12,6 +12,7 @@ export interface CustomerTicket {
   transactionHash: string | null;
   qrValue: string;
   transferAllowed: boolean;
+  hasActiveListing: boolean;
   accent: string;
 }
 
@@ -62,6 +63,7 @@ export function mapCustomerTickets(
   ticketRows: readonly DatabaseRecord[],
   eventRows: readonly DatabaseRecord[],
   ticketTypeRows: readonly DatabaseRecord[],
+  activeListingTicketIds: ReadonlySet<string> = new Set(),
 ): CustomerTicket[] {
   const events = new Map(
     eventRows.map((event) => [recordString(event, "event_id"), event]),
@@ -104,6 +106,7 @@ export function mapCustomerTickets(
       qrValue:
         recordString(ticket, "qr_code", "qr_code_data", "qr_value") ?? id,
       transferAllowed: recordBoolean(ticketType, "transfer_allowed"),
+      hasActiveListing: activeListingTicketIds.has(id),
       accent: accentFor(id),
     };
   });
