@@ -45,7 +45,7 @@ export default function RoleNav({ role }: RoleNavProps) {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    router.replace("/login");
+    router.replace("/visitor");
   }
 
   function isActive(href: string) {
