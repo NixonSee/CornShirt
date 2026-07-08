@@ -21,9 +21,9 @@ Key rules:
 
 ## Project Overview
 
-CornShirt is a Web2 + Web3 concert ticketing and payment platform. Organizers create events, customers top up platform tokens and buy blockchain-based tickets, and admins monitor events, accounts, transactions, and ticket-verification records.
+CornShirt is a Web2 + Web3 concert ticketing prototype. Organizers create events, customers pay in MYR through Stripe Test Mode and receive blockchain-based tickets, and admins monitor events, accounts, transactions, and verification records.
 
-Payment uses an ERC-20 token, DICKEN. Ticket ownership is represented by an ERC-721 Ticket NFT through a platform-managed wallet model.
+Payments and refunds use Stripe Test Mode in MYR. Ticket ownership is represented by a Ticket NFT through a platform-managed wallet model on local Hardhat.
 
 Status: Web2 surfaces such as auth, role routing, admin dashboard, and some customer/event UI exist. The Web3 platform-wallet layer is not wired yet.
 
@@ -42,7 +42,7 @@ No test runner, typecheck script, or CI config is currently configured.
 
 - Frontend: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, lucide-react, recharts, react-qr-code, react-toastify.
 - Backend: Next.js API routes, Supabase Auth/Postgres/Storage, Stripe Test Mode.
-- Smart contracts: DICKEN ERC-20 and Ticket NFT ERC-721 are consumed by ABI/address. Contract source is not currently in this repo.
+- Smart contracts: only the Ticket NFT contract is required. Its source, local deployment, ABI, and address are not currently implemented.
 
 ## Architecture
 
@@ -67,7 +67,7 @@ No test runner, typecheck script, or CI config is currently configured.
 - `src/lib/supabaseClient.ts`: anon client for client components and browser-facing actions. It is subject to RLS.
 - `src/lib/supabaseAdmin.ts`: service-role client for server-only code. It bypasses RLS and must never be imported into client components.
 
-Tables referenced by docs/code include `profiles`, `events`, `ticket_types`, `tickets`, `transactions`, `topup_records`, `verification_logs`, and `admin_activity_logs`.
+Tables referenced by docs/code include `profiles`, `customers`, `custodial_wallets`, `events`, `ticket_types`, `tickets`, `transactions`, `resale_listings`, `verification_logs`, and `admin_activity_logs`. Future Stripe work adds idempotent payment-operation records.
 
 ### Web3 and Wallets
 
@@ -77,7 +77,7 @@ The intended wallet approach is platform-managed:
 - Store only the assigned wallet address in `profiles.wallet_address`.
 - Private keys, service-role keys, seed phrases, and backend signing secrets stay server-only.
 - `src/utils/web3config.ts` should hold chain/RPC and backend transaction helper config.
-- `src/utils/smartContractAddress.ts` should hold public DICKEN and Ticket NFT contract addresses.
+- Server configuration should hold the public local Ticket NFT contract address.
 - Add ABI JSON under `src/abi/` when wiring contract interactions.
 
 `src/context/web3.tsx`, `src/utils/web3config.ts`, `src/utils/smartContractAddress.ts`, and `src/utils/toast.ts` are currently empty stubs.
@@ -93,7 +93,6 @@ SUPABASE_SERVICE_ROLE_KEY
 STRIPE_SECRET_KEY
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET
-NEXT_PUBLIC_DICKEN_TOKEN_CONTRACT_ADDRESS
 NEXT_PUBLIC_TICKET_NFT_CONTRACT_ADDRESS
 ```
 

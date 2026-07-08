@@ -44,5 +44,5 @@
 - QR Code Display
 - QR Verification Result Panel
 - Transaction History Table
-- Top Up Balance Card
+- Stripe Payment Status Card
 - Organizer Revenue Summary Card

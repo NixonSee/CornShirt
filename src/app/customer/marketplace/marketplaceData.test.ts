@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { canListTicket, parseResalePrice } from "./marketplaceData.ts";
+import { canListTicket, parseResaleMyrPrice } from "./marketplaceData.ts";
 
-test("validates whole-number DICKEN prices", () => {
-  assert.equal(parseResalePrice("95"), 95);
-  for (const value of ["", "0", "-1", "1.5", "abc"]) {
-    assert.equal(parseResalePrice(value), null);
+test("validates positive MYR prices with at most two decimal places", () => {
+  assert.equal(parseResaleMyrPrice("95"), 95);
+  assert.equal(parseResaleMyrPrice("95.50"), 95.5);
+  for (const value of ["", "0", "-1", "1.999", "abc"]) {
+    assert.equal(parseResaleMyrPrice(value), null);
   }
 });
 

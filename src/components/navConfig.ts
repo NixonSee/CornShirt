@@ -4,7 +4,6 @@ import {
   CalendarDays,
   QrCode,
   Ticket,
-  Wallet,
   Receipt,
   ClipboardCheck,
   Users,
@@ -65,7 +64,6 @@ export const NAV_BY_ROLE: Record<Role, RoleNavConfig> = {
     items: [
       { href: "/customer", label: "Dashboard", icon: LayoutDashboard },
       { href: "/customer/tickets", label: "My Tickets", icon: Ticket },
-      { href: "/customer/top-up", label: "Top Up DICKEN", icon: Wallet },
       { href: "/customer/marketplace", label: "Marketplace", icon: Store },
       { href: "/customer/transactions", label: "Transactions", icon: Receipt },
     ],

@@ -55,7 +55,7 @@ test("maps live ticket ownership rows into display tickets", async () => {
 test("eligible tickets expose a resale listing modal", () => {
   const source = readFileSync(listUrl, "utf8");
   assert.match(source, /List for resale/);
-  assert.match(source, /parseResalePrice/);
+  assert.match(source, /parseResaleMyrPrice/);
   assert.match(source, /\/api\/customer\/marketplace/);
   assert.match(source, /This ticket type does not allow resale/);
 });

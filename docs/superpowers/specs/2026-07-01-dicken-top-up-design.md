@@ -1,3 +1,5 @@
+> **Superseded:** CornShirt no longer uses the earlier token-based payment design. See `docs/superpowers/specs/2026-07-09-remove-dicken-stripe-myr-migration-design.md` for the approved Stripe MYR and Ticket NFT architecture. This file is retained only as historical project context.
+
 # Customer DICKEN Top-Up Page Design
 
 ## Scope

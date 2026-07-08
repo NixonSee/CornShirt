@@ -1,3 +1,5 @@
+import { parsePositiveMyrAmount } from "../../../lib/currency.ts";
+
 export interface MarketplaceListing {
   id: string;
   ticketId: string;
@@ -12,10 +14,8 @@ export interface MarketplaceListing {
   isMine: boolean;
 }
 
-export function parseResalePrice(value: string): number | null {
-  if (!/^\d+$/.test(value.trim())) return null;
-  const amount = Number(value);
-  return Number.isSafeInteger(amount) && amount > 0 ? amount : null;
+export function parseResaleMyrPrice(value: string): number | null {
+  return parsePositiveMyrAmount(value);
 }
 
 export function canListTicket(input: {

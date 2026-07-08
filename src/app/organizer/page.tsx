@@ -24,6 +24,7 @@ import {
   Tooltip,
 } from "recharts";
 import { supabase } from "@/lib/supabaseClient";
+import { formatMyr } from "@/lib/currency";
 import { Card } from "@/components/common/Card";
 import { Pagination } from "@/components/common/Pagination";
 
@@ -71,7 +72,7 @@ interface EventSummary extends EventRow {
 
 type EventFilter = "all" | "live" | "rejected";
 
-const DICKEN = new Intl.NumberFormat("en-US");
+const NUMBER = new Intl.NumberFormat("en-US");
 const TRANSACTIONS_PAGE_SIZE = 10;
 
 const STATUS_COLORS: Record<string, string> = {
@@ -400,8 +401,8 @@ export default function OrganizerDashboardPage() {
                 <span className="gauge-center">{currentPct}%</span>
               </div>
               <div className="gauge-detail">
-                <strong>{DICKEN.format(current.sold)}</strong>
-                <span className="muted">/ {DICKEN.format(current.supply)} capacity</span>
+                <strong>{NUMBER.format(current.sold)}</strong>
+                <span className="muted">/ {NUMBER.format(current.supply)} capacity</span>
                 <p className="gauge-event">{current.event_name}</p>
               </div>
             </div>
@@ -417,7 +418,7 @@ export default function OrganizerDashboardPage() {
           title="Total Revenue"
           titleClassName="stat-label"
         >
-          <strong className="stat-figure">{DICKEN.format(totalRevenue)} DICKEN</strong>
+          <strong className="stat-figure">{formatMyr(totalRevenue)}</strong>
           <div className="spark-figure">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueSeries} margin={{ top: 6, right: 4, bottom: 0, left: 4 }}>
@@ -436,7 +437,7 @@ export default function OrganizerDashboardPage() {
                   }}
                   labelStyle={{ color: "#a3a3a3" }}
                   formatter={(value) => [
-                    `${DICKEN.format(Number(value))} DICKEN`,
+                    formatMyr(Number(value)),
                     "Revenue",
                   ]}
                 />
@@ -507,7 +508,7 @@ export default function OrganizerDashboardPage() {
         <div>
           <h2>Managed Events</h2>
           <p className="muted dashboard-panel-text">
-            {DICKEN.format(totalSold)} of {DICKEN.format(totalSupply)} tickets sold
+            {NUMBER.format(totalSold)} of {NUMBER.format(totalSupply)} tickets sold
             across your events.
           </p>
         </div>
@@ -575,7 +576,7 @@ export default function OrganizerDashboardPage() {
                 <div className="event-card-foot">
                   <span className="event-price">
                     {event.minPrice != null
-                      ? `${DICKEN.format(event.minPrice)} DICKEN`
+                      ? formatMyr(event.minPrice)
                       : "No tickets"}
                   </span>
                   <button
@@ -630,7 +631,7 @@ export default function OrganizerDashboardPage() {
                   <td className="mono">{shortHash(tx.transaction_hash)}</td>
                   <td>{tx.tickets?.events?.event_name ?? "—"}</td>
                   <td className="mono">{shortHash(tx.tickets?.wallet_address ?? null)}</td>
-                  <td>{DICKEN.format(Number(tx.amount ?? 0))} DICKEN</td>
+                  <td>{formatMyr(Number(tx.amount ?? 0))}</td>
                   <td>
                     <span className="status">{tx.transaction_type.toUpperCase()}</span>
                   </td>

@@ -38,8 +38,8 @@ export default function PurchaseButton({
         title="Purchase service coming soon"
         actions={<Button onClick={() => setIsOpen(false)}>Close</Button>}
       >
-        Purchasing {ticketTypeName} is not connected yet. No DICKEN has been
-        charged and no ticket has been created.
+        Purchasing {ticketTypeName} is not connected yet. No Stripe payment has
+        been created and no Ticket NFT has been minted.
       </Modal>
     </>
   );

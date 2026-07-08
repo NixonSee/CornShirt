@@ -13,7 +13,6 @@ import {
 const PAGE_SIZE = 10;
 const filters: Array<{ value: TransactionFilter; label: string }> = [
   { value: "all", label: "All" },
-  { value: "topup", label: "Top ups" },
   { value: "purchase", label: "Purchases" },
   { value: "refund", label: "Refunds" },
   { value: "resale", label: "Resale" },
@@ -52,7 +51,7 @@ export default function TransactionHistory({
         <div className="state-card">
           <h2>No transactions yet</h2>
           <p className="muted">
-            Top ups, purchases, refunds, and resale activity will appear here.
+            Purchases, refunds, and resale activity will appear here.
           </p>
         </div>
       ) : (

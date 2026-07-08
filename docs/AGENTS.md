@@ -44,14 +44,14 @@ No test runner, typecheck script, or CI config is currently configured. If you a
 
 ## Product Summary
 
-CornShirt is a Web2 + Web3 concert ticketing platform. Public visitors browse active events, customers top up DICKEN and buy NFT-backed tickets, organizers create and manage events, and admins approve event submissions and monitor the platform.
+CornShirt is a Web2 + Web3 concert ticketing prototype. Public visitors browse active events, customers pay in MYR through Stripe Test Mode and receive NFT-backed tickets, organizers create and manage events, and admins approve submissions and monitor the platform.
 
 Core concepts:
 
-- Payment token: DICKEN, an ERC-20 token.
-- Ticket ownership: Ticket NFT, an ERC-721 token.
+- Payments and refunds: Stripe Test Mode in MYR; no real money or payouts.
+- Ticket ownership: Ticket NFT on local Hardhat.
 - Auth and application data: Supabase.
-- Top-up payments: Stripe Test Mode.
+- Organizer revenue and resale seller proceeds are simulated MYR accounting in Supabase.
 - Web3 transactions use a platform-managed wallet model. Customers do not need to connect external wallets.
 - The system stores only the assigned wallet address in `profiles.wallet_address`.
 - Private keys and backend signing secrets must remain server-only.
@@ -64,7 +64,7 @@ The Web2 surface exists, but the Web3 layer is not wired yet.
 - `src/app/page.tsx`: currently redirects to `/login`; target design says `/` should become public event browsing.
 - `src/app/login/page.tsx`: Supabase login and role redirect.
 - `src/app/register/page.tsx`: Supabase registration; target profile role is `customer`.
-- `src/app/user/`: logged-in customer dashboard, My Tickets, wallet/top-up, and transaction areas.
+- `src/app/customer/`: logged-in customer dashboard, My Tickets, managed-wallet status, Marketplace, and transaction areas.
 - `src/app/user/events.ts`: current dummy concert data used by legacy customer browse/detail pages; replace with Supabase `events` and `ticket_types` queries when implementing the public `/events/[eventId]` flow.
 - `src/app/organizer/`: organizer dashboard and event management routes.
 - `src/app/admin/`: admin dashboard, organizer management, event approvals, and analytics routes.
@@ -85,7 +85,7 @@ Path alias `@/*` maps to `src/*`.
 Use `docs/API_AND_ROUTES.md` as the target route map:
 
 - Public: `/`, `/login`, `/register`, `/events/[eventId]`
-- Customer: `/user`, `/user/tickets`, `/user/top-up`, `/user/transactions`
+- Customer: `/customer`, `/customer/tickets`, `/customer/marketplace`, `/customer/transactions`
 - Organizer: `/organizer`, `/organizer/create-event`, `/organizer/events/[eventId]`, `/organizer/events/[eventId]/edit`, `/organizer/verify-ticket`
 - Admin: `/admin`, `/admin/pending-events`, `/admin/organizers`, `/admin/events`
 
@@ -95,8 +95,8 @@ Current implementation may differ. When docs and code disagree, preserve working
 
 - Public visitors can browse active events, search/filter events, view previews, and access login/register.
 - New registrations become `customer` role by default.
-- Customers can browse active events, top up DICKEN, buy tickets, view platform-managed Ticket NFTs, view QR codes, transfer eligible tickets, resell eligible tickets, view transactions, and claim refunds after cancellation.
-- Organizers can create events, upload banners, create ticket types, set DICKEN price/supply/purchase limits/transfer permission, track approval status, verify tickets, mark valid tickets as used, cancel events, and view revenue.
+- Customers can browse active events, pay in MYR, view platform-managed Ticket NFTs and QR codes, transfer eligible tickets, resell eligible tickets, view transactions, and claim refunds after cancellation.
+- Organizers can create events, upload banners, create ticket types, set MYR price/supply/purchase limits/transfer permission, track approval status, verify tickets, mark valid tickets as used, cancel events, and view simulated MYR revenue.
 - Admins can view organizers, review pending events, approve events to `active`, reject events back to `draft`, and monitor platform events.
 - Only `active` events appear to public visitors and customers.
 - Used, refunded, cancelled, or invalid tickets cannot be used for entry.
@@ -118,7 +118,7 @@ Tables referenced by current docs/code include:
 - `ticket_types`
 - `tickets`
 - `transactions`
-- `topup_records`
+- payment and workflow-operation tables introduced by the approved Stripe MYR migration
 - `verification_logs`
 - `admin_activity_logs`
 
@@ -126,17 +126,17 @@ Do not store passwords in application tables. Supabase Auth owns password handli
 
 ## Web3 and Payments
 
-The docs describe DICKEN and Ticket NFT behavior, but this repo does not currently include contract source, Hardhat config, ABIs, or wired platform-wallet transaction handlers.
+The docs describe Stripe MYR and Ticket NFT behavior, but this repo does not currently include the Ticket NFT contract source, Hardhat config, ABI, deployment record, or wired NFT transaction handlers.
 
 When implementing Web3:
 
 - Use a platform-managed wallet model; do not add visible external wallet connection as the default customer flow.
 - Store only the assigned wallet address in `profiles.wallet_address`.
 - Put chain/RPC and backend transaction helper config in `src/utils/web3config.ts`.
-- Put public contract addresses in `src/utils/smartContractAddress.ts`.
+- Configure the public Ticket NFT address for server-side local Hardhat clients.
 - Add ABI JSON under `src/abi/`.
 - Keep private keys, service-role keys, seed phrases, and backend signing secrets server-only.
-- Stripe top-up work should use server-only secrets and persist top-up records in Supabase.
+- Stripe Checkout and refund work must use server-only secrets, integer-sen amounts, verified webhooks, and idempotent workflow records in Supabase.
 
 Expected environment variables:
 
@@ -147,7 +147,6 @@ SUPABASE_SERVICE_ROLE_KEY
 STRIPE_SECRET_KEY
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 STRIPE_WEBHOOK_SECRET
-NEXT_PUBLIC_DICKEN_TOKEN_CONTRACT_ADDRESS
 NEXT_PUBLIC_TICKET_NFT_CONTRACT_ADDRESS
 ```
 
@@ -172,7 +171,7 @@ Visual rules:
 - Use `Archivo` for display headings and `Inter` for body/UI text.
 - Use the fire gradient for primary actions.
 - Use dark cards, compact dashboards, tables, status badges, and clear forms.
-- Use `public/CornShirt-Logo.png`, `public/Background Login Image.png`, and `public/DICKEN token.png` where appropriate.
+- Use `public/CornShirt-Logo.png` and `public/Background Login Image.png` where appropriate.
 - Avoid reverting to the older light dashboard palette unless the user explicitly asks.
 - Keep responsive behavior aligned with the `900px` and `560px` breakpoints in `design.css`.
 
@@ -183,7 +182,7 @@ Prefer shared components when they exist or can be safely completed:
 - Layout: Header/Navbar, Footer, Dashboard Sidebar, Page Container.
 - UI: Button, Card, Status Badge, Modal/Confirmation Dialog, Input, Select, Textarea, File Upload, Search Bar, Empty State, Loading State, Error/Success Alert.
 - Data display: Table, Pagination, Event Card, Ticket Type Card, Ticket Card, Statistic Card.
-- Later/advanced: QR Code Display, QR Verification Result Panel, Transaction History Table, Top Up Balance Card, Organizer Revenue Summary Card.
+- Later/advanced: QR Code Display, QR Verification Result Panel, Transaction History Table, Stripe Payment Status Card, Organizer Revenue Summary Card.
 
 Use `lucide-react` icons for UI controls when icons are needed.
 

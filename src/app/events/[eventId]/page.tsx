@@ -44,7 +44,7 @@ export default async function EventDetailPage({
       />
 
       <footer className="site-footer">
-        CornShirt / NFT concert tickets with DICKEN token checkout.
+        CornShirt / NFT concert tickets with Stripe MYR checkout.
       </footer>
     </>
   );

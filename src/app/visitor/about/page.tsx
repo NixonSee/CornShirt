@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
-  Coins,
+  CreditCard,
   RadioTower,
   RefreshCcw,
   ShieldCheck,
@@ -33,9 +33,9 @@ const promises = [
     copy: "Ticket movement stays traceable, reducing uncertainty across the event journey.",
   },
   {
-    icon: Coins,
-    title: "DICKEN checkout",
-    copy: "A purpose-built token connects discovery, purchase, and event access in one ecosystem.",
+    icon: CreditCard,
+    title: "Secure MYR checkout",
+    copy: "Stripe Test Mode connects ticket selection and payment in Malaysian Ringgit without exposing payment secrets.",
   },
 ];
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { Button, Modal, SearchBar } from "@/components/common";
+import { formatMyr } from "@/lib/currency";
 
 import { shortWallet, type MarketplaceListing } from "./marketplaceData";
 
@@ -67,8 +68,8 @@ export default function MarketplaceClient({
                 <p><CalendarDays size={16} aria-hidden="true" />{listing.eventDate}</p>
                 <p><MapPin size={16} aria-hidden="true" />{listing.venue}</p>
                 <p className="muted">Seller {shortWallet(listing.sellerWallet)}</p>
-                <strong className="marketplace-price">{listing.price.toLocaleString("en-MY")} DICKEN</strong>
-                <Button fullWidth disabled title="DICKEN settlement and NFT transfer are not connected yet">Purchase unavailable</Button>
+                <strong className="marketplace-price">{formatMyr(listing.price)}</strong>
+                <Button fullWidth disabled title="Stripe MYR payment and NFT transfer are not connected yet">Purchase unavailable</Button>
                 {listing.isMine ? <Button fullWidth variant="outline" onClick={() => setSelected(listing)}>Cancel listing</Button> : null}
               </div>
             </article>

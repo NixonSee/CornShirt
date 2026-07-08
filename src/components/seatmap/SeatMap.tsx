@@ -6,6 +6,7 @@ import {
   type SeatZone,
   type ZoneShape,
 } from "./types";
+import { formatMyr } from "@/lib/currency";
 
 // Read-only / click-to-select seat map. Zones come from the venue's fixed
 // layout; the organizer prices them (editable) and buyers pick one to purchase.
@@ -111,7 +112,7 @@ export function SeatMap({
               tabIndex={clickable ? 0 : undefined}
               aria-label={
                 clickable
-                  ? `${zone.label}${priced ? `, ${zone.price} DICKEN` : ", unpriced"}`
+                  ? `${zone.label}${priced ? `, ${formatMyr(zone.price ?? 0)}` : ", unpriced"}`
                   : undefined
               }
               onKeyDown={
@@ -143,7 +144,7 @@ export function SeatMap({
                   textAnchor="middle"
                   dominantBaseline="central"
                 >
-                  {zone.soldOut ? "SOLD OUT" : `${zone.price} DICKEN`}
+                  {zone.soldOut ? "SOLD OUT" : formatMyr(zone.price ?? 0)}
                 </text>
               )}
             </g>

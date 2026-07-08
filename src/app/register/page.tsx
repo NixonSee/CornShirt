@@ -251,8 +251,8 @@ function RegisterContent() {
         </form>
 
         <p className="small-note">
-          By signing up, you agree to the CornShirt terms. DICKEN runs in Stripe
-          Test Mode.
+          By signing up, you agree to the CornShirt terms. Payments run in
+          Stripe Test Mode using Malaysian Ringgit.
         </p>
 
         <p className="auth-footer">

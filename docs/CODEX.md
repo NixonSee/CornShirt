@@ -26,7 +26,7 @@ The event section reproduces all five events and categories from the static HTML
 
 ## Public Event Details
 
-`/events/[eventId]` remains publicly accessible and displays the active event banner, name, artist, city, date, description, status, and available ticket types. Ticket types show their name, DICKEN price, remaining supply, purchase limit, and transfer permission. Unknown event IDs use the Next.js not-found response. The current static catalogue is extended with typed ticket data while keeping the data boundary ready for later Supabase replacement.
+`/events/[eventId]` remains publicly accessible and displays the active event banner, name, artist, city, date, description, status, and available ticket types. Ticket types show their name, MYR price, remaining supply, purchase limit, and transfer permission. Unknown event IDs use the Next.js not-found response. The current static catalogue is extended with typed ticket data while keeping the data boundary ready for later Supabase replacement.
 
 Buy Ticket is protected. On the detail page it links to `/register?returnTo=/events/[eventId]`, preserving the selected event without attempting checkout, wallet, payment, or NFT behavior in this phase.
 
@@ -229,7 +229,7 @@ The visitor page will reuse the existing `src/components/common/SearchBar.tsx` c
 
 `src/app/customer/page.tsx` will use the same marketplace design as `src/app/visitor/page.tsx`: sticky black header, bottom-aligned hero carousel, arrows and dots, Live events heading, shared search control, adjacent category filter, two-column dark event grid, and responsive mobile layout. The visitor page remains structurally unchanged.
 
-This phase builds the authenticated customer marketplace shell. Full DICKEN top-up, ticket purchasing, NFT minting, ticket transfer, resale, QR display, and refund processing are not implemented because the repository does not yet contain the required customer transaction/ticket schema or backend services.
+This phase builds the authenticated customer marketplace shell. Full Stripe MYR purchasing, NFT minting, ticket transfer, resale settlement, QR display, and refund processing are not implemented because the repository does not yet contain all required transaction/ticket workflows and backend services.
 
 ### Authentication and profile behavior
 
@@ -248,7 +248,7 @@ The customer header does not include a Login button. It includes:
 - Customer name or a safe `Customer` fallback.
 - A shortened platform-managed wallet address or `Wallet pending` fallback.
 - `My Tickets`, which opens the customer ticket section on the same page.
-- `Top Up`, which opens the shared `Modal` explaining that DICKEN top-up is not connected yet.
+- Transaction history, which shows purchases, refunds, resale records, and public NFT references when available.
 - `Logout`, implemented with the shared `Button` component.
 
 The My Tickets section uses the visitor page's dark visual language and displays a clear unavailable/empty state rather than fabricated tickets. Its unavailable action uses the shared `Modal` so the user understands which backend capability is pending.
@@ -346,7 +346,7 @@ Run the customer route test and confirm failure against the placeholder route.
 
 - [x] **Step 3: Implement the marketplace and customer controls**
 
-Copy the visitor page's carousel/search/filter/event presentation into the authenticated route. Replace the public Login action with customer name, shortened wallet address, My Tickets, Top Up, and Logout. Use `Modal` for Top Up and My Tickets service-status explanations; do not render invented balances or tickets.
+Copy the visitor page's carousel/search/filter/event presentation into the authenticated route. Replace the public Login action with customer name, shortened wallet address, My Tickets, Transactions, and Logout. Use `Modal` for unavailable service-status explanations; do not render invented balances or tickets.
 
 - [x] **Step 4: Verify the complete customer test passes**
 
