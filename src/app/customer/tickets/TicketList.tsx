@@ -16,7 +16,7 @@ import QRCode from "react-qr-code";
 import { Button, Modal } from "@/components/common";
 import {
   canListTicket,
-  parseResalePrice,
+  parseResaleMyrPrice,
 } from "@/app/customer/marketplace/marketplaceData";
 
 import type { CustomerTicket } from "./ticketData";
@@ -59,9 +59,9 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
 
   async function listForResale() {
     if (!resaleTicket) return;
-    const amount = parseResalePrice(price);
+    const amount = parseResaleMyrPrice(price);
     if (amount === null) {
-      setResaleError("Enter a positive whole-number DICKEN price.");
+      setResaleError("Enter a positive MYR price with up to two decimal places.");
       return;
     }
     setIsListing(true);
@@ -263,11 +263,11 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
             {resaleTicket?.eventName} / {resaleTicket?.ticketType}
           </p>
           <label>
-            <span>Resale price in DICKEN</span>
+            <span>Resale price (MYR)</span>
             <input
               type="number"
               min="1"
-              step="1"
+              step="0.01"
               value={price}
               onChange={(event) => setPrice(event.target.value)}
               placeholder="95"

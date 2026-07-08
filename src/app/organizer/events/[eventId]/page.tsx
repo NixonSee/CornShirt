@@ -4,8 +4,9 @@ import { Pencil, ArrowLeft } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireRole } from "@/lib/requireRole";
 import { Card } from "@/components/common/Card";
+import { formatMyr } from "@/lib/currency";
 
-const DICKEN = new Intl.NumberFormat("en-US");
+const NUMBER = new Intl.NumberFormat("en-US");
 
 function statusVariant(status: string | null): string {
   switch ((status ?? "").toLowerCase()) {
@@ -119,17 +120,17 @@ export default async function ManageEventPage({
       <section className="grid-3" style={{ marginBottom: 24 }}>
         <Card
           variant="metric"
-          value={DICKEN.format(totalSold)}
-          title={`Sold / ${DICKEN.format(totalSupply)} total`}
+          value={NUMBER.format(totalSold)}
+          title={`Sold / ${NUMBER.format(totalSupply)} total`}
         />
         <Card
           variant="metric"
-          value={DICKEN.format(totalSupply - totalSold)}
+          value={NUMBER.format(totalSupply - totalSold)}
           title="Remaining supply"
         />
         <Card
           variant="metric"
-          value={`${DICKEN.format(totalRevenue)} DICKEN`}
+          value={formatMyr(totalRevenue)}
           title="Total revenue"
         />
       </section>
@@ -159,16 +160,16 @@ export default async function ManageEventPage({
                   <td>
                     <strong>
                       {(tt.type_name as string) ||
-                        `${DICKEN.format(tt.price as number)} DICKEN`}
+                        formatMyr(tt.price as number)}
                     </strong>
                   </td>
-                  <td>{DICKEN.format((tt.price as number) ?? 0)} DICKEN</td>
+                  <td>{formatMyr((tt.price as number) ?? 0)}</td>
                   <td>
-                    {DICKEN.format(tt.sold as number)} /{" "}
-                    {DICKEN.format((tt.total_supply as number) ?? 0)}
+                    {NUMBER.format(tt.sold as number)} /{" "}
+                    {NUMBER.format((tt.total_supply as number) ?? 0)}
                   </td>
-                  <td>{DICKEN.format(tt.revenue as number)} DICKEN</td>
-                  <td>{DICKEN.format((tt.remaining_supply as number) ?? 0)}</td>
+                  <td>{formatMyr(tt.revenue as number)}</td>
+                  <td>{NUMBER.format((tt.remaining_supply as number) ?? 0)}</td>
                 </tr>
               ))}
             </tbody>

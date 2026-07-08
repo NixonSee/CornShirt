@@ -1,3 +1,5 @@
+> **Superseded:** CornShirt no longer uses the earlier token-based payment design. See `docs/superpowers/specs/2026-07-09-remove-dicken-stripe-myr-migration-design.md` for the approved Stripe MYR and Ticket NFT architecture. This file is retained only as historical project context.
+
 # Customer DICKEN Top-Up Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

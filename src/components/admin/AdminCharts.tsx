@@ -126,7 +126,7 @@ export function LineChart({
         <Area
           type="monotone"
           dataKey="revenue"
-          name="Revenue (DICKEN)"
+          name="Revenue (MYR)"
           stroke="oklch(0.7 0.17 150)"
           fill="oklch(0.7 0.17 150 / 0.2)"
           strokeWidth={2}

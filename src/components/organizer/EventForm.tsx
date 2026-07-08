@@ -488,12 +488,12 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
 
                   <div className="ce-grid-2">
                     <div className="ce-field">
-                      <label htmlFor="zone-price">Price (DICKEN)</label>
+                      <label htmlFor="zone-price">Price (MYR)</label>
                       <input
                         id="zone-price"
                         type="number"
                         min="0"
-                        step="1"
+                        step="0.01"
                         placeholder="0"
                         value={pricing[selectedZone.id] ?? ""}
                         onChange={(e) =>

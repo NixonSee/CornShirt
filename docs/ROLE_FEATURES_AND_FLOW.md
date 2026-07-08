@@ -1,207 +1,144 @@
-# CornShirt Features and Flow
+# Role Features and System Flows
 
-## 1. Roles and Permissions
+## Visitor
 
-# CornShirt Roles, Features and Permissions
-## Public Visitor
-* Browse active events
-* Search or filter active events
-* * View active event details, including artist, venue, date, description, and ticket types
-* Redirect to Login or Sign Up when attempting protected actions, such as buying tickets, accessing My Tickets, topping up DICKEN, or opening dashboards
-
----
+- Browse active approved events.
+- Search and view event, venue, ticket availability, transfer permission, and MYR pricing.
+- Open About, registration, and login pages.
+- Be redirected to login when attempting a protected purchase or dashboard action.
 
 ## Customer
-### Account and Wallet
-* Register and log in using email and password
-* Access a system-managed CornShirt wallet
-* Use an assigned wallet address stored in `profiles.wallet_address`
-* View DICKEN token balance
-* Top up DICKEN through Stripe Test Mode
-* Receive platform-managed Ticket NFTs through the CornShirt wallet
 
-### Event and Ticket Features
-* Browse active admin-approved events
-* View event details and available ticket types
-* Top up DICKEN through Stripe Test Mode
-* Buy tickets using DICKEN
-* Receive a platform-managed Ticket NFT after successful purchase
-* View My Tickets
-* View ticket details, ownership status, and transaction hash
-* Display or download a digital ticket
-* View ticket QR code
-* View transaction history
-* Transfer eligible tickets to another supported wallet address or account
-* Claim a refund when an event is cancelled
+- Receive one CornShirt-managed wallet automatically after account creation.
+- View the public wallet address and wallet-provisioning status.
+- Pay for primary and resale tickets in MYR through Stripe Test Mode.
+- Receive a Ticket NFT after verified primary payment.
+- View owned tickets, QR codes, NFT references, and ticket status.
+- Transfer an eligible existing NFT directly to another registered customer without payment.
+- List eligible tickets for resale at an MYR price.
+- Buy an active resale listing and receive its existing NFT.
+- View purchases, refunds, resale records, and public blockchain references.
+- Surrender a refund-eligible NFT after event cancellation.
 
-### Marketplace
-* List eligible tickets for resale
-* Set a resale price in DICKEN
-* View active resale listings
-* Purchase resale tickets using DICKEN
-* Cancel an active resale listing
-* Transfer platform-managed Ticket NFT ownership to the resale buyer after successful payment
-* Prevent resale when ticket transfer permission is disabled
-* View resale transaction history
-
----
+Customers never receive managed-wallet private keys and never connect an external wallet.
 
 ## Organizer
-### Event Management
-* Create events
-* Upload event banner images
-* Create ticket types
-* Set ticket price in DICKEN
-* Set ticket supply
-* Set purchase limits
-* Set ticket transfer permission
-* View organizer-created events
-* Check event approval status
-* View event details and ticket types
-* Edit draft events before submitting them for approval
 
-### Ticket and Event Operations
-* Verify tickets using QR code
-* Mark verified tickets as used
-* Cancel events
-* Provide a cancellation reason
-* Cancel events and provide a cancellation reason
-* Trigger refund eligibility for affected valid ticket holders after cancellation
-* View refund records related to cancelled events
+- Create an event using an approved venue layout.
+- Set ticket-zone prices in MYR, supply, purchase limits, and transfer permission.
+- Submit events for admin approval and edit eligible events.
+- View owned events, ticket sales, and simulated MYR revenue.
+- Cancel an eligible owned event with a reason.
+- Verify and use valid ticket QR codes for owned events.
 
-### Financial Management
-* View ticket sales for each event
-* View total tickets sold and remaining ticket supply
-* View revenue by ticket type
-* View total revenue earned in DICKEN
-* View transaction records related to the organizer’s events
-* View refund amounts for cancelled events
-
-> Note: Financial information becomes available after customers begin purchasing tickets and transaction records are created.
-
----
+Organizers do not receive blockchain wallets automatically. Their role and event ownership are authorized through Supabase.
 
 ## Admin
-### Organizer and Event Management
-* View organizers
-* View organizer-created events
-* Review pending event submissions
-* Approve events
-* Reject events or return events to draft status
-* Monitor all platform events and their statuses
-* View total organizers, pending events, active events, and total events
 
-### Future Monitoring Features
-* View transaction records, including top-ups, ticket purchases, transfers, and refunds
-* View ticket verification logs
-* Monitor cancelled events and refund statuses
+- Approve or reject organizer and event applications.
+- Monitor users, events, inventory, tickets, Stripe Test Mode activity, and simulated MYR analytics.
+- Cancel an eligible event through the administrative workflow.
+- Reconcile Stripe results, Supabase workflow records, and local Hardhat receipts.
+- Manage protected platform contract roles and deployment configuration.
 
----
+## Customer Registration and Wallet Provisioning
 
-## 2. Public Event Browsing Flow
+```text
+Customer submits registration
+  -> Supabase Auth creates account
+  -> customer profile is created
+  -> server generates a managed wallet
+  -> private key is encrypted with AES-256-GCM
+  -> PostgreSQL RPC atomically inserts custodial wallet
+     and updates customer wallet address/status
+  -> customer remains logged in
+```
 
-Guest visits CornShirt
-↓
-Views active events
-↓
-Clicks View Event
-↓
-Views event details and ticket types
-↓
-Clicks Buy Ticket
-↓
-Redirected to Login/Register if not authenticated
-↓
-After login, returns to the selected event
+If profile or wallet provisioning fails, show a recoverable error. Never return or log private-key material.
 
----
+## Primary Ticket Purchase
 
-## 3. Organizer Event Creation Flow
+```text
+Customer selects ticket type
+  -> server validates event, inventory, limit, price, and wallet
+  -> server reserves inventory and creates an idempotent operation
+  -> Stripe Test Checkout Session is created in MYR
+  -> customer completes test payment
+  -> signed Stripe webhook is verified and deduplicated
+  -> platform mints one Ticket NFT to customer wallet
+  -> local Hardhat receipt succeeds
+  -> Supabase finalizes ticket, inventory, QR data,
+     payment references, and simulated organizer revenue
+```
 
-Organizer logs in
-↓
-Opens Organizer Dashboard
-↓
-Clicks Create Event
-↓
-Adds event details and ticket types
-↓
-Event saved with status `pending`
-↓
-Admin reviews event
+The success redirect only displays progress. It cannot confirm payment or mint the NFT.
 
----
+## My Tickets and QR Verification
 
-## 4. Admin Event Approval Flow
-
-Admin logs in
-↓
-Opens Pending Events
-↓
-Reviews organizer event submission
-↓
-Approves event → status becomes `active`
-or
-Rejects event → status becomes `draft`
-↓
-Only active events appear to customers/public visitor
-
----
-
-## 5. Ticket Purchase Flow
-
-Customer visits an active event page
-↓
-Selects a ticket type
-↓
-Clicks Buy Ticket
-↓
-System checks whether the customer is logged in
-↓
-If not logged in, redirect to Login/Register
-↓
-Customer logs in and returns to the selected event
-↓
-System checks DICKEN balance
-↓
-Customer tops up DICKEN through Stripe Test Mode if balance is insufficient
-↓
-System deducts DICKEN balance
-↓
-Backend mints a platform-managed Ticket NFT
-↓
-Ticket appears in My Tickets
-
----
-
-## 6. Ticket Resale Flow
-
+```text
 Customer opens My Tickets
-↓
-Selects an eligible ticket
-↓
-System checks whether transfer permission is enabled
-↓
-Customer sets a resale price in DICKEN
-↓
-Ticket is listed in the Marketplace
-↓
-Another customer purchases the resale ticket
-↓
-System transfers DICKEN payment to the seller
-↓
-System transfers platform-managed Ticket NFT ownership to the buyer
-↓
-Resale transaction is recorded
+  -> Supabase loads tickets scoped to managed wallet
+  -> system may reconcile NFT ownership with ownerOf
+  -> customer opens QR ticket
+  -> authorized organizer scans QR
+  -> server validates organizer ownership and ticket status
+  -> valid ticket is atomically marked used
+```
 
----
+Invalid, duplicate, refunded, cancelled, and wrong-event scans are rejected.
 
-## 7. Ticket Verification Flow
+## Direct Transfer
 
-Organizer scans ticket QR code
-↓
-System checks ticket status
-↓
-Shows valid / invalid / used / refunded result
-↓
-Organizer marks valid ticket as used
+```text
+Owner selects eligible ticket and recipient
+  -> server verifies owner, recipient, transfer permission, and status
+  -> owner's managed wallet transfers existing NFT
+  -> local receipt succeeds
+  -> Supabase updates ownership and history
+```
+
+No payment is created and no new NFT is minted. Before confirmation, disclose that a future cancellation refund returns to the latest Stripe payer rather than necessarily the current owner.
+
+## Resale Listing and Purchase
+
+```text
+Seller lists eligible ticket at MYR price
+  -> server verifies ownership and one-active-listing rule
+  -> buyer selects active listing
+  -> server locks listing and creates resale operation
+  -> Stripe Test Checkout Session is created in MYR
+  -> verified webhook confirms payment
+  -> seller's managed wallet transfers existing NFT to buyer
+  -> local receipt succeeds
+  -> Supabase updates ownership and listing
+  -> simulated seller proceeds are credited in MYR
+```
+
+Stripe Connect is not used. No real payout is made. If payment succeeds but NFT transfer fails, the operation stays recoverable; retry valid delivery or issue one Stripe test refund.
+
+## Event Cancellation and Refund
+
+```text
+Approved organizer or admin cancels eligible event
+  -> Supabase blocks sales and marks tickets refund-eligible
+  -> current NFT owner starts surrender claim
+  -> system finds latest successful paid acquisition
+  -> Stripe Test Mode refunds its original payer
+  -> refund result is verified
+  -> protected platform burner burns the NFT
+  -> local receipt succeeds
+  -> Supabase marks ticket refunded and reverses
+     linked simulated accounting
+```
+
+After a free transfer, the surrendering owner and refund beneficiary may be different people. The UI must show the beneficiary before surrender confirmation.
+
+## Failure and Recovery Rules
+
+- Browser redirects never prove payment.
+- Every Stripe webhook event and purchase operation is claimed idempotently.
+- Supabase completion waits for the required blockchain receipt.
+- Payment-confirmed operations with failed NFT delivery remain retryable.
+- A failed permanent delivery creates at most one Stripe test refund.
+- A verified refund with failed burn makes the ticket unusable while the burn retries.
+- Reconciliation resumes from stored state without repeating successful actions.

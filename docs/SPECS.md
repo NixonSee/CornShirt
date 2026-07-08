@@ -1,158 +1,110 @@
-# CornShirt System Specifications
+# CornShirt System Specification
 
-## 1. System Overview
+## 1. Overview
 
-CornShirt is a web-based concert ticketing platform that uses DICKEN tokens and NFT-based tickets. The system supports public event browsing, customer ticket purchasing, organizer event creation, and admin event approval.
+CornShirt is a web-based concert ticketing prototype. Customers browse events and pay in Malaysian Ringgit through Stripe Test Mode. Successful primary purchases mint a Ticket NFT to a CornShirt-managed customer wallet on local Hardhat. The system also supports organizer event management, admin approval, direct ticket transfer, resale, QR verification, cancellation, and test refunds.
 
----
+No real money or real payouts are used. Organizer revenue and resale seller proceeds are simulated MYR accounting records in Supabase.
 
 ## 2. Roles
 
-| Role            | Description                                                                  | Permissions                                                                                                                                                                |
-| --------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Public Visitor  | A person who has not logged in.                                              | Browse active events, search/filter events, view previews, register, and log in.                                                                                           |
-| Customer        | A registered customer who purchases and manages tickets.                     | View active events, top up DICKEN, buy tickets, view platform-managed Ticket NFTs, view My Tickets, transfer eligible tickets, resell tickets at Marketplace, and claim refunds.                                        |
-| Organizer       | A registered account that creates and manages concert events.                | Create events, upload banners, create ticket types, set ticket rules, view created events, check approval status, verify tickets, mark tickets as used, revenue analytics, and cancel events. |
-| Admin           | A platform management account that reviews organizers and event submissions. | View organizers, review pending events, approve or reject events, monitor event statuses, and later view transactions and verification logs.                               |
+| Role | Purpose | Main capabilities |
+| --- | --- | --- |
+| Visitor | Unauthenticated event browser | Browse active events, view details, register, and log in. |
+| Customer | Registered ticket holder | Buy tickets in MYR, own Ticket NFTs in a managed wallet, view QR tickets, transfer eligible tickets, list/buy resale tickets, and claim eligible refunds. |
+| Organizer | Approved event operator | Create and manage events, set MYR prices, view simulated MYR revenue, cancel eligible owned events, and verify QR tickets. |
+| Admin | Platform operator | Approve organizers and events, monitor events and simulated MYR activity, cancel eligible events, and reconcile workflow state. |
 
-### Role Access Rules
-
-* Public Visitors can browse active events and access Login or Register pages.
-* New public registrations are assigned the `customer` role by default.
-* Only Organizers can create and manage events.
-* Only Admins can approve or reject pending events.
-* Only `active` events are shown to Public Visitors and Customers.
-* Customers can top up DICKEN, buy tickets, view My Tickets, transfer eligible tickets, and claim refunds after logging in.
-* Organizers and Admins can preview active event details, but management features remain inside their own dashboard routes.
-
----
+Only customer accounts receive CornShirt-managed blockchain wallets.
 
 ## 3. Functional Requirements
 
-### FR-01: Account Authentication
+### FR-01: Authentication and Role Access
 
-* The system shall allow accounts to register using name, email, and password.
-* The system shall allow accounts to log in using email and password.
-* The system shall redirect accounts based on their assigned role.
-* The system shall store additional profile information in the `profiles` table.
-* The system shall store only the assigned platform-managed wallet address in `profiles.wallet_address`.
-* The system shall not store account passwords in the `profiles` table.
+- The system shall support registration, login, logout, and role-aware redirects.
+- Protected pages and APIs shall authorize the active user on the server.
+- Registration shall keep the current immediate-login experience.
+- Customer profile and wallet provisioning failures shall be recoverable without exposing secrets.
 
-### FR-02: Event Browsing
+### FR-02: Event Discovery
 
-* The system shall display only events with an `active` status to public visitors and customers.
-* The system shall allow visitors to browse and filter active events.
-* The system shall redirect unauthenticated visitors to Login or Register before protected actions.
-* The system shall allow public visitors to view active event details and available ticket types.
+- Visitors and customers shall browse active approved events.
+- Event details shall show artist, venue, date, ticket types, availability, transfer permission, and MYR price.
+- Unavailable or unapproved events shall not accept purchases.
 
-### FR-03: Organizer Event Creation
+### FR-03: Organizer Event Management
 
-* The system shall allow organizers to create event records.
-* The system shall allow organizers to upload event banner images.
-* The system shall allow organizers to create one or more ticket types for each event.
-* Each ticket type shall include ticket name, DICKEN price, supply, purchase limit, and transfer permission.
-* New events shall be saved with a `pending` status.
+- An approved organizer shall create and edit eligible events.
+- Venue zones shall become ticket types with MYR prices, fixed supply, purchase limits, and transfer permission.
+- Events shall require admin approval before public sale.
+- Only the event's approved organizer or an admin shall cancel an eligible event.
 
-### FR-04: Admin Event Review
+### FR-04: Managed Customer Wallets
 
-* The system shall allow admins to view pending event submissions.
-* The system shall allow admins to approve an event by changing its status to `active`.
-* The system shall allow admins to reject an event by changing its status to `draft`.
-* Only active events shall appear in public event browsing.
+- The system shall automatically provision one managed wallet for each customer account only.
+- Wallet creation shall atomically insert the custodial wallet and update the customer wallet address/status through the approved PostgreSQL RPC.
+- Private keys shall be encrypted with AES-256-GCM and remain server-only.
+- Managed wallets shall hold and transfer Ticket NFTs on local Hardhat.
 
-### FR-05: DICKEN Top-Up
+### FR-05: Stripe MYR Payments
 
-* The system shall allow customers to view their DICKEN balance.
-* The system shall allow customers to top up DICKEN through Stripe Test Mode.
-* The system shall record top-up information in `topup_records` and `transactions`.
+- Primary and resale purchases shall use Stripe Test Mode directly in MYR.
+- Stripe amounts shall use integer sen loaded from authoritative server records.
+- A verified webhook, not the browser redirect, shall confirm payment.
+- Webhook processing and purchase operations shall be idempotent.
+- The system shall not accept real money or make real payouts.
 
-### FR-06: Ticket Purchase and NFT Minting
+### FR-06: Primary Ticket Purchase and NFT Minting
 
-* The system shall allow customers with sufficient DICKEN balance to purchase an available ticket.
-* The system shall mint a platform-managed Ticket NFT after successful purchase.
-* The system shall store ticket ownership, ticket status, NFT token ID, and transaction hash.
-* The system shall prevent ticket purchases when an event is cancelled or ticket supply is unavailable.
+- The system shall validate event status, inventory, purchase limits, price, and wallet readiness before checkout.
+- Inventory shall be reserved while the Stripe Checkout Session is active.
+- After verified payment, the platform shall mint exactly one Ticket NFT to the customer's managed wallet.
+- Supabase shall finalize the ticket only after the expected local Hardhat receipt succeeds.
+- The system shall record Stripe references, NFT token ID, transaction hash, QR data, and simulated organizer MYR revenue.
 
-### FR-07: Ticket Management
+### FR-07: My Tickets and Verification
 
-* The system shall allow customers to view purchased tickets in My Tickets.
-* The system shall display ticket details, ticket status, QR code, and transaction hash.
-* The system shall allow customers to transfer an eligible ticket to another supported customer account or wallet address when transfer permission is enabled.
-* The system shall update the ticket ownership record after a successful transfer.
-* The system shall allow customers to claim refunds after an event is cancelled.
+- Customers shall view owned tickets, status, event details, managed-wallet address, NFT reference, and QR code.
+- Only an authorized organizer for the ticket's event shall verify and use a currently valid ticket.
+- Repeated, invalid, refunded, cancelled, or wrong-event scans shall be rejected safely.
 
-### FR-08: Ticket Verification
+### FR-08: Direct Transfer
 
-* The system shall allow organizers to verify a ticket through its QR code.
-* The system shall show whether a ticket is valid, invalid, already used, refunded, or cancelled.
-* The system shall allow organizers to mark a valid ticket as used.
-* The system shall save verification results in `verification_logs`.
+- A customer shall transfer an eligible existing Ticket NFT to another registered customer.
+- The server shall verify ownership, recipient, ticket/event status, and transfer permission before signing.
+- Direct transfer shall create no Stripe payment and mint no replacement NFT.
+- The UI shall disclose that a cancellation refund returns to the latest Stripe payer, who may differ from the current owner after a free transfer.
 
-### FR-09: Ticket Resale Marketplace
+### FR-09: Resale Marketplace
 
-- The system shall allow customers to list eligible tickets for resale.
-- The system shall allow customers to set a resale price in DICKEN.
-- The system shall allow customers to purchase listed resale tickets using DICKEN.
-- The system shall transfer platform-managed Ticket NFT ownership to the resale buyer after successful payment.
-- The system shall prevent resale when ticket transfer permission is disabled.
-- The system shall allow ticket owners to cancel an active resale listing before it is purchased.
-- The system shall record resale payments and ownership transfers in the `transactions` table.
+- Customers shall list eligible owned tickets at a positive MYR price with at most two decimal places.
+- Only one active listing shall exist per ticket.
+- A resale buyer shall pay through Stripe Test Mode.
+- After verified payment, the seller's managed wallet shall transfer the existing NFT to the buyer.
+- Seller proceeds shall be recorded as simulated MYR accounting only; Stripe Connect is not used.
+- Failed NFT delivery after payment shall remain recoverable or trigger exactly one Stripe test refund.
 
-### FR-10: Organizer Revenue Analytics
+### FR-10: Cancellation and Refunds
 
-- The system shall allow organizers to view ticket sales for their own events.
-- The system shall display total tickets sold and remaining ticket supply.
-- The system shall display revenue by ticket type.
-- The system shall display total DICKEN revenue generated from the organizer’s own events.
-- The system shall display refund amounts for cancelled events.
+- Cancelling an event shall stop new purchases and make affected valid tickets refund-eligible.
+- The current NFT owner shall surrender the ticket through one refund claim.
+- Stripe shall refund the ticket's latest successful paid acquisition to its original payer.
+- After the refund is verified, the protected platform burner shall burn the NFT.
+- Supabase shall mark the ticket refunded only after required external results are confirmed and shall reverse the linked simulated accounting entry.
 
----
+### FR-11: Transactions and Analytics
+
+- Customers shall view purchases, refunds, resale activity, and public NFT transaction references.
+- Organizers and admins shall view values clearly labelled in MYR.
+- Reports shall not imply that simulated revenue or proceeds are real payouts.
+- Admin reconciliation shall detect disagreements among Stripe, local Hardhat, and Supabase.
 
 ## 4. Non-Functional Requirements
 
-### Security
-
-* Password authentication shall be handled through Supabase Auth.
-* Account passwords shall not be stored in custom application tables.
-* Customers shall not need to connect external wallets or provide private keys or seed phrases.
-* Supabase service-role keys, platform-wallet private keys, and backend signing secrets shall remain server-only and stored in environment variables.
-* Role-based access shall restrict access to Customer, Organizer, and Admin dashboard functions.
-
-### Usability
-
-* The system shall provide responsive layouts for desktop and mobile screens.
-* Accounts shall receive clear success, error, loading, and empty-state messages.
-* The system shall use understandable labels for DICKEN balance, ticket purchase, and ticket verification.
-
-### Performance
-
-* Active event listings should load efficiently from Supabase.
-* Event banner images should be stored using Supabase Storage.
-* Database queries should request only the fields required by the page.
-
----
-
-## 5. Main Business Rules
-
-| Rule ID | Rule                                                                    |
-| ------- | ----------------------------------------------------------------------- |
-| BR-01   | New public registrations are assigned the `customer` role by default.   |
-| BR-02   | Only organizers can create events.                                      |
-| BR-03   | New organizer events are saved as `pending`.                            |
-| BR-04   | Only admins can change an event from `pending` to `active`.             |
-| BR-05   | Public visitors and customers can only browse `active` events.          |
-| BR-06   | Ticket types must belong to one event.                                  |
-| BR-07   | Ticket purchases cannot exceed the ticket supply or purchase limit.     |
-| BR-08   | Used, refunded, cancelled, or invalid tickets cannot be used for entry. |
-| BR-09   | A ticket can only be transferred when its ticket type allows transfer.  |
-| BR-10   | Refunds are only available after an event has been cancelled.           |
-| BR-11   | A ticket can only be listed for resale when its ticket type allows transfer. |
-| BR-12   | A resale listing becomes unavailable after it is cancelled or purchased. |
----
-
-## 6. Out of Scope / Future Features
-
-* Platform fee calculation
-* Advanced admin account suspension controls
-* Advanced transaction analytics
-* Multi-chain deployment
+- Use Next.js App Router, Supabase, Stripe Test Mode, Viem, Hardhat, and OpenZeppelin.
+- Use local Hardhat only; do not deploy contracts to a public network.
+- Do not add external-wallet connection UI.
+- Never expose managed-wallet private keys, encryption keys, platform signer keys, Stripe secrets, or the Supabase service-role key.
+- Use explicit recoverable workflow states for operations spanning Stripe, blockchain receipts, and Supabase.
+- Preserve responsive, accessible interfaces and clear loading, empty, error, and recovery states.
+- Implement and verify one roadmap phase at a time.

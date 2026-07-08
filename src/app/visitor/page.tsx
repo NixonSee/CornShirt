@@ -5,10 +5,10 @@ import { EventDiscovery } from "@/components/visitor&customer";
 export default function VisitorPage() {
   return (
     <>
-      <title>CornShirt - NFT Concert Tickets with DICKEN</title>
+      <title>CornShirt - NFT Concert Tickets in MYR</title>
       <meta
         name="description"
-        content="Browse live concerts and buy NFT tickets with DICKEN tokens on CornShirt."
+        content="Browse live concerts and buy NFT tickets securely in Malaysian Ringgit on CornShirt."
       />
 
       <VisitorNav />

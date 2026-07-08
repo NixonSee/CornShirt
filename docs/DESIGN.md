@@ -33,7 +33,7 @@ Customers use the same public event browsing foundation as `index.html`, but the
 
 Customer-only additions should include:
 
-- Wallet balance and DICKEN top-up entry points
+- Managed-wallet address and Ticket NFT ownership status
 - My Tickets access
 - Ticket purchase actions on event cards and event detail pages
 - Ticket NFT status, transaction hash, QR code display, transfer, resale, and refund actions where relevant
@@ -159,7 +159,7 @@ Use the existing assets:
 
 - `public/CornShirt-Logo.png` for brand marks
 - `public/Background Login Image.png` for auth backgrounds, public hero, and event card media placeholders
-- `public/DICKEN token.png` where token identity is useful
+- Event banners, venue layouts, and Ticket NFT artwork where they clarify ownership or access
 
 Primary imagery should support the concert-ticket context. Avoid abstract decorative backgrounds that do not reveal events, tickets, wallet state, or role workflows.
 

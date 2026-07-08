@@ -53,7 +53,7 @@ test("about page uses the Editorial Trust content architecture", () => {
   assert.match(aboutSource, /Tickets people can[\s\S]*?actually trust/);
   assert.match(aboutSource, /Verified ownership/);
   assert.match(aboutSource, /Transparent transfers/);
-  assert.match(aboutSource, /DICKEN checkout/);
+  assert.match(aboutSource, /Secure MYR checkout/);
   assert.match(aboutSource, /Our mission/);
   assert.match(aboutSource, /Meet the team/);
   assert.match(aboutSource, /\/Nixon pic\.jpeg/);

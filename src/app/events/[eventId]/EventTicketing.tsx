@@ -5,6 +5,7 @@ import { ShieldCheck, ShieldX, Ticket, Users } from "lucide-react";
 
 import type { Event } from "@/app/visitor/data";
 import { SeatMap } from "@/components/seatmap/SeatMap";
+import { formatMyr } from "@/lib/currency";
 
 import PurchaseButton from "./PurchaseButton";
 
@@ -74,7 +75,7 @@ export default function EventTicketing({ event, isCustomer, loginHref }: Props) 
                   <Ticket aria-hidden="true" size={20} />
                   <h3>{ticketType.name}</h3>
                 </div>
-                <strong>{ticketType.price} DICKEN</strong>
+                <strong>{formatMyr(ticketType.price)}</strong>
               </div>
 
               <div className="ticket-option-meta">

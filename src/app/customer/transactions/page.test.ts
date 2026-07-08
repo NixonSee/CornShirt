@@ -18,7 +18,7 @@ test("transaction UI includes approved controls", () => {
     "utf8",
   );
   assert.match(source, /Transaction History/);
-  assert.match(source, /Top ups/);
+  assert.doesNotMatch(source, /Top ups/);
   assert.match(source, /Purchases/);
   assert.match(source, /Refunds/);
   assert.match(source, /Resale/);

@@ -3,8 +3,9 @@ import { PlusCircle } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireRole } from "@/lib/requireRole";
 import { Card } from "@/components/common/Card";
+import { formatMyr } from "@/lib/currency";
 
-const DICKEN = new Intl.NumberFormat("en-US");
+const NUMBER = new Intl.NumberFormat("en-US");
 
 function statusVariant(status: string | null): string {
   switch ((status ?? "").toLowerCase()) {
@@ -126,11 +127,11 @@ export default async function MyEventsPage() {
                     </td>
                     <td>
                       {info
-                        ? `${DICKEN.format(info.sold)} / ${DICKEN.format(info.supply)}`
+                        ? `${NUMBER.format(info.sold)} / ${NUMBER.format(info.supply)}`
                         : "—"}
                     </td>
                     <td>
-                      {info ? `${DICKEN.format(info.revenue)} DICKEN` : "—"}
+                      {info ? formatMyr(info.revenue) : "—"}
                     </td>
                     <td>
                       <Link

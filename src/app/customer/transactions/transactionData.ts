@@ -1,6 +1,7 @@
+import { formatMyr } from "../../../lib/currency.ts";
+
 export type TransactionFilter =
   | "all"
-  | "topup"
   | "purchase"
   | "refund"
   | "resale";
@@ -21,7 +22,6 @@ export interface CustomerTransaction {
 }
 
 const labels: Record<DisplayType, string> = {
-  topup: "Top up",
   purchase: "Purchase",
   refund: "Refund",
   resale: "Resale",
@@ -30,7 +30,6 @@ const labels: Record<DisplayType, string> = {
 
 function normalizeType(value: unknown): DisplayType {
   const type = String(value ?? "").toLowerCase().replace(/[- ]/g, "_");
-  if (type.includes("topup") || type.includes("top_up")) return "topup";
   if (type.includes("purchase")) return "purchase";
   if (type.includes("refund")) return "refund";
   if (type.includes("resale")) return "resale";
@@ -54,7 +53,7 @@ export function mapTransactionRows(rows: readonly Row[]): CustomerTransaction[] 
       typeLabel: labels[type],
       description: String(row.description ?? labels[type]),
       signedAmount,
-      amountLabel: `${signedAmount > 0 ? "+" : ""}${signedAmount.toLocaleString("en-MY")} DICKEN`,
+      amountLabel: `${signedAmount > 0 ? "+" : ""}${formatMyr(signedAmount)}`,
       dateLabel: Number.isNaN(date.getTime())
         ? "Date unavailable"
         : new Intl.DateTimeFormat("en-MY", {

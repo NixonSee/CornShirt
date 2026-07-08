@@ -163,8 +163,8 @@ export default function CustomerPage() {
           <h2>Finish wallet setup</h2>
           <p className="muted">
             Your customer account is ready, but its CornShirt-managed wallet
-            still needs to be created before top-ups, purchases, or resale
-            settlement.
+            still needs to be created before Ticket NFT purchases, transfers,
+            or resale settlement.
           </p>
           <button
             className="button"
