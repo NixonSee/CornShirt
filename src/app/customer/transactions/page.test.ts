@@ -7,6 +7,10 @@ test("transaction page protects and scopes wallet history", () => {
   assert.match(source, /requireRole\(\["customer", "user"\]\)/);
   assert.match(source, /\.select\("wallet_address"\)/);
   assert.match(source, /\.from\("transactions"\)/);
+  assert.match(source, /buyer_id/);
+  assert.match(source, /seller_id/);
+  assert.match(source, /\.or\(`buyer_id\.eq\.\$\{user\.id\},seller_id\.eq\.\$\{user\.id\}`\)/);
+  assert.doesNotMatch(source, /transactions"\)[\s\S]*?\.eq\("wallet_address"/);
   assert.match(source, /walletAddress/);
   assert.match(source, /<TransactionHistory/);
   assert.match(source, /<RoleNav role="customer"\s*\/>/);

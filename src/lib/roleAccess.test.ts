@@ -28,6 +28,13 @@ test("Supabase sessions are cookie-backed for browser and server requests", () =
   assert.match(read("../proxy.ts"), /updateSession\(request\)/);
 });
 
+test("session proxy leaves API routes to route handlers", () => {
+  const proxySource = read("../proxy.ts");
+
+  assert.match(proxySource, /matcher:/);
+  assert.match(proxySource, /\(\?!api\|/);
+});
+
 test("central role authorization verifies identity before profile roles", () => {
   const guardUrl = new URL("./requireRole.ts", import.meta.url);
   assert.equal(existsSync(guardUrl), true);

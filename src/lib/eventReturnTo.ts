@@ -5,6 +5,13 @@ export function getSafeEventReturnTo(value: string | null): string | null {
   return value;
 }
 
+export function getCustomerEventReturnTo(value: string | null): string | null {
+  const safeReturnTo = getSafeEventReturnTo(value);
+  if (!safeReturnTo) return null;
+
+  return safeReturnTo.replace(/^\/events\//, "/customer/events/");
+}
+
 export function withEventReturnTo(
   authPath: "/login" | "/register",
   returnTo: string | null,

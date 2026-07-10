@@ -35,9 +35,12 @@ test("registration forwards the selected event to login", () => {
 
 test("customer login returns to the event without changing staff routing", () => {
   assert.equal(
-    loginSource.includes('router.replace(returnTo ?? "/customer")'),
+    loginSource.includes(
+      'router.replace(getCustomerEventReturnTo(returnTo) ?? "/customer")',
+    ),
     true,
   );
+  assert.equal(loginSource.includes("getCustomerEventReturnTo"), true);
   assert.equal(loginSource.includes('router.replace("/admin")'), true);
   assert.equal(loginSource.includes('router.replace("/organizer")'), true);
 });

@@ -7,6 +7,7 @@ import { FormEvent, Suspense, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import {
+  getCustomerEventReturnTo,
   getSafeEventReturnTo,
   withEventReturnTo,
 } from "@/lib/eventReturnTo";
@@ -76,7 +77,7 @@ function LoginContent() {
         case "customer":
         case "user":
         default:
-          router.replace(returnTo ?? "/customer");
+          router.replace(getCustomerEventReturnTo(returnTo) ?? "/customer");
           break;
       }
     } catch {

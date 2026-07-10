@@ -36,6 +36,7 @@ test("maps the live Supabase schema into the public event model", () => {
   assert.equal(event.venue, databaseRow.venue);
   assert.equal(event.description, databaseRow.description);
   assert.equal(event.image, databaseRow.banner_image);
+  assert.equal(event.dateTime, databaseRow.event_date);
   assert.equal(event.price, 131);
   assert.equal(event.ticketTypes[0].name, "VIP Admission");
   assert.equal(event.ticketTypes[0].remaining, 60);
@@ -147,14 +148,14 @@ test("visitor keeps the shared public-navbar dimensions", () => {
 test("event section retains its compact dark responsive treatment", () => {
   const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
 
-  assert.match(styles, /\.events-section\s*\{[^}]*background:\s*#000000/s);
+  assert.match(styles, /\.events-section\s*\{[\s\S]*?background:\s*#000000/);
   assert.match(
     styles,
-    /\.event-controls\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:/s,
+    /\.event-controls\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:/,
   );
   assert.match(
     styles,
-    /\.event-body\s*\{[^}]*background:\s*#292929;[^}]*color:\s*#ffffff;/s,
+    /\.event-body\s*\{[\s\S]*?background:\s*#292929;[\s\S]*?color:\s*#ffffff;/,
   );
 });
 
@@ -209,18 +210,41 @@ test("shared event details place ticket options before the about section", () =>
     new URL("../../components/events/EventDetailContent.tsx", import.meta.url),
     "utf8",
   );
+  const ticketingSource = readFileSync(
+    new URL("../events/[eventId]/EventTicketing.tsx", import.meta.url),
+    "utf8",
+  );
+  const countdownPath = new URL(
+    "../../components/events/EventCountdown.tsx",
+    import.meta.url,
+  );
   const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
 
+  assert.doesNotMatch(routeSource, /className="event-detail-summary"/);
+  assert.doesNotMatch(routeSource, /event-detail-hero-badges/);
+  assert.doesNotMatch(routeSource, /event-detail-category/);
+  assert.doesNotMatch(routeSource, /EventCountdown/);
+  assert.doesNotMatch(styles, /event-countdown-/);
+  assert.ok(!existsSync(countdownPath));
+  assert.match(routeSource, /timezone:\s*"UTC\+8"/);
+  assert.match(routeSource, /className="event-detail-hero-layout"/);
+  assert.match(routeSource, /className="event-detail-meta-row"/);
+  assert.match(ticketingSource, /className=\{`event-ticketing-grid/);
+  assert.match(ticketingSource, /className="event-detail-panel event-seatmap-panel"/);
+  assert.match(ticketingSource, /<SeatMap/);
   assert.ok(
-    routeSource.indexOf('className="event-detail-panel ticket-options-panel"') <
+    routeSource.indexOf("<EventTicketing") <
       routeSource.indexOf('className="event-detail-panel event-about-panel"'),
   );
   assert.match(
     styles,
-    /\.event-detail-content\s*\{[^}]*grid-template-columns:\s*1fr;/s,
+    /\.event-detail-content\s*\{[\s\S]*?grid-template-columns:\s*1fr;/,
   );
   assert.match(
     styles,
-    /\.event-detail-content\s*\{[^}]*width:\s*min\(900px,\s*calc\(100% - 32px\)\);/s,
+    /\.event-detail-content\s*\{[\s\S]*?width:\s*min\(1600px,\s*calc\(100% - clamp\(28px,\s*4vw,\s*72px\)\)\);/,
   );
+  assert.match(styles, /\.event-detail-hero-nav-shade\s*\{/);
+  assert.match(styles, /\.event-detail-hero::after\s*\{/);
+  assert.match(styles, /\.event-detail-hero::after\s*\{[\s\S]*?inset:\s*0;/);
 });
