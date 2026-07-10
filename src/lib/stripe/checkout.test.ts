@@ -48,7 +48,17 @@ test("stripe webhook route verifies raw signatures and finalizes checkout", () =
   assert.match(webhookSource, /finalizeTicketCheckout/);
   assert.match(webhookSource, /\.from\("tickets"\)/);
   assert.match(webhookSource, /\.from\("transactions"\)/);
+  assert.match(webhookSource, /userId/);
+  assert.match(webhookSource, /user_id:\s*userId/);
+  assert.match(webhookSource, /buyer_id:\s*userId/);
   assert.match(webhookSource, /transaction_hash:\s*session\.id/);
+
+  const transactionInsertBlock =
+    webhookSource.match(/const transactionInsert[\s\S]*?\n  \}\);/)?.[0] ?? "";
+
+  assert.match(transactionInsertBlock, /buyer_id:\s*userId/);
+  assert.doesNotMatch(transactionInsertBlock, /wallet_address:/);
+  assert.doesNotMatch(transactionInsertBlock, /description:/);
 });
 
 test("buy ticket button posts selected ticket type to checkout API", () => {

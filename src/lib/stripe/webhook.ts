@@ -14,6 +14,50 @@ function metadataValue(
   return typeof value === "string" ? value : "";
 }
 
+async function recordPurchaseTransaction({
+  session,
+  ticketId,
+  userId,
+  amount,
+}: {
+  session: Stripe.Checkout.Session;
+  ticketId: string;
+  userId: string;
+  amount: number;
+}): Promise<FinalizeResult> {
+  const existingTransaction = await supabaseAdmin
+    .from("transactions")
+    .select("transaction_id")
+    .eq("transaction_hash", session.id)
+    .maybeSingle();
+
+  if (existingTransaction.error) {
+    console.error("Stripe transaction lookup failed", existingTransaction.error);
+    return { ok: false, error: "Transaction could not be checked." };
+  }
+
+  if (existingTransaction.data) {
+    return { ok: true, skipped: true };
+  }
+
+  const transactionInsert = await supabaseAdmin.from("transactions").insert({
+    transaction_id: crypto.randomUUID(),
+    ticket_id: ticketId,
+    buyer_id: userId,
+    seller_id: null,
+    transaction_hash: session.id,
+    transaction_type: "purchase",
+    amount,
+  });
+
+  if (transactionInsert.error) {
+    console.error("Stripe transaction insert failed", transactionInsert.error);
+    return { ok: false, error: "Transaction could not be recorded." };
+  }
+
+  return { ok: true };
+}
+
 export async function finalizeTicketCheckout(
   session: Stripe.Checkout.Session,
 ): Promise<FinalizeResult> {
@@ -23,11 +67,14 @@ export async function finalizeTicketCheckout(
 
   const eventId = metadataValue(session.metadata, "eventId");
   const ticketTypeId = metadataValue(session.metadata, "ticketTypeId");
+  const userId = metadataValue(session.metadata, "userId");
   const walletAddress = metadataValue(session.metadata, "walletAddress");
 
-  if (!eventId || !ticketTypeId || !walletAddress || !session.id) {
+  if (!eventId || !ticketTypeId || !userId || !walletAddress || !session.id) {
     return { ok: false, error: "Stripe session metadata is incomplete." };
   }
+
+  const amount = Number(session.amount_total ?? 0) / 100;
 
   const existingTicket = await supabaseAdmin
     .from("tickets")
@@ -35,8 +82,18 @@ export async function finalizeTicketCheckout(
     .eq("transaction_hash", session.id)
     .maybeSingle();
 
+  if (existingTicket.error) {
+    console.error("Stripe ticket lookup failed", existingTicket.error);
+    return { ok: false, error: "Ticket could not be checked." };
+  }
+
   if (existingTicket.data) {
-    return { ok: true, skipped: true };
+    return recordPurchaseTransaction({
+      session,
+      ticketId: String(existingTicket.data.ticket_id),
+      userId,
+      amount,
+    });
   }
 
   const { data: ticketType, error: ticketTypeError } = await supabaseAdmin
@@ -66,12 +123,12 @@ export async function finalizeTicketCheckout(
 
   const ticketId = crypto.randomUUID();
   const qrValue = `cornshirt:ticket:${ticketId}`;
-  const amount = Number(session.amount_total ?? 0) / 100;
 
   const ticketInsert = await supabaseAdmin.from("tickets").insert({
     ticket_id: ticketId,
     event_id: eventId,
     ticket_type_id: ticketTypeId,
+    user_id: userId,
     wallet_address: walletAddress,
     status: "active",
     qr_code: qrValue,
@@ -84,20 +141,18 @@ export async function finalizeTicketCheckout(
       .update({ remaining_supply: remainingSupply })
       .eq("ticket_type_id", ticketTypeId);
 
+    console.error("Stripe ticket insert failed", ticketInsert.error);
     return { ok: false, error: "Ticket could not be created." };
   }
 
-  await supabaseAdmin.from("transactions").insert({
-    transaction_id: crypto.randomUUID(),
-    wallet_address: walletAddress,
-    ticket_id: ticketId,
-    transaction_hash: session.id,
-    transaction_type: "purchase",
-    description: `Stripe ticket purchase: ${String(ticketType.type_name ?? "Admission")}`,
+  const transactionResult = await recordPurchaseTransaction({
+    session,
+    ticketId,
+    userId,
     amount,
   });
 
-  return { ok: true };
+  return transactionResult.ok ? { ok: true } : transactionResult;
 }
 
 export async function handleStripeWebhookEvent(event: Stripe.Event) {
