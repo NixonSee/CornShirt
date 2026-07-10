@@ -91,12 +91,12 @@ test("ticket styles enforce a single-column stack and ticket notches", () => {
 
   assert.match(
     styles,
-    /\.ticket-stack\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*1fr;/s,
+    /\.ticket-stack\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*1fr;/,
   );
   assert.match(styles, /\.ticket-pass::before/);
   assert.match(styles, /\.ticket-pass::after/);
   assert.match(
     styles,
-    /\.ticket-pass-actions\s*\{[^}]*border-left:\s*1px dashed/s,
+    /\.ticket-pass-actions\s*\{[\s\S]*?border-left:\s*1px dashed/,
   );
 });

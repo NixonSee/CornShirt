@@ -22,6 +22,7 @@ export type Event = {
   venue: string;
   category: string;
   date: string;
+  dateTime: string | null;
   price: number;
   status: EventStatus;
   description: string;
@@ -202,6 +203,7 @@ export function mapEventRow(row: EventRow): Event {
     venue: venueData?.name?.trim() || row.venue?.trim() || "Venue TBC",
     category: "Concert",
     date: formatEventDate(row.event_date),
+    dateTime: row.event_date,
     price: availablePrices.length ? Math.min(...availablePrices) : 0,
     status: isSellingFast ? "SELLING FAST" : "ACTIVE",
     description:

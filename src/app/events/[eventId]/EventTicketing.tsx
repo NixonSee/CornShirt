@@ -33,15 +33,24 @@ export default function EventTicketing({ event, isCustomer, loginHref }: Props) 
   }
 
   return (
-    <>
+    <section
+      className={`event-ticketing-grid ${
+        hasMap ? "" : "event-ticketing-grid-no-map"
+      }`.trim()}
+      aria-label="Ticket selection"
+    >
       {hasMap && event.stage && (
         <article
-          className="event-detail-panel"
-          style={{ gridColumn: "1 / -1" }}
+          className="event-detail-panel event-seatmap-panel"
           aria-labelledby="venue-layout-title"
         >
-          <p className="section-kicker">Pick your zone</p>
-          <h2 id="venue-layout-title">{event.venue}</h2>
+          <div className="event-panel-heading">
+            <div>
+              <p className="section-kicker">Pick your zone</p>
+              <h2 id="venue-layout-title">{event.venue}</h2>
+            </div>
+            <span>{event.zones.length} zones</span>
+          </div>
           <SeatMap
             stage={event.stage}
             zones={event.zones}
@@ -56,8 +65,13 @@ export default function EventTicketing({ event, isCustomer, loginHref }: Props) 
         className="event-detail-panel ticket-options-panel"
         aria-labelledby="ticket-options-title"
       >
-        <p className="section-kicker">Choose your entry</p>
-        <h2 id="ticket-options-title">Available ticket types</h2>
+        <div className="event-panel-heading">
+          <div>
+            <p className="section-kicker">Choose your entry</p>
+            <h2 id="ticket-options-title">Available ticket types</h2>
+          </div>
+          <span>{event.ticketTypes.length} types</span>
+        </div>
 
         <div className="ticket-option-list">
           {event.ticketTypes.map((ticketType) => (
@@ -97,14 +111,16 @@ export default function EventTicketing({ event, isCustomer, loginHref }: Props) 
               </div>
 
               <PurchaseButton
+                eventId={event.id}
                 isCustomer={isCustomer}
                 loginHref={loginHref}
+                ticketTypeId={ticketType.id}
                 ticketTypeName={ticketType.name}
               />
             </article>
           ))}
         </div>
       </aside>
-    </>
+    </section>
   );
 }

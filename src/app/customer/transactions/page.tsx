@@ -30,8 +30,8 @@ export default async function CustomerTransactionsPage() {
   } else {
     const { data, error } = await supabaseAdmin
       .from("transactions")
-      .select("transaction_id, transaction_hash, transaction_type, description, amount, created_at")
-      .eq("wallet_address", walletAddress)
+      .select("transaction_id, ticket_id, buyer_id, seller_id, transaction_hash, transaction_type, amount, created_at")
+      .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
       .order("created_at", { ascending: false });
     content = error
       ? <State message="Your transactions could not be loaded right now." />

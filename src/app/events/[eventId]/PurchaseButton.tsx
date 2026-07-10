@@ -3,20 +3,53 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { Button, Modal } from "@/components/common";
+import { Button } from "@/components/common";
 
 interface PurchaseButtonProps {
+  eventId: string;
   isCustomer: boolean;
   loginHref: string;
+  ticketTypeId: string;
   ticketTypeName: string;
 }
 
 export default function PurchaseButton({
+  eventId,
   isCustomer,
   loginHref,
+  ticketTypeId,
   ticketTypeName,
 }: PurchaseButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function startCheckout() {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/customer/tickets/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId, ticketTypeId }),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        url?: string;
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.url) {
+        setError(data?.error ?? "Checkout could not be started.");
+        return;
+      }
+
+      window.location.assign(data.url);
+    } catch {
+      setError("Checkout could not be started. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   if (!isCustomer) {
     return (
@@ -27,20 +60,15 @@ export default function PurchaseButton({
   }
 
   return (
-    <>
-      <Button fullWidth onClick={() => setIsOpen(true)}>
-        Buy ticket
+    <div className="purchase-button-stack">
+      <Button fullWidth loading={isLoading} onClick={startCheckout}>
+        {isLoading ? "Opening Stripe..." : "Buy ticket"}
       </Button>
-
-      <Modal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        title="Purchase service coming soon"
-        actions={<Button onClick={() => setIsOpen(false)}>Close</Button>}
-      >
-        Purchasing {ticketTypeName} is not connected yet. No Stripe payment has
-        been created and no Ticket NFT has been minted.
-      </Modal>
-    </>
+      {error ? (
+        <p className="purchase-button-error" role="alert">
+          {ticketTypeName}: {error}
+        </p>
+      ) : null}
+    </div>
   );
 }
