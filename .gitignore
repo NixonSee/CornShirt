@@ -2,6 +2,11 @@
 
 # dependencies
 /node_modules
+
+# hardhat / blockchain
+blockchain/node_modules/
+blockchain/artifacts/
+blockchain/cache/
 /.pnp
 .pnp.*
 .yarn/*
