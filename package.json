@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "hardhat:compile": "cd blockchain && npm run compile",
+    "hardhat:node": "cd blockchain && npm run node",
+    "hardhat:deploy": "cd blockchain && npm run deploy",
+    "test:helpers": "node --import tsx --test src/lib/nft/__tests__/*.test.ts",
+    "test:contracts": "cd blockchain && npx hardhat run test/CornShirtTicket.test.ts --network localhost"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
