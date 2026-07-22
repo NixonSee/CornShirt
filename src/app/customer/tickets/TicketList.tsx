@@ -6,6 +6,7 @@ import {
   Hash,
   MapPin,
   QrCode,
+  ReceiptText,
   Ticket as TicketIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -56,6 +57,9 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
   const [price, setPrice] = useState("");
   const [resaleError, setResaleError] = useState("");
   const [isListing, setIsListing] = useState(false);
+  const [refundTicket, setRefundTicket] = useState<CustomerTicket | null>(null);
+  const [refundError, setRefundError] = useState("");
+  const [isRefunding, setIsRefunding] = useState(false);
 
   async function listForResale() {
     if (!resaleTicket) return;
@@ -79,6 +83,25 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
     }
     setResaleTicket(null);
     setPrice("");
+    router.refresh();
+  }
+
+  async function claimRefund() {
+    if (!refundTicket) return;
+    setIsRefunding(true);
+    setRefundError("");
+    const response = await fetch("/api/customer/refunds/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticketId: refundTicket.id }),
+    });
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    setIsRefunding(false);
+    if (!response.ok) {
+      setRefundError(body.error ?? "Refund could not be processed.");
+      return;
+    }
+    setRefundTicket(null);
     router.refresh();
   }
 
@@ -177,6 +200,18 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                 >
                   View QR
                 </Button>
+                {ticket.refundEligible && ticket.status.toLowerCase() === "active" ? (
+                  <Button
+                    variant="destructive"
+                    icon={<ReceiptText size={17} />}
+                    onClick={() => {
+                      setRefundTicket(ticket);
+                      setRefundError("");
+                    }}
+                  >
+                    Claim refund
+                  </Button>
+                ) : null}
                 <Button
                   variant="outline"
                   icon={<ArrowRightLeft size={17} />}
@@ -277,6 +312,44 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
             You can cancel this listing before resale purchase support is connected.
           </p>
           {resaleError ? <p role="alert" className="customer-account-error">{resaleError}</p> : null}
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={refundTicket !== null}
+        onClose={() => setRefundTicket(null)}
+        title="Claim refund"
+        actions={
+          <>
+            <Button variant="outline" onClick={() => setRefundTicket(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              loading={isRefunding}
+              onClick={claimRefund}
+            >
+              Confirm refund
+            </Button>
+          </>
+        }
+      >
+        <div className="resale-form">
+          <p>
+            {refundTicket?.eventName} / {refundTicket?.ticketType}
+          </p>
+          <p className="muted">
+            This event was cancelled. Confirming will refund the Stripe
+            payment to the card of the latest person who paid for this
+            ticket — which may not be you, if the ticket was ever
+            transferred — and permanently burns the ticket NFT. This cannot
+            be undone.
+          </p>
+          {refundError ? (
+            <p role="alert" className="customer-account-error">
+              {refundError}
+            </p>
+          ) : null}
         </div>
       </Modal>
     </>

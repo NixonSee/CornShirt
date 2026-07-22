@@ -4,6 +4,7 @@ import { Pencil, ArrowLeft } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireRole } from "@/lib/requireRole";
 import { Card } from "@/components/common/Card";
+import { CancelEventButton } from "@/components/common/CancelEventButton";
 import { formatMyr } from "@/lib/currency";
 
 const NUMBER = new Intl.NumberFormat("en-US");
@@ -113,6 +114,12 @@ export default async function ManageEventPage({
               <Pencil size={16} />
               Edit
             </Link>
+          )}
+          {(event.status === "pending" || event.status === "active") && (
+            <CancelEventButton
+              eventName={event.event_name}
+              cancelUrl={`/api/organizer/events/${eventId}/cancel`}
+            />
           )}
         </div>
       </div>
