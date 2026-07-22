@@ -13,6 +13,7 @@ export interface CustomerTicket {
   qrValue: string;
   transferAllowed: boolean;
   hasActiveListing: boolean;
+  refundEligible: boolean;
   accent: string;
 }
 
@@ -107,6 +108,7 @@ export function mapCustomerTickets(
         recordString(ticket, "qr_code", "qr_code_data", "qr_value") ?? id,
       transferAllowed: recordBoolean(ticketType, "transfer_allowed"),
       hasActiveListing: activeListingTicketIds.has(id),
+      refundEligible: recordBoolean(ticket, "refund_eligible"),
       accent: accentFor(id),
     };
   });

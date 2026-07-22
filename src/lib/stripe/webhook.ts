@@ -1,6 +1,8 @@
 import type Stripe from "stripe";
+import type { Address } from "viem";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { mintTicket } from "@/lib/nft/mint";
 
 type FinalizeResult =
   | { ok: true; skipped?: boolean }
@@ -12,6 +14,36 @@ function metadataValue(
 ): string {
   const value = metadata?.[key];
   return typeof value === "string" ? value : "";
+}
+
+function paymentIntentId(session: Stripe.Checkout.Session): string | null {
+  const paymentIntent = session.payment_intent;
+  if (!paymentIntent) return null;
+  return typeof paymentIntent === "string" ? paymentIntent : paymentIntent.id;
+}
+
+// Mints the Ticket NFT to the buyer's managed wallet and persists the
+// resulting token id. Best-effort: on failure the ticket keeps a null
+// token_id, which is a recoverable state — a later webhook redelivery for
+// the same session (existingTicket branch below) retries the mint, and the
+// verify flow already tolerates an unminted ticket.
+async function mintTicketNft(ticketId: string, walletAddress: string): Promise<void> {
+  try {
+    const { tokenId, transactionHash } = await mintTicket(walletAddress as Address);
+    const { error } = await supabaseAdmin
+      .from("tickets")
+      .update({
+        token_id: Number(tokenId),
+        mint_transaction_hash: transactionHash,
+      })
+      .eq("ticket_id", ticketId);
+
+    if (error) {
+      console.error("Ticket NFT minted but token_id could not be saved", error);
+    }
+  } catch (error) {
+    console.error("Ticket NFT mint failed; token_id left unset for retry", error);
+  }
 }
 
 async function recordPurchaseTransaction({
@@ -75,10 +107,11 @@ export async function finalizeTicketCheckout(
   }
 
   const amount = Number(session.amount_total ?? 0) / 100;
+  const paymentIntent = paymentIntentId(session);
 
   const existingTicket = await supabaseAdmin
     .from("tickets")
-    .select("ticket_id")
+    .select("ticket_id, token_id")
     .eq("transaction_hash", session.id)
     .maybeSingle();
 
@@ -88,6 +121,10 @@ export async function finalizeTicketCheckout(
   }
 
   if (existingTicket.data) {
+    if (existingTicket.data.token_id === null) {
+      await mintTicketNft(String(existingTicket.data.ticket_id), walletAddress);
+    }
+
     return recordPurchaseTransaction({
       session,
       ticketId: String(existingTicket.data.ticket_id),
@@ -133,6 +170,7 @@ export async function finalizeTicketCheckout(
     status: "active",
     qr_code: qrValue,
     transaction_hash: session.id,
+    stripe_payment_intent: paymentIntent,
   });
 
   if (ticketInsert.error) {
@@ -144,6 +182,8 @@ export async function finalizeTicketCheckout(
     console.error("Stripe ticket insert failed", ticketInsert.error);
     return { ok: false, error: "Ticket could not be created." };
   }
+
+  await mintTicketNft(ticketId, walletAddress);
 
   const transactionResult = await recordPurchaseTransaction({
     session,
