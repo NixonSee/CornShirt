@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireRole } from "@/lib/requireRole";
 import { Card } from "@/components/common/Card";
 import { BackButton } from "@/components/common/BackButton";
+import { CancelEventButton } from "@/components/common/CancelEventButton";
 import { formatMyr } from "@/lib/currency";
 
 const NUMBER = new Intl.NumberFormat("en-US");
@@ -100,6 +101,12 @@ export default async function AdminEventDetailPage({
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <BackButton />
+          {(event.status === "pending" || event.status === "active") && (
+            <CancelEventButton
+              eventName={event.event_name}
+              cancelUrl={`/api/admin/events/${eventId}/cancel`}
+            />
+          )}
         </div>
       </div>
 
