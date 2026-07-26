@@ -18,14 +18,15 @@ test("ticket checkout route creates a customer-only Stripe Checkout session", ()
   assert.match(routeSource, /authorizeApiRole\(\["customer", "user"\]\)/);
   assert.match(routeSource, /createTicketCheckoutSession/);
   assert.match(checkoutSource, /getStripe\(\)\.checkout\.sessions\.create/);
-  assert.match(checkoutSource, /currency:\s*"myr"/);
+  assert.match(checkoutSource, /reserve_primary_ticket/);
+  assert.match(checkoutSource, /amount_sen/);
   assert.match(checkoutSource, /mode:\s*"payment"/);
   assert.match(checkoutSource, /metadata:\s*\{/);
   assert.match(checkoutSource, /eventId/);
   assert.match(checkoutSource, /ticketTypeId/);
   assert.match(checkoutSource, /userId/);
-  assert.match(checkoutSource, /walletAddress/);
-  assert.match(checkoutSource, /remaining_supply/);
+  assert.match(checkoutSource, /operationId/);
+  assert.match(checkoutSource, /idempotencyKey/);
 });
 
 test("stripe webhook route verifies raw signatures and finalizes checkout", () => {
@@ -46,19 +47,11 @@ test("stripe webhook route verifies raw signatures and finalizes checkout", () =
   assert.match(routeSource, /STRIPE_WEBHOOK_SECRET/);
   assert.match(webhookSource, /checkout\.session\.completed/);
   assert.match(webhookSource, /finalizeTicketCheckout/);
-  assert.match(webhookSource, /\.from\("tickets"\)/);
-  assert.match(webhookSource, /\.from\("transactions"\)/);
-  assert.match(webhookSource, /userId/);
-  assert.match(webhookSource, /user_id:\s*userId/);
-  assert.match(webhookSource, /buyer_id:\s*userId/);
-  assert.match(webhookSource, /transaction_hash:\s*session\.id/);
-
-  const transactionInsertBlock =
-    webhookSource.match(/const transactionInsert[\s\S]*?\n  \}\);/)?.[0] ?? "";
-
-  assert.match(transactionInsertBlock, /buyer_id:\s*userId/);
-  assert.doesNotMatch(transactionInsertBlock, /wallet_address:/);
-  assert.doesNotMatch(transactionInsertBlock, /description:/);
+  assert.match(webhookSource, /claim_stripe_webhook/);
+  assert.match(webhookSource, /amount_total/);
+  assert.match(webhookSource, /payment_status/);
+  assert.match(webhookSource, /finalize_primary_purchase/);
+  assert.match(webhookSource, /recoverMintResult/);
 });
 
 test("buy ticket button posts selected ticket type to checkout API", () => {

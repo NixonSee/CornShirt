@@ -72,7 +72,7 @@ Required roles:
 
 Required interfaces:
 
-- `mintTicket(address recipient, string metadataUri)` returns a unique token ID.
+- `mintTicket(address recipient)` returns a unique token ID.
 - `ownerOf(uint256 tokenId)` returns authoritative ownership.
 - `safeTransferFrom(address from, address to, uint256 tokenId)` transfers an existing NFT.
 - `burnRefundedTicket(uint256 tokenId)` allows only `BURNER_ROLE` to burn a refund-eligible ticket after backend verification.

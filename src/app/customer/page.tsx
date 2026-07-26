@@ -185,7 +185,7 @@ export default function CustomerPage() {
         </p>
       ) : null}
 
-      <main>
+      <main className="customer-dashboard-main">
         <EventDiscovery detailBasePath="/customer/events" />
       </main>
 

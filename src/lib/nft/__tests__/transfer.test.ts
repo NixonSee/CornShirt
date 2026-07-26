@@ -99,3 +99,31 @@ test("transferTicket: private key does not appear in result or errors", async ()
     assert.equal(msg.includes(TEST_PRIVATE_KEY), false);
   }
 });
+
+test("transferTicket: receipt-confirmed revert uses a distinguishable error", async () => {
+  const url = new URL("../transfer.ts", import.meta.url);
+  const mod = await import(url.href);
+
+  const fakePublicClient = {
+    waitForTransactionReceipt: async () => ({ status: "reverted" }),
+  };
+  const fakeCustomerWallet = {
+    walletClient: { writeContract: async () => TRANSACTION_HASH },
+    accountAddress: CUSTOMER_ADDRESS,
+  };
+
+  await assert.rejects(
+    mod.transferTicket(
+      TEST_PRIVATE_KEY,
+      CUSTOMER_ADDRESS,
+      RECIPIENT_ADDRESS,
+      0n,
+      {
+        publicClient: fakePublicClient,
+        createCustomerWallet: () => fakeCustomerWallet,
+        contractAddress: CONTRACT_ADDRESS,
+      },
+    ),
+    (error: unknown) => error instanceof mod.NftTransferRevertedError,
+  );
+});

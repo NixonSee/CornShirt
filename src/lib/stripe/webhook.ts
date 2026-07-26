@@ -1,12 +1,30 @@
+import "server-only";
+
 import type Stripe from "stripe";
 import type { Address } from "viem";
 
+import { mintTicket, recoverMintResult } from "@/lib/nft/mint";
+import { finalizeResaleCheckout } from "@/lib/stripe/resale";
+import { getStripe } from "@/lib/stripe/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { mintTicket } from "@/lib/nft/mint";
 
-type FinalizeResult =
-  | { ok: true; skipped?: boolean }
-  | { ok: false; error: string };
+export type FinalizeResult =
+  | { ok: true; skipped?: boolean; operationId?: string }
+  | { ok: false; error: string; category: string };
+
+type TicketOperation = {
+  operation_id: string;
+  operation_kind: "primary_purchase" | "resale_purchase";
+  state: string;
+  actor_user_id: string;
+  amount_sen: number;
+  currency: string;
+  wallet_address: string;
+  stripe_checkout_session_id: string | null;
+  asset_transaction_hash: `0x${string}` | null;
+  token_id: number | null;
+  retry_count: number;
+};
 
 function metadataValue(
   metadata: Stripe.Metadata | null | undefined,
@@ -22,72 +40,48 @@ function paymentIntentId(session: Stripe.Checkout.Session): string | null {
   return typeof paymentIntent === "string" ? paymentIntent : paymentIntent.id;
 }
 
-// Mints the Ticket NFT to the buyer's managed wallet and persists the
-// resulting token id. Best-effort: on failure the ticket keeps a null
-// token_id, which is a recoverable state — a later webhook redelivery for
-// the same session (existingTicket branch below) retries the mint, and the
-// verify flow already tolerates an unminted ticket.
-async function mintTicketNft(ticketId: string, walletAddress: string): Promise<void> {
-  try {
-    const { tokenId, transactionHash } = await mintTicket(walletAddress as Address);
-    const { error } = await supabaseAdmin
-      .from("tickets")
-      .update({
-        token_id: Number(tokenId),
-        mint_transaction_hash: transactionHash,
-      })
-      .eq("ticket_id", ticketId);
-
-    if (error) {
-      console.error("Ticket NFT minted but token_id could not be saved", error);
-    }
-  } catch (error) {
-    console.error("Ticket NFT mint failed; token_id left unset for retry", error);
-  }
+function failed(error: string, category: string): FinalizeResult {
+  return { ok: false, error, category };
 }
 
-async function recordPurchaseTransaction({
-  session,
-  ticketId,
-  userId,
-  amount,
-}: {
-  session: Stripe.Checkout.Session;
-  ticketId: string;
-  userId: string;
-  amount: number;
-}): Promise<FinalizeResult> {
-  const existingTransaction = await supabaseAdmin
-    .from("transactions")
-    .select("transaction_id")
-    .eq("transaction_hash", session.id)
+async function loadOperation(
+  operationId: string,
+): Promise<TicketOperation | null> {
+  const result = await supabaseAdmin
+    .from("ticket_operations")
+    .select(
+      "operation_id, operation_kind, state, actor_user_id, amount_sen, currency, wallet_address, stripe_checkout_session_id, asset_transaction_hash, token_id, retry_count",
+    )
+    .eq("operation_id", operationId)
     .maybeSingle();
 
-  if (existingTransaction.error) {
-    console.error("Stripe transaction lookup failed", existingTransaction.error);
-    return { ok: false, error: "Transaction could not be checked." };
+  return result.error ? null : (result.data as TicketOperation | null);
+}
+
+function validatePaidSession(
+  session: Stripe.Checkout.Session,
+  operation: TicketOperation,
+): FinalizeResult | null {
+  if (session.payment_status !== "paid") {
+    return failed("Stripe payment is not complete.", "payment_not_paid");
   }
-
-  if (existingTransaction.data) {
-    return { ok: true, skipped: true };
+  if (session.id !== operation.stripe_checkout_session_id) {
+    return failed("Checkout session does not match.", "session_mismatch");
   }
-
-  const transactionInsert = await supabaseAdmin.from("transactions").insert({
-    transaction_id: crypto.randomUUID(),
-    ticket_id: ticketId,
-    buyer_id: userId,
-    seller_id: null,
-    transaction_hash: session.id,
-    transaction_type: "purchase",
-    amount,
-  });
-
-  if (transactionInsert.error) {
-    console.error("Stripe transaction insert failed", transactionInsert.error);
-    return { ok: false, error: "Transaction could not be recorded." };
+  if (
+    session.client_reference_id !== operation.actor_user_id ||
+    metadataValue(session.metadata, "userId") !== operation.actor_user_id
+  ) {
+    return failed("Checkout customer does not match.", "customer_mismatch");
   }
-
-  return { ok: true };
+  if (
+    Number(session.amount_total) !== Number(operation.amount_sen) ||
+    String(session.currency ?? "").toUpperCase() !==
+      operation.currency.toUpperCase()
+  ) {
+    return failed("Checkout amount does not match.", "amount_mismatch");
+  }
+  return null;
 }
 
 export async function finalizeTicketCheckout(
@@ -97,109 +91,169 @@ export async function finalizeTicketCheckout(
     return { ok: true, skipped: true };
   }
 
-  const eventId = metadataValue(session.metadata, "eventId");
-  const ticketTypeId = metadataValue(session.metadata, "ticketTypeId");
-  const userId = metadataValue(session.metadata, "userId");
-  const walletAddress = metadataValue(session.metadata, "walletAddress");
-
-  if (!eventId || !ticketTypeId || !userId || !walletAddress || !session.id) {
-    return { ok: false, error: "Stripe session metadata is incomplete." };
+  const operationId = metadataValue(session.metadata, "operationId");
+  if (!operationId) {
+    return failed("Stripe operation metadata is incomplete.", "metadata");
   }
 
-  const amount = Number(session.amount_total ?? 0) / 100;
+  const operation = await loadOperation(operationId);
+  if (!operation || operation.operation_kind !== "primary_purchase") {
+    return failed("Purchase operation was not found.", "operation_not_found");
+  }
+  if (operation.state === "completed") {
+    return { ok: true, skipped: true, operationId };
+  }
+
+  const validation = validatePaidSession(session, operation);
+  if (validation) return validation;
+
   const paymentIntent = paymentIntentId(session);
-
-  const existingTicket = await supabaseAdmin
-    .from("tickets")
-    .select("ticket_id, token_id")
-    .eq("transaction_hash", session.id)
+  const paymentUpdate = await supabaseAdmin
+    .from("ticket_operations")
+    .update({
+      state: operation.asset_transaction_hash
+        ? "asset_submitted"
+        : "payment_confirmed",
+      stripe_payment_intent_id: paymentIntent,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("operation_id", operationId)
+    .in("state", [
+      "checkout_created",
+      "payment_confirmed",
+      "asset_submitted",
+      "delivery_failed",
+    ])
+    .select("operation_id")
     .maybeSingle();
 
-  if (existingTicket.error) {
-    console.error("Stripe ticket lookup failed", existingTicket.error);
-    return { ok: false, error: "Ticket could not be checked." };
+  if (paymentUpdate.error || !paymentUpdate.data) {
+    return failed("Payment state could not be recorded.", "storage");
   }
 
-  if (existingTicket.data) {
-    if (existingTicket.data.token_id === null) {
-      await mintTicketNft(String(existingTicket.data.ticket_id), walletAddress);
+  let mintResult;
+  try {
+    if (operation.asset_transaction_hash) {
+      mintResult = await recoverMintResult(
+        operation.wallet_address as Address,
+        operation.asset_transaction_hash,
+      );
+    } else {
+      mintResult = await mintTicket(
+        operation.wallet_address as Address,
+        undefined,
+        async (hash) => {
+          const submitted = await supabaseAdmin
+            .from("ticket_operations")
+            .update({
+              state: "asset_submitted",
+              asset_transaction_hash: hash,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("operation_id", operationId)
+            .eq("state", "payment_confirmed");
+          if (submitted.error) {
+            throw new Error("Mint submission could not be recorded.");
+          }
+        },
+      );
     }
-
-    return recordPurchaseTransaction({
-      session,
-      ticketId: String(existingTicket.data.ticket_id),
-      userId,
-      amount,
+  } catch (error) {
+    const retryCount = Number(operation.retry_count ?? 0) + 1;
+    console.error("Ticket NFT delivery failed", {
+      operationId,
+      error: error instanceof Error ? error.message : "unknown",
     });
-  }
-
-  const { data: ticketType, error: ticketTypeError } = await supabaseAdmin
-    .from("ticket_types")
-    .select("remaining_supply, type_name, price")
-    .eq("ticket_type_id", ticketTypeId)
-    .maybeSingle();
-
-  if (ticketTypeError || !ticketType) {
-    return { ok: false, error: "Ticket type could not be loaded." };
-  }
-
-  const remainingSupply = Number(ticketType.remaining_supply ?? 0);
-  if (remainingSupply <= 0) {
-    return { ok: false, error: "Ticket type is sold out." };
-  }
-
-  const updateResult = await supabaseAdmin
-    .from("ticket_types")
-    .update({ remaining_supply: remainingSupply - 1 })
-    .eq("ticket_type_id", ticketTypeId)
-    .eq("remaining_supply", remainingSupply);
-
-  if (updateResult.error) {
-    return { ok: false, error: "Ticket inventory could not be updated." };
-  }
-
-  const ticketId = crypto.randomUUID();
-  const qrValue = `cornshirt:ticket:${ticketId}`;
-
-  const ticketInsert = await supabaseAdmin.from("tickets").insert({
-    ticket_id: ticketId,
-    event_id: eventId,
-    ticket_type_id: ticketTypeId,
-    user_id: userId,
-    wallet_address: walletAddress,
-    status: "active",
-    qr_code: qrValue,
-    transaction_hash: session.id,
-    stripe_payment_intent: paymentIntent,
-  });
-
-  if (ticketInsert.error) {
     await supabaseAdmin
-      .from("ticket_types")
-      .update({ remaining_supply: remainingSupply })
-      .eq("ticket_type_id", ticketTypeId);
-
-    console.error("Stripe ticket insert failed", ticketInsert.error);
-    return { ok: false, error: "Ticket could not be created." };
+      .from("ticket_operations")
+      .update({
+        state: "delivery_failed",
+        safe_error_category: "nft_mint",
+        retry_count: retryCount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("operation_id", operationId);
+    if (retryCount >= 3 && paymentIntent) {
+      try {
+        const refund = await getStripe().refunds.create(
+          { payment_intent: paymentIntent },
+          { idempotencyKey: `primary_delivery_refund_${operationId}` },
+        );
+        if (refund.status !== "failed") {
+          const marked = await supabaseAdmin.rpc("mark_primary_refunded", {
+            p_operation_id: operationId,
+            p_refund_id: refund.id,
+            p_error_category: "nft_mint",
+          });
+          if (!marked.error) {
+            return { ok: true, operationId };
+          }
+        }
+      } catch (refundError) {
+        console.error("Primary delivery refund failed", {
+          operationId,
+          error:
+            refundError instanceof Error ? refundError.message : "unknown",
+        });
+      }
+    }
+    return failed("Ticket NFT delivery is pending retry.", "nft_mint");
   }
 
-  await mintTicketNft(ticketId, walletAddress);
-
-  const transactionResult = await recordPurchaseTransaction({
-    session,
-    ticketId,
-    userId,
-    amount,
+  const qrValue = `cornshirt:ticket:${crypto.randomUUID()}`;
+  const finalized = await supabaseAdmin.rpc("finalize_primary_purchase", {
+    p_operation_id: operationId,
+    p_token_id: Number(mintResult.tokenId),
+    p_asset_transaction_hash: mintResult.transactionHash,
+    p_qr_code: qrValue,
   });
 
-  return transactionResult.ok ? { ok: true } : transactionResult;
+  if (finalized.error) {
+    console.error("Primary purchase finalization failed", {
+      operationId,
+      message: finalized.error.message,
+    });
+    return failed("Ticket finalization is pending retry.", "storage");
+  }
+
+  return { ok: true, operationId };
 }
 
-export async function handleStripeWebhookEvent(event: Stripe.Event) {
+async function claimStripeEvent(event: Stripe.Event): Promise<boolean> {
+  const result = await supabaseAdmin.rpc("claim_stripe_webhook", {
+    p_event_id: event.id,
+    p_event_type: event.type,
+  });
+  return !result.error && result.data === true;
+}
+
+async function finishStripeEvent(
+  eventId: string,
+  result: FinalizeResult,
+): Promise<void> {
+  await supabaseAdmin.rpc("finish_stripe_webhook", {
+    p_event_id: eventId,
+    p_succeeded: result.ok,
+    p_error_category: result.ok ? null : result.category,
+  });
+}
+
+export async function handleStripeWebhookEvent(
+  event: Stripe.Event,
+): Promise<FinalizeResult> {
   if (event.type !== "checkout.session.completed") {
-    return { ok: true as const, skipped: true as const };
+    return { ok: true, skipped: true };
   }
 
+  const claimed = await claimStripeEvent(event);
+  if (!claimed) return { ok: true, skipped: true };
+
   const session = event.data.object as Stripe.Checkout.Session;
-  return finalizeTicketCheckout(session);
+  const kind = metadataValue(session.metadata, "kind");
+  const result =
+    kind === "resale_ticket"
+      ? await finalizeResaleCheckout(session)
+      : await finalizeTicketCheckout(session);
+  await finishStripeEvent(event.id, result);
+  return result;
 }

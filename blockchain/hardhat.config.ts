@@ -1,4 +1,4 @@
-export default {
+const hardhatConfig = {
   solidity: {
     version: "0.8.27",
     settings: {
@@ -12,3 +12,5 @@ export default {
     },
   },
 };
+
+export default hardhatConfig;

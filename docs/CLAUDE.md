@@ -15,7 +15,8 @@ Key rules:
 - Turbopack is the default. Do not add a `--turbopack` flag.
 - There is no `middleware`; use `proxy` if route interception is introduced.
 - Do not use `next/legacy/image`, AMP, or `next/config`.
-- Tailwind CSS v4 uses `@import "tailwindcss"` in `globals.css`.
+- Global styling is maintained directly in `src/app/globals.css`; Tailwind is
+  not installed.
 - ESLint uses flat config in `eslint.config.mjs`; do not add `.eslintrc`.
 - React 19.2 is in use.
 
@@ -25,7 +26,9 @@ CornShirt is a Web2 + Web3 concert ticketing prototype. Organizers create events
 
 Payments and refunds use Stripe Test Mode in MYR. Ticket ownership is represented by a Ticket NFT through a platform-managed wallet model on local Hardhat.
 
-Status: Web2 surfaces such as auth, role routing, admin dashboard, and some customer/event UI exist. The Web3 platform-wallet layer is not wired yet.
+Status: Auth, server-side role guards, public event discovery, Stripe ticket
+checkout, My Tickets, resale marketplace, QR verification, custodial wallet
+provisioning, and local Hardhat Ticket NFT operations are implemented.
 
 ## Commands
 
@@ -34,15 +37,19 @@ npm run dev
 npm run build
 npm run start
 npm run lint
+npm test
 ```
 
-No test runner, typecheck script, or CI config is currently configured.
+The source test suite uses Node's test runner through `tsx`. Contract integration
+tests are separate because they require a running Hardhat node.
 
 ## Tech Stack
 
-- Frontend: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, lucide-react, recharts, react-qr-code, react-toastify.
+- Frontend: Next.js 16 App Router, React 19, TypeScript, plain CSS,
+  lucide-react, recharts, and react-qr-code.
 - Backend: Next.js API routes, Supabase Auth/Postgres/Storage, Stripe Test Mode.
-- Smart contracts: only the Ticket NFT contract is required. Its source, local deployment, ABI, and address are not currently implemented.
+- Smart contracts: one ERC-721 Ticket NFT contract under `blockchain/`, with a
+  local deployment script and application ABI under `src/abi/`.
 
 ## Architecture
 
@@ -50,17 +57,19 @@ No test runner, typecheck script, or CI config is currently configured.
 
 - Auth is Supabase Auth.
 - `register/page.tsx` calls `supabase.auth.signUp`, then inserts a row into `profiles`. The target customer role value is `customer`.
-- `login/page.tsx` signs in, reads `profiles.role`, and redirects: `admin` to `/admin`, `organizer` to `/organizer`, otherwise to `/user`.
-- `src/app/page.tsx` currently redirects to `/login`; the target design is `/` as public active-event browsing.
-- There is no proxy-based route guard yet. Role gating happens only at login redirect time.
+- `login/page.tsx` signs in, reads `profiles.role`, and redirects to the
+  matching `/admin`, `/organizer`, or `/customer` surface.
+- `src/app/page.tsx` redirects public traffic to `/visitor`.
+- Dashboard layouts and sensitive pages use server-side role authorization.
 
 ### Public and Customer Surfaces
 
-- Target routing: `/` is public active-event browsing.
-- Target routing: `/events/[eventId]` is public event detail.
-- Target routing: `/user` is the logged-in customer dashboard / My Tickets area.
-- Current code still has legacy customer browse/detail files under `src/app/user/`. When adding docs or routes, keep `/user` as authenticated customer account pages.
-- `src/app/user/events.ts` is dummy concert data and should be replaced with real `events` / `ticket_types` queries when implementing the public event flow.
+- `/visitor` provides public active-event browsing.
+- `/events/[eventId]` is the public event detail route.
+- `/customer` and its nested routes provide the authenticated customer
+  dashboard, tickets, transactions, and marketplace.
+- Public and customer event data comes from Supabase; there is no production
+  dummy event catalogue.
 
 ### Supabase Clients
 
@@ -80,7 +89,8 @@ The intended wallet approach is platform-managed:
 - Server configuration should hold the public local Ticket NFT contract address.
 - Add ABI JSON under `src/abi/` when wiring contract interactions.
 
-`src/context/web3.tsx`, `src/utils/web3config.ts`, `src/utils/smartContractAddress.ts`, and `src/utils/toast.ts` are currently empty stubs.
+`src/utils/web3config.ts` currently targets a local Hardhat chain. Converting
+the runtime and deployment scripts to Sepolia is a separate deployment task.
 
 ## Environment Variables
 

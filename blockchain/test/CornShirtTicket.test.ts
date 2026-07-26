@@ -114,7 +114,6 @@ async function main() {
   const contractAddress = contract.address;
 
   const MINTER_ROLE = await contract.read("MINTER_ROLE");
-  const BURNER_ROLE = await contract.read("BURNER_ROLE");
   const ERC721_ID = "0x80ac58cd" as Address;
   const ACCESS_CONTROL_ID = "0x7965db0b" as Address;
 

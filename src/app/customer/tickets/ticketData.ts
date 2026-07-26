@@ -10,7 +10,8 @@ export interface CustomerTicket {
   status: string;
   tokenId: string;
   transactionHash: string | null;
-  qrValue: string;
+  qrValue: string | null;
+  isNftBacked: boolean;
   transferAllowed: boolean;
   hasActiveListing: boolean;
   refundEligible: boolean;
@@ -87,6 +88,16 @@ export function mapCustomerTickets(
       "nft_token_id",
       "contract_token_id",
     );
+    const qrValue = recordString(
+      ticket,
+      "qr_code",
+      "qr_code_data",
+      "qr_value",
+    );
+    const isNftBacked =
+      recordString(ticket, "record_source") === "stripe_nft" &&
+      Boolean(rawTokenId) &&
+      Boolean(qrValue);
 
     return {
       id,
@@ -104,8 +115,8 @@ export function mapCustomerTickets(
         "mint_transaction_hash",
         "tx_hash",
       ),
-      qrValue:
-        recordString(ticket, "qr_code", "qr_code_data", "qr_value") ?? id,
+      qrValue,
+      isNftBacked,
       transferAllowed: recordBoolean(ticketType, "transfer_allowed"),
       hasActiveListing: activeListingTicketIds.has(id),
       refundEligible: recordBoolean(ticket, "refund_eligible"),

@@ -92,6 +92,10 @@ export type EventRow = {
 };
 
 const ACCENTS = ["amber", "gold", "red", "violet", "teal"] as const;
+const TICKET_TYPE_COLLATOR = new Intl.Collator("en", {
+  numeric: true,
+  sensitivity: "base",
+});
 
 function numericValue(value: number | string | null | undefined): number {
   const parsed = Number(value ?? 0);
@@ -117,14 +121,20 @@ function formatEventDate(value: string | null): string {
 }
 
 export function mapEventRow(row: EventRow): Event {
-  const ticketTypes = (row.ticket_types ?? []).map((ticket): TicketType => ({
-    id: ticket.ticket_type_id,
-    name: ticket.type_name?.trim() || "General Admission",
-    price: numericValue(ticket.price),
-    remaining: ticket.remaining_supply ?? 0,
-    purchaseLimit: ticket.purchase_limit ?? 1,
-    transferAllowed: ticket.transfer_allowed ?? false,
-  }));
+  const ticketTypes = (row.ticket_types ?? [])
+    .map((ticket): TicketType => ({
+      id: ticket.ticket_type_id,
+      name: ticket.type_name?.trim() || "General Admission",
+      price: numericValue(ticket.price),
+      remaining: ticket.remaining_supply ?? 0,
+      purchaseLimit: ticket.purchase_limit ?? 1,
+      transferAllowed: ticket.transfer_allowed ?? false,
+    }))
+    .sort(
+      (left, right) =>
+        TICKET_TYPE_COLLATOR.compare(left.name, right.name) ||
+        TICKET_TYPE_COLLATOR.compare(left.id, right.id),
+    );
   const availablePrices = ticketTypes
     .map((ticket) => ticket.price)
     .filter((price) => price > 0);

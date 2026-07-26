@@ -1,256 +1,115 @@
 # CornShirt
 
-CornShirt is a Web2 + Web3 concert ticketing and payment management platform. The system allows organizers to create events, users to top up platform tokens and purchase blockchain-based tickets, and admins to monitor events, users, transactions, and ticket verification records.
+CornShirt is a concert ticketing marketplace built with Next.js, Supabase,
+Stripe, and an ERC-721 Ticket NFT contract. Customers pay in MYR through
+Stripe, receive tickets in platform-managed wallets, can list transferable
+tickets for resale, and present QR codes for organizer verification.
 
-The platform uses an ERC-20 token called **DICKEN** for ticket payment and an ERC-721 **Ticket NFT** to represent unique ticket ownership.
+## Technology
 
----
+- Next.js 16, React 19, and TypeScript
+- Supabase Auth, PostgreSQL, and Storage
+- Stripe Checkout and signed webhooks
+- Viem, Solidity, OpenZeppelin, and Hardhat
+- Plain CSS, Lucide icons, Recharts, and `react-qr-code`
 
-## Tech Stack
+The application uses one smart contract:
+`blockchain/contracts/CornShirtTicket.sol`.
 
-### Frontend
+## Setup
 
-* Next.js
-* React.js
-* TypeScript
-* TailwindCSS
-* react-qr-code
-* React Toastify
-* Wagmi + Viem
-* Reown AppKit
-
-### Backend
-
-* Next.js API Routes
-* Supabase PostgreSQL
-* Supabase Auth
-* Supabase Storage
-* Stripe Test Mode
-
-### Smart Contract
-
-* Solidity
-* DICKEN Token Contract (ERC-20)
-* Ticket NFT Contract (ERC-721)
-* OpenZeppelin
-* Hardhat
-* Hardhat Node
-* Hardhat Ignition
-
----
-
-## Project Setup
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-link>
-cd CornShirt
-```
-
-If the folder name is lowercase, use:
-
-```bash
-cd cornshirt
-```
-
----
-
-### 2. Install Dependencies
+Install the application dependencies:
 
 ```bash
 npm install
 ```
 
----
-
-### 3. Install Required Libraries
-
-If the required libraries are not installed yet, run:
+Install the isolated blockchain dependencies:
 
 ```bash
-npm install react-qr-code react-toastify
-npm install @supabase/supabase-js
-npm install stripe
-npm i @reown/appkit @reown/appkit-adapter-wagmi wagmi viem @tanstack/react-query
-npm install --save-dev hardhat
-npm install --save-dev @openzeppelin/contracts
+cd blockchain
+npm install
+cd ..
 ```
 
----
-
-### 4. Create Environment File
-
-Create a `.env.local` file in the project root.
+Create `.env.local` in the project root. Do not commit this file.
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
 STRIPE_SECRET_KEY=
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-NEXT_PUBLIC_PROJECT_ID=
-NEXT_PUBLIC_DICKEN_TOKEN_CONTRACT_ADDRESS=
-NEXT_PUBLIC_TICKET_NFT_CONTRACT_ADDRESS=
+TICKET_NFT_CONTRACT_ADDRESS=
+PLATFORM_CONTRACT_PRIVATE_KEY=
+HARDHAT_RPC_URL=http://127.0.0.1:8545
+WALLET_ENCRYPTION_KEY=
+
+# Optional organizer rejection email configuration
+GMAIL_USER=
+GMAIL_APP_PASSWORD=
+REJECT_FROM_EMAIL=
 ```
 
-Do not upload `.env.local` to GitHub.
+`WALLET_ENCRYPTION_KEY` must be a base64-encoded 32-byte key.
 
-Make sure `.gitignore` includes:
+Review and run the required database migrations from `scripts/sql` in the
+Supabase SQL Editor. Migrations are not executed automatically by the
+application.
 
-```text
-.env*.local
-```
+## Development
 
----
-
-### 5. Run the Development Server
+Start Next.js:
 
 ```bash
 npm run dev
 ```
 
-Open the project in your browser:
+For local blockchain testing, use separate terminals:
+
+```bash
+npm run hardhat:node
+npm run hardhat:deploy
+```
+
+The local deployment writes the Ticket NFT contract address to `.env.local`.
+
+Stripe webhook forwarding is only required when testing payment workflows:
+
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
+## Verification
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+The contract integration test additionally requires the local Hardhat node:
+
+```bash
+npm run test:contracts
+```
+
+## Repository layout
 
 ```text
-http://localhost:3000
+blockchain/       Ticket NFT contract, deployment script, and contract test
+docs/             Architecture, API, Stripe, and system-testing documentation
+public/           Runtime images and media
+scripts/sql/      Reviewed Supabase migrations
+src/abi/          Ticket NFT ABI
+src/app/          Next.js pages and API routes
+src/components/   Shared UI components
+src/lib/          Supabase, Stripe, wallet, marketplace, and NFT services
+src/utils/        Runtime Web3 configuration
 ```
 
----
-
-## Current Folder Structure
-
-```text
-CornShirt/
-├── .next/
-├── node_modules/
-├── public/
-│
-├── src/
-│   ├── abi/
-│   │
-│   ├── app/
-│   │   ├── favicon.ico
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   │
-│   ├── components/
-│   │
-│   ├── context/
-│   │   └── web3.tsx
-│   │
-│   ├── lib/
-│   │   └── supabaseClient.ts
-│   │
-│   └── utils/
-│       ├── smartContractAddress.ts
-│       ├── toast.ts
-│       └── web3config.ts
-│
-├── .env.local
-├── .gitignore
-├── AGENTS.md
-├── CLAUDE.md
-├── eslint.config.mjs
-├── next-env.d.ts
-├── next.config.ts
-├── package-lock.json
-├── package.json
-├── postcss.config.mjs
-├── README.md
-└── tsconfig.json
-```
-
-## Folder Notes
-
-* `src/app/` stores the main Next.js pages, layouts, and route files.
-* `src/components/` stores reusable UI components.
-* `src/context/` stores global providers such as the Web3 context.
-* `src/lib/` stores external service clients such as Supabase.
-* `src/utils/` stores helper files such as toast messages, Web3 configuration, and smart contract addresses.
-* `src/abi/` stores smart contract ABI JSON files after contract deployment.
-* `public/` stores public images and static assets.
-* `.env.local` stores private environment variables and must not be uploaded to GitHub.
-* `.next/` and `node_modules/` are generated folders and should not be edited manually.
-
----
-
-## Branch Workflow
-
-Recommended workflow:
-
-```bash
-git checkout dev
-git pull origin dev
-git checkout -b your-branch-name
-```
-
-After completing a task:
-
-```bash
-git add .
-git commit -m "Your commit message"
-git push origin your-branch-name
-```
-
-Then create a pull request to merge into `dev`.
-
-Do not push directly to `main`.
-
----
-
-## Important Rules
-
-* Do not upload `.env.local`
-* Do not upload `node_modules`
-* Do not manually edit `.next`
-* Always pull the latest code before starting work
-* Commit small changes regularly
-* Use clear commit messages
-* Test before pushing
-* Merge into `dev` first before `main`
-
----
-
-## Useful Commands
-
-### Start Project
-
-```bash
-npm run dev
-```
-
-### Check Git Status
-
-```bash
-git status
-```
-
-### Pull Latest Code
-
-```bash
-git pull origin dev
-```
-
-### Create New Branch
-
-```bash
-git checkout -b branch-name
-```
-
-### Switch Branch
-
-```bash
-git checkout branch-name
-```
-
-### Add, Commit, Push
-
-```bash
-git add .
-git commit -m "Commit message"
-git push origin branch-name
-```
+Generated folders such as `.next`, `node_modules`, `blockchain/artifacts`, and
+`blockchain/cache` must not be edited or committed.

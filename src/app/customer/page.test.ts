@@ -29,6 +29,7 @@ test("customer route keeps event discovery without duplicate ticket or top-up pr
     source,
     /<EventDiscovery detailBasePath="\/customer\/events"\s*\/>/,
   );
+  assert.match(source, /<main className="customer-dashboard-main">/);
   assert.doesNotMatch(source, /className="home-hero hero-carousel"/);
   assert.doesNotMatch(source, /className="events-section"/);
   assert.match(source, /<Footer\s*\/>/);
@@ -49,6 +50,17 @@ test("customer account controls extend the visitor design responsively", () => {
   assert.match(
     styles,
     /@media \(max-width: 560px\)[\s\S]*?\.customer-header\s*\{/,
+  );
+});
+
+test("customer hero clears the navbar and favors the top of event artwork", () => {
+  assert.match(
+    styles,
+    /@media \(max-width: 560px\)[\s\S]*?\.customer-dashboard-main\s*\{[\s\S]*?padding-top:\s*4px;/,
+  );
+  assert.match(
+    styles,
+    /\.customer-dashboard-main\s+\.hero-slide\s*\{[\s\S]*?background-position:\s*center 35%;/,
   );
 });
 
