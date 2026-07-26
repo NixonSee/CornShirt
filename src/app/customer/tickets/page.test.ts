@@ -20,6 +20,7 @@ test("maps live ticket ownership rows into display tickets", async () => {
         ticket_type_id: "type-1",
         wallet_address: "0x1234567890abcdef",
         status: "valid",
+        record_source: "stripe_nft",
         token_id: "4821",
         transaction_hash: "0xabcdef1234567890",
         qr_code: "cornshirt:ticket-1",
@@ -50,6 +51,7 @@ test("maps live ticket ownership rows into display tickets", async () => {
   assert.equal(result[0].transferAllowed, true);
   assert.equal(result[0].hasActiveListing, false);
   assert.equal(result[0].qrValue, "cornshirt:ticket-1");
+  assert.equal(result[0].isNftBacked, true);
 });
 
 test("eligible tickets expose a resale listing modal", () => {
@@ -58,6 +60,10 @@ test("eligible tickets expose a resale listing modal", () => {
   assert.match(source, /parseResaleMyrPrice/);
   assert.match(source, /\/api\/customer\/marketplace/);
   assert.match(source, /This ticket type does not allow resale/);
+  assert.match(source, /className="ticket-resale-modal"/);
+  assert.match(source, /showCloseButton/);
+  assert.match(source, /data-testid="resale-listing-form"/);
+  assert.match(source, /inputMode="decimal"/);
 });
 
 test("customer ticket page loads only the authenticated wallet tickets", () => {
@@ -82,7 +88,11 @@ test("ticket list renders one ticket-shaped row with QR and safe actions", () =>
   assert.match(source, /<QRCode/);
   assert.match(source, /<Modal/);
   assert.match(source, />\s*View QR\s*</);
-  assert.match(source, />\s*Transfer unavailable\s*</);
+  assert.match(source, /Ticket ID/);
+  assert.match(source, /navigator\.clipboard\.writeText/);
+  assert.doesNotMatch(source, /Full QR value/);
+  assert.match(source, />\s*Transfer\s*</);
+  assert.match(source, /recipientEmail/);
   assert.doesNotMatch(source, /AURORA LIVE|SONIC BLOOM/);
 });
 

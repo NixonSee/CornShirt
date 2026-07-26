@@ -5,14 +5,10 @@ import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
 import { useState } from "react";
 
 import { Button } from "@/components/common";
-
-type VerifyResult =
-  | "valid"
-  | "invalid"
-  | "used"
-  | "refunded"
-  | "cancelled"
-  | "owner_mismatch";
+import {
+  canCheckInTicket,
+  type VerifyResult,
+} from "./ticketScannerState";
 
 interface VerifyTicket {
   id: string;
@@ -34,8 +30,16 @@ const RESULT_LABEL: Record<VerifyResult, string> = {
   used: "Already used",
   refunded: "Refunded",
   cancelled: "Cancelled",
-  owner_mismatch: "Owner mismatch",
+  owner_mismatch: "Ownership check failed",
 };
+
+function resultLabel(response: VerifyResponse) {
+  if (response.onchain === "burned") {
+    return "On-chain ticket unavailable";
+  }
+
+  return RESULT_LABEL[response.result];
+}
 
 function resultVariant(result: VerifyResult): "good" | "bad" | "warn" {
   if (result === "valid") return "good";
@@ -95,12 +99,12 @@ export function TicketScanner() {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
 
       if (!res.ok) {
-        setError(body.error ?? "Ticket could not be marked as used.");
+        setError(body.error ?? "Ticket could not be checked in.");
       } else {
         setMarkedUsed(true);
       }
     } catch {
-      setError("Mark-as-used request failed. Check your connection.");
+      setError("Check-in request failed. Check your connection.");
     } finally {
       setIsMarking(false);
     }
@@ -144,12 +148,12 @@ export function TicketScanner() {
         }}
       >
         <label>
-          <span>Or paste the QR value / ticket id</span>
+          <span>Or paste the ticket ID</span>
           <input
             type="text"
             value={manualValue}
             onChange={(event) => setManualValue(event.target.value)}
-            placeholder="cornshirt:ticket:..."
+            placeholder="Ticket UUID"
           />
         </label>
         <Button
@@ -172,7 +176,7 @@ export function TicketScanner() {
       {response ? (
         <div className="ticket-scanner-result">
           <span className={`status ${resultVariant(response.result)}`}>
-            {RESULT_LABEL[response.result]}
+            {resultLabel(response)}
           </span>
           <dl>
             <div>
@@ -205,8 +209,19 @@ export function TicketScanner() {
                 size={15}
                 style={{ verticalAlign: "-2px", marginRight: 6 }}
               />
-              The on-chain owner does not match the ticket&apos;s wallet on
-              record.
+              The NFT belongs to a different wallet than the ticket record.
+              Do not check in this ticket until ownership is resolved.
+            </p>
+          ) : null}
+          {response.onchain === "burned" ? (
+            <p className="muted dashboard-panel-text">
+              <ShieldAlert
+                size={15}
+                style={{ verticalAlign: "-2px", marginRight: 6 }}
+              />
+              The NFT could not be found on the configured blockchain. Check
+              the blockchain connection and contract deployment before
+              admitting this ticket.
             </p>
           ) : null}
 
@@ -217,17 +232,16 @@ export function TicketScanner() {
                   size={15}
                   style={{ verticalAlign: "-2px", marginRight: 6 }}
                 />
-                Marked as used
+                Checked in
               </span>
-            ) : (
+            ) : canCheckInTicket(response.result, markedUsed) ? (
               <Button
                 onClick={markUsed}
                 loading={isMarking}
-                disabled={response.result !== "valid"}
               >
-                Mark as used
+                Check in ticket
               </Button>
-            )}
+            ) : null}
             <Button
               variant="outline"
               icon={<RefreshCw size={16} />}

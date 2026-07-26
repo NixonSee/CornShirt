@@ -31,19 +31,9 @@ export function getPlatformWalletClient() {
   });
 }
 
-export function getContract(publicClient: ReturnType<typeof getPublicClient>) {
+export function getContract() {
   return {
     address: getContractAddress(),
     abi: getAbi(),
-  };
-}
-
-export function getContractWithWallet(
-  walletClient: ReturnType<typeof getPlatformWalletClient>
-) {
-  return {
-    address: getContractAddress(),
-    abi: getAbi(),
-    functionName: "" as string,
   };
 }

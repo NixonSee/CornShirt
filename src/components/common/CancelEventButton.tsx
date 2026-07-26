@@ -61,9 +61,15 @@ export function CancelEventButton({
           setError("");
         }}
         title={`Cancel "${eventName}"?`}
+        className="cancel-event-modal"
+        showCloseButton
         actions={
           <>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+              disabled={isSubmitting}
+            >
               Keep event
             </Button>
             <Button
@@ -76,18 +82,31 @@ export function CancelEventButton({
           </>
         }
       >
-        <p className="muted dashboard-panel-text">
-          This blocks new ticket purchases and makes every currently active
-          ticket for this event refund-eligible. This cannot be undone.
-        </p>
-        <label>
-          <span>Reason (shown in admin activity logs)</span>
+        <div className="cancel-event-warning">
+          <span className="cancel-event-warning-icon" aria-hidden="true">
+            <Ban size={18} />
+          </span>
+          <div>
+            <strong>This action is permanent</strong>
+            <p>
+              Ticket sales will stop and all active tickets will become
+              eligible for a refund.
+            </p>
+          </div>
+        </div>
+
+        <label className="cancel-event-reason">
+          <span className="cancel-event-reason-label">
+            <strong>Reason for cancellation</strong>
+            <small>Optional</small>
+          </span>
           <textarea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             rows={3}
-            placeholder="e.g. Venue unavailable"
+            placeholder="For example: Venue unavailable"
           />
+          <small>This will be saved in the admin activity logs.</small>
         </label>
         {error ? (
           <p role="alert" className="customer-account-error">

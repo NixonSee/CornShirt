@@ -56,7 +56,8 @@ export async function PUT(
     .from("tickets")
     .update({ refund_eligible: true })
     .eq("event_id", eventId)
-    .eq("status", "active");
+    .in("status", ["active", "valid"])
+    .eq("record_source", "stripe_nft");
 
   if (refundEligibleError) {
     console.error(

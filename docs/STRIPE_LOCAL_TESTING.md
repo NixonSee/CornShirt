@@ -40,7 +40,26 @@ add the folder containing `stripe.exe` to your Windows `Path`.
 
 ## Run locally
 
-In terminal 1:
+Before starting the application, run
+`scripts/sql/2026-07-23-stripe-ticket-marketplace-workflows.sql` once in the
+Supabase SQL Editor. Existing tickets without a confirmed `token_id` remain
+legacy history and cannot be transferred, resold, refunded, or scanned as
+Ticket NFTs.
+
+Start the local Hardhat node and deploy the contract:
+
+```bash
+npm run hardhat:node
+```
+
+In another terminal:
+
+```bash
+npm run hardhat:compile
+npm run hardhat:deploy
+```
+
+Then start Next.js:
 
 ```bash
 npm run dev
@@ -62,8 +81,14 @@ Copy the printed `whsec_...` value into `.env.local`, then restart
 3. Click **Buy ticket** for an available ticket type.
 4. Use Stripe test card `4242 4242 4242 4242`, any future expiry, any CVC.
 5. Watch the Stripe CLI terminal for `checkout.session.completed`.
-6. After the webhook succeeds, check `/customer/tickets` and
+6. After the webhook succeeds, wait for the purchase status banner to confirm
+   NFT delivery, then check `/customer/tickets` and
    `/customer/transactions`.
+
+For resale, create a listing from one wallet-ready customer, log in as a
+different wallet-ready customer, select **Buy with Stripe**, and use the same
+test card. The successful webhook transfers the existing token rather than
+minting a replacement.
 
 `stripe trigger checkout.session.completed` is useful for checking that the
 webhook route accepts signed Stripe events, but it will not finalize a CornShirt

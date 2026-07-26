@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/common";
 
@@ -22,16 +22,22 @@ export default function PurchaseButton({
 }: PurchaseButtonProps) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const idempotencyKey = useRef<string | null>(null);
 
   async function startCheckout() {
     setError("");
     setIsLoading(true);
 
     try {
+      idempotencyKey.current ??= crypto.randomUUID();
       const response = await fetch("/api/customer/tickets/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId, ticketTypeId }),
+        body: JSON.stringify({
+          eventId,
+          ticketTypeId,
+          idempotencyKey: idempotencyKey.current,
+        }),
       });
       const data = (await response.json().catch(() => null)) as {
         url?: string;

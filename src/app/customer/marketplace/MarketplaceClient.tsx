@@ -2,7 +2,7 @@
 
 import { CalendarDays, MapPin, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Button, Modal, SearchBar } from "@/components/common";
 import { formatMyr } from "@/lib/currency";
@@ -20,6 +20,9 @@ export default function MarketplaceClient({
   const [selected, setSelected] = useState<MarketplaceListing | null>(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [purchaseError, setPurchaseError] = useState("");
+  const checkoutKeys = useRef<Record<string, string>>({});
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return listings.filter((listing) => {
@@ -43,6 +46,32 @@ export default function MarketplaceClient({
     }
     setSelected(null);
     router.refresh();
+  }
+
+  async function purchaseListing(listing: MarketplaceListing) {
+    checkoutKeys.current[listing.id] ??= crypto.randomUUID();
+    setBuyingId(listing.id);
+    setPurchaseError("");
+    const response = await fetch(
+      `/api/customer/marketplace/${listing.id}/checkout`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idempotencyKey: checkoutKeys.current[listing.id],
+        }),
+      },
+    );
+    const body = (await response.json().catch(() => ({}))) as {
+      url?: string;
+      error?: string;
+    };
+    if (!response.ok || !body.url) {
+      setBuyingId(null);
+      setPurchaseError(body.error ?? "Resale checkout could not be started.");
+      return;
+    }
+    window.location.assign(body.url);
   }
 
   return (
@@ -69,13 +98,27 @@ export default function MarketplaceClient({
                 <p><MapPin size={16} aria-hidden="true" />{listing.venue}</p>
                 <p className="muted">Seller {shortWallet(listing.sellerWallet)}</p>
                 <strong className="marketplace-price">{formatMyr(listing.price)}</strong>
-                <Button fullWidth disabled title="Stripe MYR payment and NFT transfer are not connected yet">Purchase unavailable</Button>
+                <Button
+                  fullWidth
+                  disabled={listing.isMine}
+                  loading={buyingId === listing.id}
+                  title={listing.isMine ? "You cannot purchase your own listing" : undefined}
+                  onClick={() => purchaseListing(listing)}
+                >
+                  {listing.isMine ? "Your listing" : "Buy with Stripe"}
+                </Button>
                 {listing.isMine ? <Button fullWidth variant="outline" onClick={() => setSelected(listing)}>Cancel listing</Button> : null}
               </div>
             </article>
           ))}
         </section>
       )}
+
+      {purchaseError ? (
+        <p className="customer-account-error" role="alert">
+          {purchaseError}
+        </p>
+      ) : null}
 
       <Modal isOpen={selected !== null} onClose={() => setSelected(null)} title="Cancel resale listing" actions={<><Button variant="outline" onClick={() => setSelected(null)}>Keep listing</Button><Button variant="destructive" loading={isSubmitting} onClick={cancelListing}>Cancel listing</Button></>}>
         <p>This removes the ticket from the active Marketplace. The cancellation remains in resale history.</p>

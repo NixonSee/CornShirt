@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-const walletEncryptionUrl = new URL("./walletEncryption.ts", import.meta.url);
-const {
+import {
   decryptPrivateKey,
   encryptPrivateKey,
   readWalletEncryptionKey,
-} = (await import(walletEncryptionUrl.href)) as typeof import("./walletEncryption");
+} from "./walletEncryption";
 
 const encryptionKey = Buffer.alloc(32, 7);
 const privateKey =

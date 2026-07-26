@@ -12,25 +12,16 @@ type VerifyResult =
   | "cancelled"
   | "owner_mismatch";
 
-function ticketIdFromQr(qr: string): string {
-  const trimmed = qr.trim();
-  const prefix = "cornshirt:ticket:";
-  return trimmed.startsWith(prefix) ? trimmed.slice(prefix.length) : trimmed;
-}
-
 async function logVerification(
   ticketId: string,
-  eventId: string | null,
   verifiedBy: string,
   result: VerifyResult,
-  detail?: string,
 ) {
   const { error } = await supabaseAdmin.from("verification_logs").insert({
     ticket_id: ticketId,
-    event_id: eventId,
     verified_by: verifiedBy,
-    result,
-    detail: detail ?? null,
+    verification_status: result,
+    verified_at: new Date().toISOString(),
   });
   if (error) {
     console.error("Verification log insert failed", error);
@@ -59,15 +50,27 @@ export async function POST(request: Request) {
     return Response.json({ error: "A QR value or ticket id is required." }, { status: 400 });
   }
 
-  const ticketId = ticketIdFromQr(qr);
-
-  const { data: ticket, error: ticketError } = await supabaseAdmin
+  const qrValue = qr.trim();
+  let ticketLookup = await supabaseAdmin
     .from("tickets")
     .select(
-      "ticket_id, event_id, ticket_type_id, status, wallet_address, token_id",
+      "ticket_id, event_id, ticket_type_id, status, wallet_address, token_id, record_source",
     )
-    .eq("ticket_id", ticketId)
+    .eq("qr_code", qrValue)
     .maybeSingle();
+  if (
+    !ticketLookup.data &&
+    /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(qrValue)
+  ) {
+    ticketLookup = await supabaseAdmin
+      .from("tickets")
+      .select(
+        "ticket_id, event_id, ticket_type_id, status, wallet_address, token_id, record_source",
+      )
+      .eq("ticket_id", qrValue)
+      .maybeSingle();
+  }
+  const { data: ticket, error: ticketError } = ticketLookup;
 
   if (ticketError) {
     console.error("Ticket lookup failed", ticketError);
@@ -112,9 +115,13 @@ export async function POST(request: Request) {
     result = "refunded";
   } else if (ticket.status === "cancelled" || ticket.status === "canceled") {
     result = "cancelled";
-  } else if (ticket.status === "active") {
-    if (ticket.token_id === null || ticket.token_id === undefined) {
-      result = "valid";
+  } else if (["active", "valid"].includes(String(ticket.status))) {
+    if (
+      ticket.record_source !== "stripe_nft" ||
+      ticket.token_id === null ||
+      ticket.token_id === undefined
+    ) {
+      result = "invalid";
       onchain = "unminted";
     } else {
       try {
@@ -140,7 +147,7 @@ export async function POST(request: Request) {
     result = "invalid";
   }
 
-  await logVerification(ticket.ticket_id, ticket.event_id, organizerId, result);
+  await logVerification(ticket.ticket_id, organizerId, result);
 
   return Response.json({
     result,

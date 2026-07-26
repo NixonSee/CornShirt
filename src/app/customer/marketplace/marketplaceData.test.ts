@@ -21,10 +21,13 @@ test("allows only transferable active tickets without an active listing", () => 
 
 test("migration enforces one active listing per ticket", () => {
   const sql = readFileSync(
-    new URL("../../../../scripts/sql/create-resale-listings.sql", import.meta.url),
+    new URL(
+      "../../../../scripts/sql/2026-07-23-stripe-ticket-marketplace-workflows.sql",
+      import.meta.url,
+    ),
     "utf8",
   );
-  assert.match(sql, /create table if not exists public\.resale_listings/i);
-  assert.match(sql, /price[^;]+check[^;]+price > 0/i);
+  assert.match(sql, /alter table public\.resale_listings/i);
+  assert.match(sql, /price_sen bigint/i);
   assert.match(sql, /where status = 'active'/i);
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { ReactNode, useEffect } from "react";
 
 interface ModalProps {
@@ -9,9 +10,20 @@ interface ModalProps {
   children: ReactNode;
   actions: ReactNode;
   wide?: boolean;
+  className?: string;
+  showCloseButton?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, children, actions, wide = false }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  actions,
+  wide = false,
+  className = "",
+  showCloseButton = false,
+}: ModalProps) {
   useEffect(() => {
     if (!isOpen) return;
 
@@ -28,10 +40,26 @@ export function Modal({ isOpen, onClose, title, children, actions, wide = false 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
-        className={`modal-card${wide ? " wide" : ""}`}
+        className={[
+          "modal-card",
+          wide ? "wide" : "",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
         onClick={(e) => e.stopPropagation()}
       >
         <h2>{title}</h2>
+        {showCloseButton ? (
+          <button
+            type="button"
+            className="modal-close-button"
+            aria-label="Close modal"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" size={18} />
+          </button>
+        ) : null}
         <div className="modal-body">{children}</div>
         <div className="modal-actions">{actions}</div>
       </div>

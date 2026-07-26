@@ -13,7 +13,7 @@ export async function POST(
 
   const { data: ticket, error: ticketError } = await supabaseAdmin
     .from("tickets")
-    .select("ticket_id, event_id, status")
+    .select("ticket_id, event_id, status, token_id, record_source")
     .eq("ticket_id", ticketId)
     .maybeSingle();
 
@@ -33,6 +33,12 @@ export async function POST(
       { status: 403 },
     );
   }
+  if (ticket.record_source !== "stripe_nft" || ticket.token_id == null) {
+    return Response.json(
+      { error: "Only a confirmed Ticket NFT can be used." },
+      { status: 409 },
+    );
+  }
 
   // Atomic transition guards against double-use races: only rows still
   // "active" are updated, and the affected-row count tells us whether this
@@ -41,7 +47,7 @@ export async function POST(
     .from("tickets")
     .update({ status: "used" })
     .eq("ticket_id", ticketId)
-    .eq("status", "active")
+    .in("status", ["active", "valid"])
     .select("ticket_id");
 
   if (updateError) {
@@ -58,10 +64,9 @@ export async function POST(
 
   await supabaseAdmin.from("verification_logs").insert({
     ticket_id: ticketId,
-    event_id: ticket.event_id,
     verified_by: organizerId,
-    result: "used",
-    detail: "Marked as used at entry.",
+    verification_status: "used",
+    verified_at: new Date().toISOString(),
   });
 
   return Response.json({ status: "used" });

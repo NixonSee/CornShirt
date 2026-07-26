@@ -572,7 +572,7 @@ tr:last-child td {
   z-index: 1;
   display: flex;
   width: min(1180px, calc(100% - 32px));
-  min-height: 660px;
+  min-height: 720px;
   align-items: flex-end;
   margin: 0 auto;
   padding: 96px 0 112px;
@@ -1727,6 +1727,221 @@ tr:last-child td {
   margin-top: 20px;
 }
 
+.modal-overlay:has(.cancel-event-modal) {
+  background: rgba(5, 5, 5, 0.76);
+  backdrop-filter: blur(8px);
+}
+
+.cancel-event-modal {
+  position: relative;
+  width: min(100%, 500px);
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #343434;
+  border-radius: 18px;
+  background: #191919;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.62);
+}
+
+.cancel-event-modal > h2 {
+  margin: 0;
+  padding: 24px 68px 18px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  color: #f6f6f6;
+  font-size: 20px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.cancel-event-modal .modal-close-button {
+  position: absolute;
+  top: 17px;
+  right: 18px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #393939;
+  border-radius: 10px;
+  background: transparent;
+  color: #9d9d9d;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.cancel-event-modal .modal-close-button:hover {
+  border-color: #505050;
+  background: #242424;
+  color: #ffffff;
+}
+
+.cancel-event-modal .modal-close-button:focus-visible {
+  outline: 3px solid rgba(246, 167, 48, 0.24);
+  outline-offset: 2px;
+}
+
+.cancel-event-modal .modal-body {
+  display: grid;
+  gap: 20px;
+  padding: 22px 24px 0;
+}
+
+.cancel-event-warning {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(216, 74, 74, 0.28);
+  border-radius: 12px;
+  background: rgba(216, 74, 74, 0.08);
+}
+
+.cancel-event-warning-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(216, 74, 74, 0.15);
+  color: #ff8f8f;
+}
+
+.cancel-event-warning strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #f4f4f4;
+  font-size: 14px;
+}
+
+.cancel-event-warning p {
+  margin: 0;
+  color: #a9a9a9;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.cancel-event-reason {
+  display: grid;
+  gap: 8px;
+}
+
+.cancel-event-reason-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cancel-event-reason-label strong {
+  color: #eeeeee;
+  font-size: 13px;
+}
+
+.cancel-event-reason-label small {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #8f8f8f;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cancel-event-reason textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid #414141;
+  border-radius: 12px;
+  background: #121212;
+  color: #f5f5f5;
+  padding: 12px 13px;
+  outline: none;
+  font: inherit;
+  line-height: 1.5;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.cancel-event-reason textarea::placeholder {
+  color: #666666;
+}
+
+.cancel-event-reason textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(246, 167, 48, 0.14);
+}
+
+.cancel-event-reason > small {
+  color: #777777;
+  font-size: 11px;
+}
+
+.cancel-event-modal .customer-account-error {
+  margin: 0;
+  border: 1px solid rgba(216, 74, 74, 0.32);
+  border-radius: 10px;
+  background: rgba(216, 74, 74, 0.1);
+  color: #ffaaaa;
+  text-align: left;
+}
+
+.cancel-event-modal .modal-actions {
+  margin-top: 22px;
+  padding: 18px 24px 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.cancel-event-modal .modal-actions > button {
+  min-height: 44px;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+@media (max-width: 560px) {
+  .modal-overlay:has(.cancel-event-modal) {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .cancel-event-modal {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    border-radius: 18px;
+  }
+
+  .cancel-event-modal > h2 {
+    padding: 21px 62px 16px 18px;
+    font-size: 18px;
+  }
+
+  .cancel-event-modal .modal-close-button {
+    top: 14px;
+    right: 14px;
+  }
+
+  .cancel-event-modal .modal-body {
+    padding: 18px 18px 0;
+  }
+
+  .cancel-event-modal .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 16px 18px 18px;
+  }
+
+  .cancel-event-modal .modal-actions > button {
+    width: 100%;
+  }
+}
+
 .pagination {
   display: flex;
   align-items: center;
@@ -1840,6 +2055,20 @@ tr:last-child td {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+.customer-dashboard-main {
+  background: #000000;
+}
+
+.customer-dashboard-main .hero-slide {
+  background-position: center 35%;
+}
+
+@media (max-width: 560px) {
+  .customer-dashboard-main {
+    padding-top: 4px;
+  }
 }
 
 .shell-main {
@@ -3060,9 +3289,14 @@ tr:last-child td {
 
 .ticket-qr-modal {
   display: grid;
+  width: 100%;
   justify-items: center;
   gap: 10px;
   text-align: center;
+}
+
+.ticket-view-modal {
+  width: min(100%, 540px);
 }
 
 .ticket-qr-large {
@@ -3078,6 +3312,272 @@ tr:last-child td {
 .ticket-qr-modal span,
 .ticket-qr-modal p {
   color: var(--muted-foreground);
+}
+
+.ticket-qr-identifiers {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+  margin-top: 8px;
+  text-align: left;
+}
+
+.ticket-qr-identifier {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #383838;
+  border-radius: 12px;
+  background: #141414;
+}
+
+.ticket-qr-identifier > span {
+  color: #8c8c8c;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ticket-qr-identifier code {
+  min-width: 0;
+  color: #eeeeee;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.ticket-qr-identifier .button-outline {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-height: 38px;
+  padding: 8px 11px;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.ticket-qr-modal .customer-account-error {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+
+@media (max-width: 520px) {
+  .ticket-qr-identifier {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-qr-identifier .button-outline {
+    grid-column: 1;
+    grid-row: auto;
+    width: 100%;
+  }
+}
+
+.modal-overlay:has(.ticket-resale-modal) {
+  background: rgba(8, 8, 8, 0.7);
+  backdrop-filter: blur(7px);
+}
+
+.ticket-resale-modal {
+  position: relative;
+  width: min(100%, 480px);
+  overflow: hidden;
+  padding: 0;
+  border-color: #3d3d3d;
+  border-radius: 18px;
+  background: #1c1c1c;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
+}
+
+.ticket-resale-modal > h2 {
+  margin: 0;
+  padding: 24px 70px 18px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  color: #f7f7f7;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.ticket-resale-modal .modal-close-button {
+  position: absolute;
+  top: 16px;
+  right: 17px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #3d3d3d;
+  border-radius: 10px;
+  background: transparent;
+  color: #9a9a9a;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.ticket-resale-modal .modal-close-button:hover {
+  border-color: #5a5a5a;
+  background: #2a2a2a;
+  color: #f2f2f2;
+  transform: none;
+}
+
+.ticket-resale-modal .modal-close-button:focus-visible {
+  outline: 3px solid rgba(246, 167, 48, 0.22);
+  outline-offset: 2px;
+}
+
+.ticket-resale-modal .modal-body {
+  padding: 22px 24px 0;
+}
+
+.resale-listing-form {
+  display: grid;
+  gap: 20px;
+}
+
+.resale-listing-ticket {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #333333;
+}
+
+.resale-listing-eyebrow {
+  display: block;
+  margin-bottom: 6px;
+  color: #8e8e8e;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.resale-listing-ticket strong {
+  display: block;
+  overflow: hidden;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resale-listing-ticket p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 5px;
+  color: #929292;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.resale-listing-ticket p span {
+  color: #5d5d5d;
+}
+
+.resale-price-field {
+  display: grid;
+  gap: 8px;
+}
+
+.resale-price-label {
+  color: #eeeeee;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.resale-price-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 54px;
+  overflow: hidden;
+  border: 1px solid #494949;
+  border-radius: 12px;
+  background: #151515;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.resale-price-control:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(246, 167, 48, 0.14);
+}
+
+.resale-price-control > span {
+  display: grid;
+  align-self: stretch;
+  padding: 0 14px;
+  place-items: center;
+  border-right: 1px solid #353535;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--primary);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.resale-price-control input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  padding: 11px 14px;
+  outline: 0;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.resale-price-control input::placeholder {
+  color: #575757;
+}
+
+.resale-price-field small {
+  color: #7f7f7f;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.resale-listing-note {
+  margin-top: -6px;
+  color: #8a8a8a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ticket-resale-modal .customer-account-error {
+  border: 1px solid rgba(216, 74, 74, 0.38);
+  border-radius: 12px;
+  background: rgba(216, 74, 74, 0.14);
+  color: #ffb1b1;
+  text-align: left;
+}
+
+.ticket-resale-modal .modal-actions {
+  margin-top: 22px;
+  padding: 18px 24px 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.ticket-resale-modal .modal-actions > button {
+  min-width: 120px;
+  min-height: 44px;
+  justify-content: center;
+  border-radius: 10px;
 }
 
 @media (max-width: 900px) {
@@ -3138,6 +3638,39 @@ tr:last-child td {
 
   .ticket-action-row button {
     flex: 1;
+  }
+
+  .modal-overlay:has(.ticket-resale-modal) {
+    padding: 14px;
+  }
+
+  .ticket-resale-modal {
+    border-radius: 16px;
+  }
+
+  .ticket-resale-modal > h2 {
+    padding: 22px 64px 16px 20px;
+    font-size: 19px;
+  }
+
+  .ticket-resale-modal .modal-close-button {
+    top: 13px;
+    right: 14px;
+  }
+
+  .ticket-resale-modal .modal-body {
+    padding: 20px 20px 0;
+  }
+
+  .ticket-resale-modal .modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 16px 20px 20px;
+  }
+
+  .ticket-resale-modal .modal-actions > button {
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -3494,6 +4027,10 @@ tr:last-child td {
 .marketplace-card-body p { display: flex; gap: 7px; align-items: center; margin: 0; }
 .marketplace-verified { display: inline-flex; align-items: center; gap: 6px; color: #10b981; font-size: 12px; font-weight: 800; text-transform: uppercase; }
 .marketplace-price { color: #ff9000; font-size: 22px; }
+.checkout-status { display: grid; gap: 4px; margin: 0 0 22px; padding: 14px 16px; border: 1px solid rgba(255,144,0,.4); border-radius: 12px; background: rgba(255,144,0,.08); }
+.checkout-status span { color: #bbb; font-size: 14px; }
+.checkout-status-good { border-color: rgba(16,185,129,.45); background: rgba(16,185,129,.08); }
+.checkout-status-error { border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.08); }
 @media (max-width: 900px) { .marketplace-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .marketplace-toolbar, .marketplace-grid { grid-template-columns: 1fr; } .marketplace-tabs { overflow-x: auto; } }
 
@@ -8554,5 +9091,698 @@ tr:last-child td {
 
   .ticket-option-heading strong {
     white-space: normal;
+  }
+}
+
+/* ===== Mobile experience polish ===== */
+@media (max-width: 640px) {
+  :where(
+    html:has(.visitor-nav),
+    html:has(.app-shell .side-nav a[href="/customer/tickets"]),
+    html:has(.app-shell .side-nav a[href="/organizer/verify-ticket"].active)
+  ),
+  :where(
+    body:has(.visitor-nav),
+    body:has(.app-shell .side-nav a[href="/customer/tickets"]),
+    body:has(.app-shell .side-nav a[href="/organizer/verify-ticket"].active)
+  ) {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  :where(
+      body:has(.visitor-nav),
+      body:has(.app-shell .side-nav a[href="/customer/tickets"]),
+      body:has(.app-shell .side-nav a[href="/organizer/verify-ticket"].active)
+    )
+    :is(button, a, input, select) {
+    touch-action: manipulation;
+  }
+
+  /* Compact role navigation for customers and the organizer scanner only. */
+  :where(
+      .app-shell:has(.side-nav a[href="/customer/tickets"]),
+      .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    )
+    > .app-topbar:not(.visitor-nav) {
+    min-height: 64px;
+    gap: 10px;
+    padding: 8px 14px;
+  }
+
+  :where(
+      .app-shell:has(.side-nav a[href="/customer/tickets"]),
+      .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    )
+    > .app-topbar:not(.visitor-nav)
+    .app-topbar-brand
+    img {
+    max-width: 148px;
+    max-height: 44px;
+  }
+
+  :where(
+      .app-shell:has(.side-nav a[href="/customer/tickets"]),
+      .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    )
+    > .app-topbar:not(.visitor-nav)
+    .hamburger {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  /* Keep the public header useful without spending three rows on it. */
+  .visitor-nav {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 9px 16px 10px;
+  }
+
+  .visitor-nav-brand {
+    min-width: 0;
+  }
+
+  .visitor-nav-brand img {
+    width: auto;
+    height: auto;
+    max-width: 146px;
+    max-height: 42px;
+  }
+
+  .visitor-nav-actions {
+    display: contents;
+  }
+
+  .visitor-nav-link {
+    grid-column: 2;
+    grid-row: 1;
+    width: auto;
+    padding: 8px 2px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .visitor-nav-actions .visitor-nav-action {
+    min-height: 38px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+  }
+
+  .visitor-nav-actions .visitor-nav-action.button {
+    grid-column: 3;
+    grid-row: 1;
+    min-width: 68px;
+    width: auto;
+  }
+
+  .visitor-nav-actions .visitor-nav-action.button-outline {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  /* Featured event */
+  .home-hero,
+  .home-hero-inner {
+    min-height: clamp(480px, 70svh, 600px);
+  }
+
+  .home-hero-inner {
+    width: 100%;
+    align-items: flex-end;
+    padding: 64px 58px 98px 38px;
+  }
+
+  .home-hero-copy {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .home-hero h1 {
+    max-width: 100%;
+    margin-top: 8px;
+    font-size: clamp(30px, 9vw, 40px);
+    line-height: 1.02;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+
+  .home-hero-copy .button-row {
+    margin-top: 20px;
+  }
+
+  .hero-slide::after {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.08) 20%,
+        rgba(0, 0, 0, 0.3) 52%,
+        rgba(0, 0, 0, 0.9) 100%
+      );
+  }
+
+  .carousel-arrow {
+    bottom: 22px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .carousel-arrow-left {
+    left: 12px;
+  }
+
+  .carousel-arrow-right {
+    right: 12px;
+  }
+
+  .carousel-dots {
+    bottom: 37px;
+    max-width: calc(100% - 116px);
+    gap: 6px;
+  }
+
+  .carousel-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .carousel-dot.active {
+    width: 24px;
+  }
+
+  /* Event discovery */
+  .events-section {
+    padding: 38px 16px 56px;
+  }
+
+  .events-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .events-toolbar h2 {
+    font-size: clamp(32px, 10vw, 42px);
+  }
+
+  .event-controls {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .search-box input,
+  .filter-box select {
+    min-height: 48px;
+  }
+
+  .event-grid {
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .event-card {
+    border-radius: 18px;
+  }
+
+  .event-media {
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+  }
+
+  .event-body {
+    min-height: 0;
+    padding: 18px;
+  }
+
+  .event-body h3 {
+    margin-bottom: 14px;
+    font-size: 23px;
+  }
+
+  .event-buy-button {
+    margin-top: 22px;
+  }
+
+  /* Loading, authentication, and shared page containers */
+  body:has(.visitor-nav) .state-page,
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .state-page {
+    min-height: 100svh;
+    padding: 16px;
+  }
+
+  body:has(.visitor-nav) .state-card,
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .state-card,
+  .auth-card {
+    width: min(100%, 440px);
+    max-width: calc(100vw - 32px);
+  }
+
+  .auth-page {
+    min-height: 100svh;
+    padding: 16px;
+  }
+
+  .auth-card {
+    padding: 24px 20px;
+  }
+
+  .auth-card h1,
+  body:has(.visitor-nav) .state-card h1,
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .state-card h1 {
+    font-size: 31px;
+  }
+
+  .login-password-heading {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  :where(
+      .app-shell:has(.side-nav a[href="/customer/tickets"]),
+      .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    )
+    :is(.shell-main, .main) {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 16px;
+  }
+
+  .my-tickets-page,
+  .marketplace-page,
+  .transactions-page {
+    width: 100%;
+    padding-top: 28px;
+    padding-bottom: 56px;
+  }
+
+  .ticket-page-heading,
+  .marketplace-heading,
+  .transactions-heading {
+    margin-bottom: 22px;
+  }
+
+  .ticket-page-heading h1,
+  .marketplace-heading h1,
+  .transactions-heading h1 {
+    font-size: clamp(32px, 10vw, 42px);
+  }
+
+  /* Customer ticket collection */
+  .ticket-stack {
+    gap: 16px;
+  }
+
+  .ticket-pass {
+    border-radius: 18px;
+  }
+
+  .ticket-pass-stub,
+  .ticket-pass-details,
+  .ticket-pass-actions {
+    padding: 20px 18px;
+  }
+
+  .ticket-pass-stub h2 {
+    font-size: clamp(25px, 8vw, 32px);
+  }
+
+  .ticket-pass-actions {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .ticket-action-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ticket-action-row button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Marketplace and transactions */
+  .marketplace-toolbar {
+    gap: 12px;
+  }
+
+  .marketplace-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .marketplace-tabs button {
+    min-width: 0;
+    padding-inline: 10px;
+  }
+
+  .marketplace-grid {
+    gap: 14px;
+  }
+
+  .marketplace-art {
+    height: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  .marketplace-card-body {
+    padding: 16px;
+  }
+
+  .transaction-row {
+    gap: 10px 14px;
+    padding: 15px;
+  }
+
+  .transaction-filters {
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .transaction-row .mono,
+  .ticket-transaction {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .pagination-pages {
+    justify-content: center;
+  }
+
+  /* Modals stay within the visual viewport and keep actions thumb-friendly. */
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .modal-overlay {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .modal-card,
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .modal-card.wide {
+    width: 100%;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100svh - 24px);
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .modal-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .app-shell:has(.side-nav a[href="/customer/tickets"])
+    .modal-actions
+    > button,
+  .app-shell:has(.side-nav a[href="/customer/tickets"])
+    .modal-actions
+    > a {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ticket-qr-large {
+    max-width: 100%;
+  }
+
+  .ticket-qr-large svg {
+    width: min(210px, 62vw);
+    height: auto;
+  }
+
+  /* Event details and seat selection */
+  .event-detail-hero {
+    min-height: clamp(490px, 66svh, 580px);
+    background-position: center top;
+  }
+
+  .event-detail-hero-inner {
+    width: 100%;
+    padding: 92px 18px 48px;
+  }
+
+  .event-detail-hero h1 {
+    font-size: clamp(35px, 11vw, 46px);
+    line-height: 0.98;
+  }
+
+  .event-detail-meta {
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .event-detail-content {
+    width: 100%;
+    padding: 28px 14px 56px;
+  }
+
+  .event-detail-panel {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .event-panel-heading {
+    gap: 10px;
+  }
+
+  .event-panel-heading > span {
+    align-self: flex-start;
+  }
+
+  .event-seatmap-panel .sm-frame {
+    padding: 8px;
+  }
+
+  .ticket-option-card {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .ticket-option-meta {
+    gap: 8px 12px;
+    margin: 13px 0 16px;
+  }
+
+  /* About page typography should read as editorial, not oversized. */
+  .about-hero {
+    padding: 52px 0 54px;
+  }
+
+  .about-hero h1 {
+    margin-block: 16px 18px;
+    font-size: clamp(42px, 13vw, 54px);
+    line-height: 0.94;
+    overflow-wrap: anywhere;
+  }
+
+  .about-ticket-visual {
+    min-height: 230px;
+  }
+
+  .about-ticket-card {
+    width: min(94%, 360px);
+  }
+
+  .about-section {
+    padding-block: 54px;
+  }
+
+  .about-value-card {
+    min-height: 0;
+    padding: 22px;
+  }
+
+  .site-footer,
+  :where(
+      .app-shell:has(.side-nav a[href="/customer/tickets"]),
+      .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    )
+    > .shell-footer {
+    padding: 20px 16px;
+  }
+
+  :where(
+      .app-shell:has(.side-nav a[href="/customer/tickets"]),
+      .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    )
+    .table-card {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Organizer QR scanner: no other organizer page receives these rules. */
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .top-row {
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .top-row
+    h1 {
+    font-size: clamp(32px, 10vw, 42px);
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .panel {
+    padding: 16px;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner {
+    display: grid;
+    min-width: 0;
+    gap: 16px;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-camera {
+    width: 100%;
+    max-width: 520px;
+    overflow: hidden;
+    margin-inline: auto;
+    border-radius: 16px;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-manual {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-manual
+    label {
+    display: grid;
+    min-width: 0;
+    gap: 7px;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-manual
+    input {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    border: 1px solid var(--input);
+    border-radius: 12px;
+    background: var(--secondary);
+    color: var(--primary-foreground);
+    padding: 11px 12px;
+    outline: none;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-manual
+    input:focus {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px rgba(246, 167, 48, 0.2);
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-manual
+    .button {
+    width: 100%;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-result {
+    display: grid;
+    min-width: 0;
+    gap: 14px;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-result
+    dl {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-result
+    dl
+    div {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-result
+    :is(dt, dd) {
+    overflow-wrap: anywhere;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-result
+    dt {
+    margin-bottom: 4px;
+    color: var(--muted-foreground);
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-result
+    dd {
+    margin: 0;
+    font-weight: 800;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .app-shell:has(.side-nav a[href="/organizer/verify-ticket"].active)
+    .ticket-scanner-actions
+    .button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .visitor-nav {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    padding-inline: 12px;
+  }
+
+  .visitor-nav-brand img {
+    max-width: 128px;
+  }
+
+  .visitor-nav-link,
+  .visitor-nav-actions .visitor-nav-action {
+    font-size: 0.72rem;
+  }
+
+  .home-hero-inner {
+    padding-inline: 34px 52px;
+  }
+
+  .ticket-action-row,
+  .app-shell:has(.side-nav a[href="/customer/tickets"]) .modal-actions {
+    grid-template-columns: 1fr;
   }
 }
