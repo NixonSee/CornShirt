@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "CornShirt",
   description: "Concert ticketing platform",
+  icons: {
+    icon: [{ url: "/CornShirt Logo.jpeg", type: "image/jpeg" }],
+  },
 };
 
 export default function RootLayout({
