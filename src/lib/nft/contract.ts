@@ -1,11 +1,11 @@
 import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { hardhat } from "viem/chains";
 import artifact from "@/abi/CornShirtTicket.json";
 import {
-  HARDHAT_RPC_URL,
+  WEB3_CHAIN,
   getContractAddress,
   getPlatformPrivateKey,
+  getWeb3RpcUrl,
 } from "@/utils/web3config";
 
 const abi = artifact.abi;
@@ -17,8 +17,8 @@ function getAbi(): NftAbi {
 
 export function getPublicClient() {
   return createPublicClient({
-    chain: hardhat,
-    transport: http(HARDHAT_RPC_URL),
+    chain: WEB3_CHAIN,
+    transport: http(getWeb3RpcUrl()),
   });
 }
 
@@ -26,8 +26,8 @@ export function getPlatformWalletClient() {
   const account = privateKeyToAccount(getPlatformPrivateKey());
   return createWalletClient({
     account,
-    chain: hardhat,
-    transport: http(HARDHAT_RPC_URL),
+    chain: WEB3_CHAIN,
+    transport: http(getWeb3RpcUrl()),
   });
 }
 
