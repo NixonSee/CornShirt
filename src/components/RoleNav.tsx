@@ -67,18 +67,16 @@ export default function RoleNav({ role }: RoleNavProps) {
           />
         </Link>
 
-        <div className="app-topbar-actions">
-          <button
-            type="button"
-            className="hamburger"
-            aria-label="Open navigation menu"
-            aria-expanded={open}
-            aria-controls="role-nav-drawer"
-            onClick={() => setOpen(true)}
-          >
-            <Menu size={26} />
-          </button>
-        </div>
+        <button
+          type="button"
+          className="hamburger"
+          aria-label="Open navigation menu"
+          aria-expanded={open}
+          aria-controls="role-nav-drawer"
+          onClick={() => setOpen(true)}
+        >
+          <Menu size={26} />
+        </button>
       </header>
 
       <div
