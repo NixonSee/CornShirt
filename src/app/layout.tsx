@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "CornShirt",
   description: "Concert ticketing platform",
   icons: {
-    icon: [{ url: "/CornShirt Logo.jpeg", type: "image/jpeg" }],
+    icon: [{ url: "/Cornshirt logo.png", type: "image/png" }],
   },
 };
 
