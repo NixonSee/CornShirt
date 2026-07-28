@@ -1,83 +1,262 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createPublicClient, createWalletClient, http, getContract } from "viem";
+
+import dotenv from "dotenv";
+import {
+  createPublicClient,
+  createWalletClient,
+  formatEther,
+  getContract,
+  http,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { hardhat } from "viem/chains";
+import { sepolia } from "viem/chains";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const RPC_URL = "http://127.0.0.1:8545";
-const DEPLOYER_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+// .env.local is in the main CornShirt folder.
+const envPath = path.resolve(__dirname, "..", "..", ".env.local");
+
+dotenv.config({
+  path: envPath,
+  quiet: true,
+  override: true,
+});
+
+const rpcUrl = process.env.SEPOLIA_RPC_URL?.trim();
+const rawPrivateKey = process.env.SEPOLIA_PRIVATE_KEY?.trim();
+const checkOnly = process.argv.includes("--check");
+
+if (!rpcUrl) {
+  throw new Error("SEPOLIA_RPC_URL is missing from .env.local");
+}
+
+let parsedRpcUrl;
+
+try {
+  parsedRpcUrl = new URL(rpcUrl);
+} catch {
+  throw new Error("SEPOLIA_RPC_URL must be a valid HTTP or HTTPS URL.");
+}
+
+if (!["http:", "https:"].includes(parsedRpcUrl.protocol)) {
+  throw new Error("SEPOLIA_RPC_URL must use HTTP or HTTPS.");
+}
+
+if (
+  /YOUR[_-]?(ALCHEMY[_-]?)?API[_-]?KEY|REPLACE[_-]?ME|PLACEHOLDER/i.test(
+    parsedRpcUrl.href,
+  )
+) {
+  throw new Error(
+    "SEPOLIA_RPC_URL still contains a placeholder. Copy the complete Sepolia HTTP endpoint from your Alchemy app's Endpoints page.",
+  );
+}
+
+if (!rawPrivateKey) {
+  throw new Error("SEPOLIA_PRIVATE_KEY is missing from .env.local");
+}
+
+// MetaMask may export the key without 0x.
+const deployerKey = rawPrivateKey.startsWith("0x")
+  ? rawPrivateKey
+  : `0x${rawPrivateKey}`;
+
+if (!/^0x[a-fA-F0-9]{64}$/.test(deployerKey)) {
+  throw new Error(
+    "SEPOLIA_PRIVATE_KEY must contain exactly 64 hexadecimal characters.",
+  );
+}
 
 async function main() {
+  const deployerAccount = privateKeyToAccount(deployerKey);
+
   const publicClient = createPublicClient({
-    chain: hardhat,
-    transport: http(RPC_URL),
+    chain: sepolia,
+    transport: http(rpcUrl),
   });
 
-  const deployerAccount = privateKeyToAccount(DEPLOYER_KEY);
   const walletClient = createWalletClient({
     account: deployerAccount,
-    chain: hardhat,
-    transport: http(RPC_URL),
+    chain: sepolia,
+    transport: http(rpcUrl),
   });
 
+  let chainId;
+  let balance;
+
+  try {
+    chainId = await publicClient.getChainId();
+    balance = await publicClient.getBalance({
+      address: deployerAccount.address,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+
+    if (/authenticated|unauthorized|forbidden|api key|status: 401/i.test(message)) {
+      throw new Error(
+        "Sepolia RPC authentication failed. Copy the complete Sepolia HTTP endpoint from your Alchemy app's Endpoints page into SEPOLIA_RPC_URL.",
+      );
+    }
+
+    throw new Error(
+      "Could not connect to Sepolia through SEPOLIA_RPC_URL. Verify the endpoint and your internet connection.",
+    );
+  }
+
+  if (chainId !== sepolia.id) {
+    throw new Error(
+      `SEPOLIA_RPC_URL returned chain ID ${chainId}; expected ${sepolia.id} for Sepolia.`,
+    );
+  }
+
+  console.log("Network: Sepolia");
   console.log("Deploying account:", deployerAccount.address);
+  console.log("Sepolia ETH balance:", formatEther(balance));
 
-  // Read artifact for ABI + bytecode
+  if (checkOnly) {
+    console.log("\nOK: RPC authentication, Sepolia network, and private key format are valid.");
+    if (balance === 0n) {
+      console.log("Warning: this wallet needs Sepolia ETH before deployment.");
+    }
+    return;
+  }
+
+  if (balance === 0n) {
+    throw new Error(
+      "The deployment wallet has no Sepolia ETH for deployment gas.",
+    );
+  }
+
+  // Read the Hardhat-generated ABI and bytecode.
   const artifactPath = path.resolve(
-    __dirname, "..", "artifacts", "contracts",
-    "CornShirtTicket.sol", "CornShirtTicket.json",
+    __dirname,
+    "..",
+    "artifacts",
+    "contracts",
+    "CornShirtTicket.sol",
+    "CornShirtTicket.json",
   );
-  const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf-8"));
 
-  const hash = await walletClient.deployContract({
+  if (!fs.existsSync(artifactPath)) {
+    throw new Error(
+      `Contract artifact was not found at ${artifactPath}. Run "npx hardhat compile" first.`,
+    );
+  }
+
+  const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
+
+  if (
+    typeof artifact.bytecode !== "string" ||
+    !artifact.bytecode.startsWith("0x") ||
+    artifact.bytecode === "0x"
+  ) {
+    throw new Error("The contract artifact does not contain valid bytecode.");
+  }
+
+  console.log("\nDeploying CornShirtTicket...");
+
+  const transactionHash = await walletClient.deployContract({
+    account: deployerAccount,
     abi: artifact.abi,
     bytecode: artifact.bytecode,
+
+    // Add args: [...] here only if the Solidity constructor
+    // requires external constructor arguments.
   });
 
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  console.log("Deployment transaction:", transactionHash);
+  console.log(
+    "View transaction:",
+    `https://sepolia.etherscan.io/tx/${transactionHash}`,
+  );
+
+  const receipt = await publicClient.waitForTransactionReceipt({
+    hash: transactionHash,
+    confirmations: 1,
+  });
+
+  if (receipt.status !== "success") {
+    throw new Error("The deployment transaction was reverted.");
+  }
+
   const contractAddress = receipt.contractAddress;
 
   if (!contractAddress) {
-    throw new Error("Deployment failed — no contract address in receipt.");
+    throw new Error("Deployment succeeded but no contract address was found.");
   }
 
-  console.log("CornShirtTicket deployed to:", contractAddress);
+  console.log("\nCornShirtTicket deployed to:", contractAddress);
+  console.log(
+    "View contract:",
+    `https://sepolia.etherscan.io/address/${contractAddress}`,
+  );
 
-  // Read roles from the contract
+  // Verify contract roles.
   const contract = getContract({
     address: contractAddress,
     abi: artifact.abi,
-    client: { public: publicClient, wallet: walletClient },
+    client: {
+      public: publicClient,
+      wallet: walletClient,
+    },
   });
 
+  const defaultAdminRole = await contract.read.DEFAULT_ADMIN_ROLE();
   const minterRole = await contract.read.MINTER_ROLE();
   const burnerRole = await contract.read.BURNER_ROLE();
-  console.log("MINTER_ROLE:", minterRole);
-  console.log("BURNER_ROLE:", burnerRole);
-  console.log("Deployer has DEFAULT_ADMIN_ROLE, MINTER_ROLE, and BURNER_ROLE");
 
-  // Write to .env.local
-  const envPath = path.resolve(__dirname, "..", "..", ".env.local");
+  const [hasAdminRole, hasMinterRole, hasBurnerRole] = await Promise.all([
+    contract.read.hasRole([defaultAdminRole, deployerAccount.address]),
+    contract.read.hasRole([minterRole, deployerAccount.address]),
+    contract.read.hasRole([burnerRole, deployerAccount.address]),
+  ]);
+
+  console.log("\nRole verification:");
+  console.log("DEFAULT_ADMIN_ROLE:", hasAdminRole);
+  console.log("MINTER_ROLE:", hasMinterRole);
+  console.log("BURNER_ROLE:", hasBurnerRole);
+
+  if (!hasAdminRole || !hasMinterRole || !hasBurnerRole) {
+    throw new Error(
+      "The deployer was not granted all required contract roles.",
+    );
+  }
+
+  // Update only the deployed contract address in .env.local.
   let envContent = "";
-  try {
-    envContent = fs.readFileSync(envPath, "utf-8");
-  } catch {
-    // file does not exist yet
+
+  if (fs.existsSync(envPath)) {
+    envContent = fs.readFileSync(envPath, "utf8");
   }
 
   const lines = envContent
-    .split("\n")
-    .filter((l) => !l.startsWith("TICKET_NFT_CONTRACT_ADDRESS="));
-  lines.push(`TICKET_NFT_CONTRACT_ADDRESS=${contractAddress}`);
-  fs.writeFileSync(envPath, lines.join("\n").trim() + "\n");
+    .split(/\r?\n/)
+    .filter(
+      (line) =>
+        line.trim() !== "" &&
+        !line.startsWith("TICKET_NFT_CONTRACT_ADDRESS="),
+    );
 
-  console.log(`\n✔ TICKET_NFT_CONTRACT_ADDRESS written to .env.local`);
+  lines.push(`TICKET_NFT_CONTRACT_ADDRESS=${contractAddress}`);
+
+  fs.writeFileSync(envPath, `${lines.join("\n")}\n`, "utf8");
+
+  console.log(
+    "\n✔ TICKET_NFT_CONTRACT_ADDRESS was written to .env.local",
+  );
+  console.log("✔ Sepolia deployment completed successfully");
 }
 
 main().catch((error) => {
-  console.error(error);
+  console.error("\nDeployment failed:");
+
+  if (error instanceof Error) {
+    console.error(error.message);
+  } else {
+    console.error(error);
+  }
+
   process.exitCode = 1;
 });

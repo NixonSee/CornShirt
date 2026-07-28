@@ -11,6 +11,7 @@ import {
   Contact,
   Inbox,
   Store,
+  UserRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,6 +47,7 @@ export const NAV_BY_ROLE: Record<Role, RoleNavConfig> = {
       { href: "/organizer/create-event", label: "Create Event", icon: PlusCircle },
       { href: "/organizer/events", label: "My Events", icon: CalendarDays },
       { href: "/organizer/verify-ticket", label: "Verify Ticket", icon: QrCode },
+      { href: "/organizer/profile", label: "Profile", icon: UserRound },
     ],
   },
   admin: {
@@ -57,6 +59,7 @@ export const NAV_BY_ROLE: Record<Role, RoleNavConfig> = {
       { href: "/admin/users", label: "Users", icon: Contact },
       { href: "/admin/partner-applications", label: "Applications", icon: Inbox },
       { href: "/admin/events", label: "All Events", icon: ListChecks },
+      { href: "/admin/profile", label: "Profile", icon: UserRound },
     ],
   },
   customer: {
@@ -66,6 +69,7 @@ export const NAV_BY_ROLE: Record<Role, RoleNavConfig> = {
       { href: "/customer/tickets", label: "My Tickets", icon: Ticket },
       { href: "/customer/marketplace", label: "Marketplace", icon: Store },
       { href: "/customer/transactions", label: "Transactions", icon: Receipt },
+      { href: "/customer/profile", label: "Profile", icon: UserRound },
     ],
   },
 };

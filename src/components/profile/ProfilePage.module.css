@@ -1,0 +1,352 @@
+.profilePage {
+  width: min(940px, 100%);
+  margin: 0 auto;
+  padding: 40px 22px 64px;
+}
+
+.pageHeading {
+  margin-bottom: 22px;
+}
+
+.pageHeading h1 {
+  margin: 0;
+  padding: 0;
+  font-size: clamp(30px, 4vw, 38px);
+  letter-spacing: -0.03em;
+}
+
+.pageHeading p {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+.accountPanel {
+  overflow: hidden;
+  border: 1px solid #303030;
+  border-radius: 12px;
+  background: #171717;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 26px;
+  border-bottom: 1px solid #303030;
+}
+
+.identity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 15px;
+}
+
+.avatar {
+  display: grid;
+  flex: 0 0 54px;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid rgba(246, 167, 48, 0.42);
+  border-radius: 50%;
+  background: rgba(246, 167, 48, 0.09);
+  color: var(--primary);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.heroCopy {
+  min-width: 0;
+}
+
+.heroCopy h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.heroCopy p {
+  overflow: hidden;
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  text-overflow: ellipsis;
+}
+
+.profileStatus {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.layout {
+  padding: 0 26px 7px;
+}
+
+.card {
+  padding: 24px 0;
+  border-bottom: 1px solid #303030;
+}
+
+.cardHeading {
+  margin-bottom: 15px;
+}
+
+.cardHeading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.cardHeading p {
+  max-width: 620px;
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.detailList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid #2b2b2b;
+}
+
+.detailList > div {
+  min-width: 0;
+  padding: 13px 18px 13px 0;
+  border-bottom: 1px solid #2b2b2b;
+}
+
+.detailList > div:nth-child(even) {
+  padding-right: 0;
+  padding-left: 18px;
+  border-left: 1px solid #2b2b2b;
+}
+
+.detailList dt {
+  margin-bottom: 4px;
+  color: #7d7d7d;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.detailList dd {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: #ededed;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.detailList dd.mono {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.passwordForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 14px;
+}
+
+.passwordForm label {
+  display: grid;
+  gap: 7px;
+  color: #d7d7d7;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.passwordForm input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  background: #101010;
+  color: var(--foreground);
+  outline: none;
+}
+
+.passwordForm input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(246, 167, 48, 0.1);
+}
+
+.passwordButton {
+  grid-column: 1 / -1;
+  width: fit-content;
+  min-width: 160px;
+  border-radius: 8px;
+}
+
+.formMessage {
+  grid-column: 1 / -1;
+  padding: 9px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.error {
+  background: rgba(216, 74, 74, 0.14);
+  color: #ffaaaa;
+}
+
+.success {
+  background: rgba(54, 181, 106, 0.14);
+  color: #7be0a5;
+}
+
+.documentList {
+  border-top: 1px solid #2b2b2b;
+}
+
+.document {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid #2b2b2b;
+}
+
+.documentIcon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(246, 167, 48, 0.09);
+  color: var(--primary);
+}
+
+.document > div {
+  display: grid;
+  min-width: 0;
+}
+
+.document strong {
+  font-size: 13px;
+}
+
+.document > div span,
+.document small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document a {
+  padding: 6px 10px;
+  border: 1px solid #3b3b3b;
+  border-radius: 7px;
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.document a:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.documentUnavailable,
+.empty {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.securityNote {
+  padding: 17px 0 11px;
+  color: #777;
+}
+
+.securityNote strong {
+  color: #bdbdbd;
+  font-size: 13px;
+}
+
+.securityNote p {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+@media (max-width: 620px) {
+  .profilePage {
+    padding: 26px 14px 44px;
+  }
+
+  .pageHeading {
+    margin-bottom: 17px;
+  }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .profileStatus {
+    justify-self: start;
+  }
+
+  .layout {
+    padding: 0 20px 6px;
+  }
+
+  .detailList,
+  .passwordForm {
+    grid-template-columns: 1fr;
+  }
+
+  .detailList > div,
+  .detailList > div:nth-child(even) {
+    padding: 12px 0;
+    border-left: 0;
+  }
+
+  .passwordButton,
+  .formMessage {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .avatar {
+    flex-basis: 46px;
+    width: 46px;
+    height: 46px;
+    font-size: 15px;
+  }
+
+  .heroCopy h2 {
+    font-size: 18px;
+  }
+
+  .passwordButton {
+    width: 100%;
+  }
+
+  .document {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .document a,
+  .documentUnavailable {
+    grid-column: 2;
+    width: fit-content;
+  }
+}
