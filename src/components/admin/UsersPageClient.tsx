@@ -112,6 +112,8 @@ export function UsersPageClient({ users, currentUserId }: Props) {
           gap: 12,
           marginBottom: 18,
           flexWrap: "wrap",
+          position: "relative",
+          zIndex: 10,
         }}
       >
         <SearchBar
