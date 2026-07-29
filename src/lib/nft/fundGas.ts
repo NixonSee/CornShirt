@@ -5,8 +5,8 @@ import {
 } from "./contract";
 import { parseEther, type Address } from "viem";
 
-const GAS_FUND_THRESHOLD = parseEther("0.01");
-const GAS_FUND_AMOUNT = parseEther("0.1");
+const GAS_FUND_THRESHOLD = parseEther("0.001");
+const GAS_FUND_AMOUNT = parseEther("0.002");
 
 export type FundGasDeps = {
   publicClient: {
