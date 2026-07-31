@@ -133,16 +133,41 @@ test("public API and details query only active Supabase events", () => {
 test("visitor keeps the shared public-navbar dimensions", () => {
   const pageSource = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
   const navSource = readFileSync(
-    new URL("../../components/VisitorNav.tsx", import.meta.url),
+    new URL("../../components/nav/SiteNav.tsx", import.meta.url),
     "utf8",
   );
 
   assert.match(pageSource, /import VisitorNav from "@\/components\/VisitorNav"/);
   assert.match(pageSource, /<VisitorNav\s*\/>/);
-  assert.match(navSource, /className="app-topbar visitor-nav"/);
-  assert.match(navSource, /className="app-topbar-brand visitor-nav-brand"/);
-  assert.match(navSource, /className="app-topbar-actions visitor-nav-actions"/);
+  // The public bar still carries every legacy class globals.css keys off.
+  assert.match(navSource, /"app-topbar",/);
+  assert.match(navSource, /isVisitor && "visitor-nav"/);
+  assert.match(navSource, /app-topbar-brand sitenav-brand/);
+  assert.match(navSource, /visitor-nav-brand/);
+  assert.match(navSource, /app-topbar-actions sitenav-actions/);
+  assert.match(navSource, /visitor-nav-actions/);
   assert.match(navSource, /width=\{190\}[\s\S]*height=\{50\}/);
+});
+
+test("SiteNav preserves the globals.css route-scoping contract", () => {
+  const navSource = readFileSync(
+    new URL("../../components/nav/SiteNav.tsx", import.meta.url),
+    "utf8",
+  );
+  const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
+
+  // ~500 rules scope per-page styling via
+  // `.app-shell:has(.side-nav a[href="..."].active)`. If the drawer stops
+  // rendering that markup, admin/organizer/customer styling dies silently.
+  assert.match(navSource, /className="side-nav"/);
+  assert.match(navSource, /isActive\(href\) \? "active" : undefined/);
+  // The drawer must stay mounted at every breakpoint, never conditionally rendered.
+  assert.doesNotMatch(navSource, /open &&\s*\(?\s*<aside/);
+  assert.doesNotMatch(navSource, /open \?\s*\(?\s*<aside/);
+  // The centre pill must not reuse `.side-nav`, or it inherits drawer styling
+  // and creates a second set of `.active` links in the tree.
+  assert.doesNotMatch(navSource, /className="sitenav-pill side-nav"/);
+  assert.match(styles, /\.app-shell:has\(\.side-nav a\[href="\/admin\/events"\]\.active\)/);
 });
 
 test("event section retains its compact dark responsive treatment", () => {
@@ -171,15 +196,16 @@ test("visitor and customer event routes own separate navigation", () => {
 
   const publicSource = readFileSync(publicUrl, "utf8");
   const customerSource = readFileSync(customerUrl, "utf8");
+  // Public link hrefs moved into VISITOR_NAV when the navbars were unified.
   const visitorNavSource = readFileSync(
-    new URL("../../components/VisitorNav.tsx", import.meta.url),
+    new URL("../../components/navConfig.ts", import.meta.url),
     "utf8",
   );
 
   assert.doesNotMatch(publicSource, /getVerifiedRole|RoleNav/);
   assert.match(publicSource, /<VisitorNav loginHref=\{loginHref\}\s*\/>/);
-  assert.match(visitorNavSource, /href="\/visitor\/apply"/);
-  assert.match(visitorNavSource, /href="\/visitor\/about"/);
+  assert.match(visitorNavSource, /href: "\/visitor\/apply"/);
+  assert.match(visitorNavSource, /href: "\/visitor\/about"/);
   assert.match(publicSource, /withEventReturnTo\("\/login"/);
   assert.match(customerSource, /requireRole\(\["customer", "user"\]\)/);
   assert.match(customerSource, /<RoleNav role="customer"\s*\/>/);

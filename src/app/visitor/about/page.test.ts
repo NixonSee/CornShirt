@@ -14,21 +14,31 @@ const applySource = readFileSync(
   new URL("../apply/page.tsx", import.meta.url),
   "utf8",
 );
-const navUrl = new URL("../../../components/VisitorNav.tsx", import.meta.url);
+// The public navbar is now the shared SiteNav; its links live in navConfig.ts
+// and VisitorNav.tsx is the adapter that supplies the public defaults.
+const navUrl = new URL("../../../components/nav/SiteNav.tsx", import.meta.url);
 const navSource = existsSync(fileURLToPath(navUrl))
   ? readFileSync(navUrl, "utf8")
   : "";
+const navConfigSource = readFileSync(
+  new URL("../../../components/navConfig.ts", import.meta.url),
+  "utf8",
+);
+const visitorNavAdapterSource = readFileSync(
+  new URL("../../../components/VisitorNav.tsx", import.meta.url),
+  "utf8",
+);
 
 test("shared visitor navigation exposes the public actions", () => {
-  assert.notEqual(navSource, "", "VisitorNav component should exist");
-  assert.match(navSource, /href="\/visitor\/about"/);
-  assert.match(navSource, /About Us/);
-  assert.match(navSource, /href="\/visitor\/apply"/);
-  assert.match(navSource, /Become an Organizer/);
-  assert.match(navSource, /loginHref = "\/login"/);
+  assert.notEqual(navSource, "", "SiteNav component should exist");
+  assert.match(navConfigSource, /href: "\/visitor\/about"/);
+  assert.match(navConfigSource, /label: "About Us"/);
+  assert.match(navConfigSource, /href: "\/visitor\/apply"/);
+  assert.match(navConfigSource, /label: "Become an Organizer"/);
+  assert.match(visitorNavAdapterSource, /loginHref = "\/login"/);
   assert.match(
     navSource,
-    /aria-current=\{active === "about" \? "page" : undefined\}/,
+    /aria-current=\{isActive\(href\) \? "page" : undefined\}/,
   );
 });
 

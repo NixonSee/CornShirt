@@ -10,6 +10,7 @@ import {
   ListChecks,
   Contact,
   Inbox,
+  Info,
   Store,
   UserRound,
   type LucideIcon,
@@ -72,6 +73,36 @@ export const NAV_BY_ROLE: Record<Role, RoleNavConfig> = {
       { href: "/customer/profile", label: "Profile", icon: UserRound },
     ],
   },
+};
+
+/**
+ * The public surface plus the three dashboard roles. Deliberately a separate
+ * type from `Role`: `Role` feeds authorization (normalizeRole, requireRole),
+ * and "visitor" must never be able to leak into those code paths.
+ */
+export type NavAudience = Role | "visitor";
+
+/**
+ * Public navigation. These hrefs are not referenced by the route-scoping
+ * selectors in globals.css (those only key off /admin/*, /customer/tickets and
+ * /organizer/verify-ticket), so they are safe to edit.
+ */
+export const VISITOR_NAV: RoleNavConfig = {
+  badge: "Visitor",
+  items: [
+    { href: "/visitor", label: "Events", icon: CalendarDays },
+    { href: "/visitor/about", label: "About Us", icon: Info },
+    { href: "/visitor/apply", label: "Become an Organizer", icon: Store },
+  ],
+};
+
+/**
+ * Superset consumed by SiteNav. NAV_BY_ROLE keeps its Record<Role, ...> type so
+ * adding a fourth role still fails the build until its links are defined.
+ */
+export const NAV_BY_AUDIENCE: Record<NavAudience, RoleNavConfig> = {
+  ...NAV_BY_ROLE,
+  visitor: VISITOR_NAV,
 };
 
 /**
