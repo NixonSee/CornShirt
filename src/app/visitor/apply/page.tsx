@@ -366,14 +366,22 @@ function PersonalStep({
           />
         </Field>
         <Field label="Phone number" hint="Optional">
-          <input
-            id="applicant-phone"
-            type="tel"
-            value={form.phone}
-            onChange={(event) => setField("phone", event.target.value)}
-            autoComplete="tel"
-            placeholder="e.g. +60 12-345 6789"
-          />
+          <div className="partner-apply-phone-field">
+            <span className="partner-apply-phone-prefix">+60</span>
+            <input
+              id="applicant-phone"
+              type="tel"
+              value={form.phone.startsWith("+60") ? form.phone.slice(3) : form.phone}
+              onChange={(event) =>
+                setField(
+                  "phone",
+                  event.target.value ? `+60${event.target.value}` : ""
+                )
+              }
+              autoComplete="tel"
+              placeholder="12-345 6789"
+            />
+          </div>
         </Field>
       </div>
     </div>
