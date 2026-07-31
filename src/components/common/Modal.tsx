@@ -8,7 +8,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  actions: ReactNode;
+  actions?: ReactNode;
   wide?: boolean;
   className?: string;
   showCloseButton?: boolean;
@@ -61,7 +61,7 @@ export function Modal({
           </button>
         ) : null}
         <div className="modal-body">{children}</div>
-        <div className="modal-actions">{actions}</div>
+        {actions ? <div className="modal-actions">{actions}</div> : null}
       </div>
     </div>
   );

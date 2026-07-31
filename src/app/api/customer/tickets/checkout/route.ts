@@ -19,10 +19,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const customerEmail = auth.identity.user.email?.trim();
+  if (!customerEmail) {
+    return NextResponse.json(
+      { error: "Your account email is unavailable." },
+      { status: 409 },
+    );
+  }
+
   const result = await createTicketCheckoutSession({
     eventId: body.eventId,
     ticketTypeId: body.ticketTypeId,
     userId: auth.identity.user.id,
+    customerEmail,
     origin: getPublicRequestOrigin(request),
     idempotencyKey: body.idempotencyKey,
   });
