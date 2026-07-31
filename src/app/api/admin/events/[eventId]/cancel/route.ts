@@ -1,7 +1,7 @@
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-const CANCELLABLE_STATUSES = new Set(["pending", "active"]);
+const CANCELLABLE_STATUSES = new Set(["active"]);
 
 export async function PUT(
   request: Request,
@@ -56,7 +56,8 @@ export async function PUT(
     .from("tickets")
     .update({ refund_eligible: true })
     .eq("event_id", eventId)
-    .eq("status", "active");
+    .in("status", ["active", "valid"])
+    .eq("record_source", "stripe_nft");
 
   if (refundEligibleError) {
     console.error(

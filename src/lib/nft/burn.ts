@@ -23,12 +23,13 @@ export type BurnDeps = {
 export async function burnRefundedTicket(
   tokenId: bigint,
   deps?: BurnDeps,
+  onSubmitted?: (hash: `0x${string}`) => Promise<void>,
 ): Promise<NftBurnResult> {
   const useDeps = deps?.publicClient && deps?.contractAddress;
 
   const publicClient: unknown = useDeps ? deps!.publicClient : getPublicClient();
   const walletClient: unknown = useDeps ? deps!.walletClient : getPlatformWalletClient();
-  const contractAddress = useDeps ? deps!.contractAddress : getContract(getPublicClient()).address;
+  const contractAddress = useDeps ? deps!.contractAddress : getContract().address;
   const contractAbi = useDeps ? (deps!.contractAbi ?? abi) : abi;
 
   const pc = publicClient as BurnDeps["publicClient"];
@@ -40,8 +41,12 @@ export async function burnRefundedTicket(
     functionName: "burnRefundedTicket",
     args: [tokenId],
   });
+  await onSubmitted?.(hash);
 
-  await pc.waitForTransactionReceipt({ hash });
+  const receipt = await pc.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") {
+    throw new Error("NFT burn transaction reverted.");
+  }
 
   return { transactionHash: hash };
 }

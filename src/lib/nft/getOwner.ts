@@ -19,7 +19,7 @@ export async function getTicketOwner(
   const useDeps = deps?.publicClient && deps?.contractAddress;
 
   const publicClient: unknown = useDeps ? deps!.publicClient : getPublicClient();
-  const contractAddress = useDeps ? deps!.contractAddress : getContract(getPublicClient()).address;
+  const contractAddress = useDeps ? deps!.contractAddress : getContract().address;
   const contractAbi = useDeps ? (deps!.contractAbi ?? abi) : abi;
 
   const pc = publicClient as OwnerDeps["publicClient"];

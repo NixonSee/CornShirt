@@ -2,15 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import type { WalletProvisioningDependencies } from "./walletProvisioningCore";
-
-const walletProvisioningCoreUrl = new URL(
-  "./walletProvisioningCore.ts",
-  import.meta.url,
-);
-const { parseProvisioningRpcResult, provisionCustomerWallet } = (await import(
-  walletProvisioningCoreUrl.href
-)) as typeof import("./walletProvisioningCore");
+import {
+  parseProvisioningRpcResult,
+  provisionCustomerWallet,
+  type WalletProvisioningDependencies,
+} from "./walletProvisioningCore";
 
 const sqlPath = new URL(
   "../../scripts/sql/create-custodial-wallets.sql",

@@ -48,8 +48,19 @@ export async function createResaleListing(
   ) {
     return { status: 403, body: { error: "Ticket is unavailable." } };
   }
+  if (ticket.record_source !== "stripe_nft" || ticket.token_id == null) {
+    return {
+      status: 409,
+      body: { error: "Only confirmed Ticket NFTs can be listed for resale." },
+    };
+  }
 
-  const [{ data: ticketType }, { data: event }, { data: activeListing }] =
+  const [
+    { data: ticketType },
+    { data: event },
+    { data: activeListing },
+    { data: activeOperation },
+  ] =
     await Promise.all([
       supabaseAdmin
         .from("ticket_types")
@@ -67,6 +78,20 @@ export async function createResaleListing(
         .eq("ticket_id", ticketId)
         .eq("status", "active")
         .maybeSingle(),
+      supabaseAdmin
+        .from("ticket_operations")
+        .select("operation_id")
+        .eq("ticket_id", ticketId)
+        .in("state", [
+          "pending",
+          "checkout_created",
+          "payment_confirmed",
+          "asset_submitted",
+          "asset_confirmed",
+          "delivery_failed",
+          "refund_pending",
+        ])
+        .maybeSingle(),
     ]);
 
   if (event?.status !== "active") {
@@ -74,6 +99,12 @@ export async function createResaleListing(
   }
   if (ticketType?.transfer_allowed !== true) {
     return { status: 409, body: { error: "This ticket type does not allow resale." } };
+  }
+  if (activeOperation) {
+    return {
+      status: 409,
+      body: { error: "A transfer or refund is already in progress." },
+    };
   }
   if (
     !canListTicket({
@@ -94,8 +125,11 @@ export async function createResaleListing(
 
   const { error } = await supabaseAdmin.from("resale_listings").insert({
     ticket_id: ticketId,
+    seller_user_id: userId,
     seller_wallet_address: walletResult.wallet,
     price,
+    price_sen: Math.round(price * 100),
+    currency: "MYR",
     status: "active",
   });
   if (error?.code === "23505") {
@@ -122,6 +156,7 @@ export async function cancelResaleListing(
     .eq("listing_id", listingId)
     .eq("seller_wallet_address", walletResult.wallet)
     .eq("status", "active")
+    .is("reserved_operation_id", null)
     .select("listing_id")
     .maybeSingle();
   if (error) {
@@ -143,7 +178,7 @@ export async function getMarketplacePageData(userId: string): Promise<{
 
   const { data: listingData, error } = await supabaseAdmin
     .from("resale_listings")
-    .select("listing_id, ticket_id, seller_wallet_address, price, created_at")
+    .select("listing_id, ticket_id, seller_wallet_address, price, price_sen, created_at, reserved_until")
     .eq("status", "active")
     .order("created_at", { ascending: false });
   if (error) return { listings: [], wallet: walletResult.wallet, error: "Marketplace could not be loaded." };
@@ -165,8 +200,17 @@ export async function getMarketplacePageData(userId: string): Promise<{
   const typeMap = new Map(((typeData ?? []) as Row[]).map((row) => [text(row, "ticket_type_id"), row]));
 
   const listings = listingRows.flatMap((listing): MarketplaceListing[] => {
+    const reservedUntil = new Date(text(listing, "reserved_until"));
+    if (!Number.isNaN(reservedUntil.getTime()) && reservedUntil > new Date()) {
+      return [];
+    }
     const ticket = ticketMap.get(text(listing, "ticket_id"));
-    if (!ticket || !["active", "valid"].includes(text(ticket, "status").toLowerCase())) return [];
+    if (
+      !ticket ||
+      ticket.record_source !== "stripe_nft" ||
+      ticket.token_id == null ||
+      !["active", "valid"].includes(text(ticket, "status").toLowerCase())
+    ) return [];
     const event = eventMap.get(text(ticket, "event_id"));
     const ticketType = typeMap.get(text(ticket, "ticket_type_id"));
     if (!event || !ticketType || ticketType.transfer_allowed !== true) return [];

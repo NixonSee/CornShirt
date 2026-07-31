@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 import TicketList from "./TicketList";
+import PurchaseStatus from "./PurchaseStatus";
 import {
   mapCustomerTickets,
   recordString,
@@ -13,8 +14,15 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomerTicketsPage() {
+export default async function CustomerTicketsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ purchase?: string | string[] }>;
+}) {
   const { user } = await requireRole(["customer", "user"]);
+  const query = await searchParams;
+  const operationId =
+    typeof query.purchase === "string" ? query.purchase : null;
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
     .select("wallet_address")
@@ -114,6 +122,7 @@ export default async function CustomerTicketsPage() {
           </span>
         </header>
 
+        <PurchaseStatus operationId={operationId} />
         <TicketList tickets={tickets} errorMessage={errorMessage} />
       </main>
 

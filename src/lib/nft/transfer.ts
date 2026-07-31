@@ -4,12 +4,18 @@ import {
   getContract,
 } from "./contract";
 import { createWalletClient, http, type Address } from "viem";
-import { hardhat } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { HARDHAT_RPC_URL } from "@/utils/web3config";
+import { WEB3_CHAIN, getWeb3RpcUrl } from "@/utils/web3config";
 import artifact from "@/abi/CornShirtTicket.json";
 
 const abi = artifact.abi;
+
+export class NftTransferRevertedError extends Error {
+  constructor() {
+    super("NFT transfer transaction reverted.");
+    this.name = "NftTransferRevertedError";
+  }
+}
 
 export type TransferDeps = {
   publicClient: {
@@ -28,11 +34,12 @@ export async function transferTicket(
   to: Address,
   tokenId: bigint,
   deps?: TransferDeps,
+  onSubmitted?: (hash: `0x${string}`) => Promise<void>,
 ): Promise<NftTransferResult> {
   const useDeps = deps?.publicClient && deps?.contractAddress;
 
   const publicClient: unknown = useDeps ? deps!.publicClient : getPublicClient();
-  const contractAddress = useDeps ? deps!.contractAddress : getContract(getPublicClient()).address;
+  const contractAddress = useDeps ? deps!.contractAddress : getContract().address;
   const contractAbi = useDeps ? (deps!.contractAbi ?? abi) : abi;
 
   const pc = publicClient as TransferDeps["publicClient"];
@@ -42,7 +49,11 @@ export async function transferTicket(
     : (() => {
         const account = privateKeyToAccount(customerPrivateKey);
         return {
-          walletClient: createWalletClient({ account, chain: hardhat, transport: http(HARDHAT_RPC_URL) }),
+          walletClient: createWalletClient({
+            account,
+            chain: WEB3_CHAIN,
+            transport: http(getWeb3RpcUrl()),
+          }),
         };
       })();
 
@@ -52,8 +63,12 @@ export async function transferTicket(
     functionName: "safeTransferFrom",
     args: [from, to, tokenId],
   });
+  await onSubmitted?.(hash);
 
-  await pc.waitForTransactionReceipt({ hash });
+  const receipt = await pc.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") {
+    throw new NftTransferRevertedError();
+  }
 
   return { transactionHash: hash };
 }

@@ -1,0 +1,1586 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CornShirt Organizer Dashboard — Design Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --background: #0d1117;
+        --header: #000000;
+        --surface: #161b22;
+        --surface-raised: #1c222b;
+        --surface-soft: #21262d;
+        --border: #30363d;
+        --border-strong: #454c56;
+        --foreground: #f7f7f7;
+        --muted: #9ca3ad;
+        --muted-strong: #c1c7cf;
+        --primary: #f6a730;
+        --primary-bright: #ffc869;
+        --primary-deep: #e57b1b;
+        --success: #36b56a;
+        --danger: #d84a4a;
+        --radius: 12px;
+        --shadow: 0 18px 46px rgba(0, 0, 0, 0.24);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+        background: var(--background);
+        color-scheme: dark;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: clip;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: "Inter", system-ui, sans-serif;
+        line-height: 1.45;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body.menu-open {
+        overflow: hidden;
+      }
+
+      button,
+      a {
+        font: inherit;
+      }
+
+      button {
+        color: inherit;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      svg {
+        display: block;
+      }
+
+      .app-shell {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: column;
+      }
+
+      .app-topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        width: 100%;
+        max-width: 100vw;
+        min-height: 76px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 9px clamp(18px, 4vw, 52px);
+        border-bottom: 1px solid var(--border);
+        background: #000;
+      }
+
+      .app-topbar-brand {
+        display: inline-flex;
+        align-items: center;
+        transition: transform 180ms ease;
+      }
+
+      .app-topbar-brand:hover {
+        transform: scale(1.02);
+      }
+
+      .app-topbar-brand img {
+        display: block;
+        width: auto;
+        height: 55px;
+        object-fit: contain;
+      }
+
+      .hamburger,
+      .icon-button {
+        display: inline-flex;
+        width: 46px;
+        height: 46px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: transparent;
+        color: var(--foreground);
+        cursor: pointer;
+        transition:
+          border-color 160ms ease,
+          background 160ms ease,
+          color 160ms ease,
+          transform 160ms ease;
+      }
+
+      .hamburger:hover,
+      .icon-button:hover,
+      .icon-button.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #15100a;
+        transform: translateY(-1px);
+      }
+
+      .nav-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        visibility: hidden;
+        background: rgba(0, 0, 0, 0.68);
+        opacity: 0;
+        transition:
+          opacity 200ms ease,
+          visibility 200ms ease;
+      }
+
+      .nav-overlay.open {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .nav-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        z-index: 50;
+        display: flex;
+        width: min(320px, 88vw);
+        height: 100vh;
+        flex-direction: column;
+        padding: 20px 18px;
+        border-left: 2px solid var(--primary);
+        background: #000;
+        box-shadow: -18px 0 48px rgba(0, 0, 0, 0.52);
+        transform: translateX(100%);
+        transition: transform 220ms ease;
+      }
+
+      .nav-drawer.open {
+        transform: translateX(0);
+      }
+
+      .nav-drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+      }
+
+      .drawer-role {
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .side-nav {
+        display: grid;
+        gap: 6px;
+      }
+
+      .side-nav a,
+      .nav-signout {
+        display: flex;
+        min-height: 46px;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: #d5d8dc;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 750;
+        text-align: left;
+        transition:
+          background 160ms ease,
+          color 160ms ease;
+      }
+
+      .side-nav a:hover,
+      .side-nav a.active {
+        background: rgba(246, 167, 48, 0.14);
+        color: var(--primary);
+      }
+
+      .nav-signout {
+        width: 100%;
+        margin-top: auto;
+        color: #ed7474;
+      }
+
+      .nav-signout:hover {
+        background: rgba(216, 74, 74, 0.14);
+      }
+
+      .dashboard-main {
+        width: 100%;
+        max-width: 1540px;
+        flex: 1;
+        margin: 0 auto;
+        padding: 38px clamp(22px, 4vw, 54px) 64px;
+      }
+
+      .page-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .eyebrow {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-family: "Archivo", system-ui, sans-serif;
+      }
+
+      h1 {
+        font-size: clamp(30px, 4vw, 46px);
+        line-height: 1;
+        letter-spacing: -0.035em;
+      }
+
+      h2 {
+        font-size: clamp(24px, 3vw, 34px);
+        letter-spacing: -0.025em;
+      }
+
+      .page-copy,
+      .section-copy {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .primary-button {
+        display: inline-flex;
+        min-height: 46px;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 11px 17px;
+        border: 1px solid var(--primary);
+        border-radius: 9px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-deep));
+        color: #17110a;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 900;
+        box-shadow: 0 10px 28px rgba(246, 167, 48, 0.16);
+        transition:
+          box-shadow 160ms ease,
+          transform 160ms ease;
+      }
+
+      .primary-button:hover {
+        box-shadow: 0 12px 32px rgba(246, 167, 48, 0.27);
+        transform: translateY(-2px);
+      }
+
+      .metrics-grid {
+        display: grid;
+        grid-template-columns:
+          minmax(0, 1fr)
+          minmax(0, 1.65fr)
+          minmax(0, 1fr);
+        gap: 16px;
+      }
+
+      .metric-card {
+        position: relative;
+        min-height: 190px;
+        overflow: hidden;
+        padding: 22px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .metric-card::after {
+        position: absolute;
+        right: -44px;
+        bottom: -68px;
+        width: 150px;
+        height: 150px;
+        border: 1px solid rgba(246, 167, 48, 0.12);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .metric-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .metric-label {
+        color: var(--muted-strong);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .metric-icon {
+        color: var(--primary);
+      }
+
+      .metric-body {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        min-height: 115px;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        padding-top: 14px;
+      }
+
+      .metric-value {
+        display: block;
+        color: var(--foreground);
+        font-family: "Archivo", system-ui, sans-serif;
+        font-size: clamp(30px, 3vw, 40px);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .metric-note {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .metric-note.positive {
+        color: var(--success);
+      }
+
+      .donut {
+        display: grid;
+        width: 82px;
+        height: 82px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 50%;
+        background: conic-gradient(var(--primary) 0 78%, var(--surface-soft) 78% 100%);
+      }
+
+      .donut::after {
+        display: grid;
+        width: 58px;
+        height: 58px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--surface);
+        color: var(--foreground);
+        content: "78%";
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .revenue-card {
+        min-width: 0;
+      }
+
+      .revenue-body {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        min-height: 115px;
+        grid-template-columns: minmax(145px, 0.62fr) minmax(210px, 1.38fr);
+        align-items: end;
+        gap: 20px;
+        padding-top: 14px;
+      }
+
+      .revenue-summary {
+        padding-bottom: 19px;
+      }
+
+      .revenue-chart {
+        position: relative;
+        min-width: 0;
+      }
+
+      .revenue-chart svg {
+        width: 100%;
+        height: 98px;
+        overflow: visible;
+      }
+
+      .revenue-guide {
+        opacity: 0;
+        transition: opacity 120ms ease;
+      }
+
+      .revenue-guide.visible {
+        opacity: 1;
+      }
+
+      .revenue-point {
+        cursor: crosshair;
+        outline: none;
+      }
+
+      .revenue-point .point-halo {
+        fill: rgba(246, 167, 48, 0.18);
+        opacity: 0;
+        transition: opacity 120ms ease;
+      }
+
+      .revenue-point .point-hit {
+        fill: transparent;
+        stroke: transparent;
+      }
+
+      .revenue-point:hover .point-halo,
+      .revenue-point:focus .point-halo,
+      .revenue-point.active .point-halo {
+        opacity: 1;
+      }
+
+      .revenue-point:focus .point-core {
+        stroke: #ffffff;
+        stroke-width: 2.5;
+      }
+
+      .revenue-tooltip {
+        position: absolute;
+        z-index: 5;
+        display: grid;
+        min-width: 136px;
+        gap: 2px;
+        padding: 9px 11px;
+        border: 1px solid rgba(246, 167, 48, 0.42);
+        border-radius: 8px;
+        background: #0d1117;
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.38);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, -100%) translateY(-9px);
+        visibility: hidden;
+        transition:
+          opacity 120ms ease,
+          visibility 120ms ease;
+      }
+
+      .revenue-tooltip.below {
+        transform: translate(-50%, 0) translateY(9px);
+      }
+
+      .revenue-tooltip.visible {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .revenue-tooltip-date {
+        color: var(--primary);
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .revenue-tooltip strong {
+        color: var(--foreground);
+        font-family: "Archivo", system-ui, sans-serif;
+        font-size: 15px;
+      }
+
+      .revenue-tooltip small {
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .revenue-axis {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        margin-top: 2px;
+        color: #737b86;
+        font-size: 8px;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .revenue-trend {
+        color: var(--success);
+      }
+
+      .status-list {
+        display: grid;
+        min-width: 112px;
+        gap: 8px;
+      }
+
+      .status-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .status-key {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--success);
+      }
+
+      .status-dot.pending {
+        background: var(--primary);
+      }
+
+      .status-dot.draft {
+        background: #707782;
+      }
+
+      .dashboard-section {
+        margin-top: 52px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      .section-actions {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .filter-tabs {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--surface);
+      }
+
+      .filter-tabs button {
+        min-height: 36px;
+        padding: 7px 12px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .filter-tabs button:hover,
+      .filter-tabs button.active {
+        background: rgba(246, 167, 48, 0.15);
+        color: var(--primary);
+      }
+
+      .events-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .event-card {
+        display: grid;
+        min-height: 246px;
+        grid-template-columns: minmax(180px, 38%) minmax(0, 1fr);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+        transition:
+          border-color 180ms ease,
+          transform 180ms ease;
+      }
+
+      .event-card:hover {
+        border-color: rgba(246, 167, 48, 0.62);
+        transform: translateY(-3px);
+      }
+
+      .event-image {
+        position: relative;
+        min-height: 246px;
+        overflow: hidden;
+        background:
+          linear-gradient(145deg, rgba(13, 17, 23, 0.05), rgba(13, 17, 23, 0.52)),
+          url("../public/Background Image.png") center / cover;
+      }
+
+      .event-image.second {
+        background-position: 78% center;
+        filter: saturate(0.72);
+      }
+
+      .event-image::after {
+        position: absolute;
+        inset: auto 0 0;
+        height: 45%;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.42));
+        content: "";
+      }
+
+      .event-content {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        padding: 24px;
+      }
+
+      .event-topline,
+      .event-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 9px;
+        border: 1px solid rgba(54, 181, 106, 0.3);
+        border-radius: 5px;
+        background: rgba(54, 181, 106, 0.1);
+        color: #78dc9f;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .status-badge.pending {
+        border-color: rgba(246, 167, 48, 0.34);
+        background: rgba(246, 167, 48, 0.11);
+        color: var(--primary-bright);
+      }
+
+      .event-menu {
+        display: inline-flex;
+        gap: 5px;
+        color: var(--muted);
+      }
+
+      .event-menu button {
+        display: inline-flex;
+        width: 31px;
+        height: 31px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      .event-menu button:hover {
+        background: var(--surface-soft);
+        color: var(--primary);
+      }
+
+      .event-content h3 {
+        margin-top: 20px;
+        font-size: clamp(19px, 2vw, 25px);
+        line-height: 1.15;
+      }
+
+      .event-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .event-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .progress-track {
+        height: 7px;
+        overflow: hidden;
+        margin-top: auto;
+        border-radius: 999px;
+        background: var(--surface-soft);
+      }
+
+      .progress-bar {
+        width: 78%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--primary-deep), var(--primary-bright));
+      }
+
+      .progress-bar.pending {
+        width: 34%;
+        background: #6f7782;
+      }
+
+      .event-footer {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .event-footer strong {
+        color: var(--foreground);
+        font-size: 12px;
+      }
+
+      .table-wrap {
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(48, 54, 61, 0.72);
+        text-align: left;
+      }
+
+      th {
+        background: var(--surface-soft);
+        color: var(--muted-strong);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      td {
+        color: var(--muted-strong);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      tbody tr {
+        transition: background 150ms ease;
+      }
+
+      tbody tr:hover {
+        background: rgba(246, 167, 48, 0.045);
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .transaction-type {
+        display: inline-flex;
+        min-width: 54px;
+        justify-content: center;
+        padding: 5px 7px;
+        border-radius: 4px;
+        background: rgba(246, 167, 48, 0.13);
+        color: var(--primary-bright);
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
+      .transaction-type.mint {
+        background: rgba(54, 181, 106, 0.13);
+        color: #78dc9f;
+      }
+
+      .mono {
+        font-family: "Courier New", monospace;
+        letter-spacing: 0.03em;
+      }
+
+      .amount {
+        color: var(--foreground);
+        font-weight: 800;
+      }
+
+      .shell-footer {
+        padding: 18px clamp(18px, 4vw, 52px);
+        border-top: 1px solid var(--border);
+        background: var(--background);
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .prototype-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-left: 8px;
+        color: #747c87;
+      }
+
+      .prototype-note::before {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: currentColor;
+        content: "";
+      }
+
+      @media (max-width: 1080px) {
+        .metrics-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .revenue-card {
+          grid-column: 1 / -1;
+          grid-row: 1;
+        }
+
+        .events-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .dashboard-main {
+          padding-top: 26px;
+        }
+
+        .page-heading,
+        .section-head {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .page-heading .primary-button {
+          width: 100%;
+        }
+
+        .section-actions {
+          flex-wrap: wrap;
+        }
+
+        .filter-tabs {
+          flex: 1;
+        }
+
+        .filter-tabs button {
+          flex: 1;
+        }
+
+        .table-wrap {
+          overflow-x: auto;
+        }
+
+        table {
+          min-width: 780px;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .app-topbar {
+          min-height: 66px;
+          padding: 7px 14px;
+        }
+
+        .app-topbar-brand img {
+          height: 46px;
+          max-width: 176px;
+        }
+
+        .hamburger,
+        .icon-button {
+          width: 42px;
+          height: 42px;
+        }
+
+        .dashboard-main {
+          padding: 22px 16px 48px;
+        }
+
+        .metrics-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .revenue-card {
+          grid-column: auto;
+          grid-row: auto;
+        }
+
+        .metric-card {
+          min-height: 170px;
+        }
+
+        .revenue-body {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .revenue-summary {
+          padding-bottom: 0;
+        }
+
+        .dashboard-section {
+          margin-top: 40px;
+        }
+
+        .section-actions {
+          display: grid;
+          grid-template-columns: 1fr auto auto;
+          width: 100%;
+        }
+
+        .filter-tabs {
+          grid-column: 1 / -1;
+        }
+
+        .event-card {
+          grid-template-columns: 1fr;
+        }
+
+        .event-image {
+          min-height: 184px;
+        }
+
+        .event-content {
+          min-height: 230px;
+          padding: 20px;
+        }
+
+        .prototype-note {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-topbar">
+        <a class="app-topbar-brand" href="#" aria-label="CornShirt Organizer Dashboard">
+          <img src="../public/CornShirt Hub.png" alt="CornShirt Hub" />
+        </a>
+
+        <button
+          class="hamburger"
+          id="open-menu"
+          type="button"
+          aria-label="Open navigation menu"
+          aria-expanded="false"
+          aria-controls="role-nav-drawer"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
+      <aside class="nav-drawer" id="role-nav-drawer" aria-label="Organizer navigation" aria-hidden="true">
+        <div class="nav-drawer-head">
+          <span class="drawer-role">Organizer workspace</span>
+          <button class="hamburger" id="close-menu" type="button" aria-label="Close navigation menu">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <nav class="side-nav">
+          <a class="active" href="#">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8" />
+              <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8" />
+              <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8" />
+              <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+            Dashboard
+          </a>
+          <a href="#">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+            Create Event
+          </a>
+          <a href="#">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8" />
+              <path d="M7 3v4M17 3v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            My Events
+          </a>
+          <a href="#">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 4h5v5H4zM15 4h5v5h-5zM4 15h5v5H4zM15 15h2v2h-2zM19 15h1v5h-5v-1" stroke="currentColor" stroke-width="1.8" />
+            </svg>
+            Verify Ticket
+          </a>
+          <a href="#">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8" />
+              <path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            Profile
+          </a>
+        </nav>
+
+        <button class="nav-signout" type="button">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M10 5H5v14h5M14 8l4 4-4 4M18 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Sign out
+        </button>
+      </aside>
+
+      <main class="dashboard-main">
+        <section class="page-heading" aria-labelledby="page-title">
+          <div>
+            <span class="eyebrow">Organizer workspace</span>
+            <h1 id="page-title">Organizer Dashboard</h1>
+            <p class="page-copy">Track events, ticket performance, and blockchain activity at a glance.</p>
+          </div>
+          <button class="primary-button" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            Create Event
+          </button>
+        </section>
+
+        <section class="metrics-grid" aria-label="Organizer performance summary">
+          <article class="metric-card">
+            <div class="metric-head">
+              <span class="metric-label">Tickets Sold</span>
+              <svg class="metric-icon" width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 8.5V6h18v2.5a2.5 2.5 0 0 0 0 5V18H3v-4.5a2.5 2.5 0 0 0 0-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M13 7.5h4M13 10.5h4M13 13.5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div class="metric-body">
+              <div>
+                <strong class="metric-value">2,842</strong>
+                <span class="metric-note positive">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="m2 11 4-4 3 3 5-6M10 4h4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  12.5% this month
+                </span>
+              </div>
+              <div class="donut" aria-label="78 percent of ticket capacity sold"></div>
+            </div>
+          </article>
+
+          <article class="metric-card revenue-card">
+            <div class="metric-head">
+              <span class="metric-label">Total Revenue</span>
+              <svg class="metric-icon" width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="6" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8" />
+                <path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </div>
+            <div class="revenue-body">
+              <div class="revenue-summary">
+                <strong class="metric-value">RM 284.6K</strong>
+                <span class="metric-note">Simulated organizer earnings</span>
+                <span class="metric-note revenue-trend">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="m2 11 4-4 3 3 5-6M10 4h4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  18.2% over 6 months
+                </span>
+              </div>
+              <div class="revenue-chart">
+                <div class="revenue-tooltip" id="revenue-tooltip" role="status" aria-live="polite">
+                  <span class="revenue-tooltip-date" id="revenue-tooltip-date">Feb 08</span>
+                  <strong id="revenue-tooltip-value">RM 18,400</strong>
+                  <small>Revenue for this day</small>
+                </div>
+                <svg
+                  viewBox="0 0 420 98"
+                  fill="none"
+                  role="group"
+                  aria-label="Daily revenue chart. Hover or focus a point to view the date and revenue."
+                >
+                  <defs>
+                    <linearGradient id="revenue-fill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#f6a730" stop-opacity=".48" />
+                      <stop offset="100%" stop-color="#f6a730" stop-opacity="0" />
+                    </linearGradient>
+                    <filter id="revenue-glow" x="-20%" y="-40%" width="140%" height="180%">
+                      <feGaussianBlur stdDeviation="3" result="blur" />
+                      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                    </filter>
+                  </defs>
+                  <path d="M4 18H416M4 49H416M4 80H416" stroke="#30363d" stroke-width="1" stroke-dasharray="3 5" />
+                  <path d="M4 78 C34 74 48 68 75 70 C105 72 118 55 145 58 C178 61 194 43 220 47 C250 51 272 32 294 35 C326 39 345 17 371 22 C390 25 403 14 416 10 V92 H4 Z" fill="url(#revenue-fill)" />
+                  <path d="M4 78 C34 74 48 68 75 70 C105 72 118 55 145 58 C178 61 194 43 220 47 C250 51 272 32 294 35 C326 39 345 17 371 22 C390 25 403 14 416 10" stroke="#f6a730" stroke-width="3" stroke-linecap="round" filter="url(#revenue-glow)" />
+                  <line class="revenue-guide" id="revenue-guide" x1="4" y1="8" x2="4" y2="91" stroke="#f6a730" stroke-width="1" stroke-dasharray="3 4" />
+                  <g
+                    class="revenue-point"
+                    tabindex="0"
+                    role="button"
+                    aria-label="February 8, revenue RM 18,400"
+                    data-date="Feb 08"
+                    data-revenue="RM 18,400"
+                    data-x="4"
+                  >
+                    <circle class="point-hit" cx="4" cy="78" r="13" />
+                    <circle class="point-halo" cx="4" cy="78" r="9" />
+                    <circle class="point-core" cx="4" cy="78" r="3.5" fill="#0d1117" stroke="#ffc869" stroke-width="2" />
+                  </g>
+                  <g
+                    class="revenue-point"
+                    tabindex="0"
+                    role="button"
+                    aria-label="March 12, revenue RM 23,650"
+                    data-date="Mar 12"
+                    data-revenue="RM 23,650"
+                    data-x="75"
+                  >
+                    <circle class="point-hit" cx="75" cy="70" r="13" />
+                    <circle class="point-halo" cx="75" cy="70" r="9" />
+                    <circle class="point-core" cx="75" cy="70" r="3.5" fill="#0d1117" stroke="#ffc869" stroke-width="2" />
+                  </g>
+                  <g
+                    class="revenue-point"
+                    tabindex="0"
+                    role="button"
+                    aria-label="April 9, revenue RM 31,200"
+                    data-date="Apr 09"
+                    data-revenue="RM 31,200"
+                    data-x="145"
+                  >
+                    <circle class="point-hit" cx="145" cy="58" r="13" />
+                    <circle class="point-halo" cx="145" cy="58" r="9" />
+                    <circle class="point-core" cx="145" cy="58" r="3.5" fill="#0d1117" stroke="#ffc869" stroke-width="2" />
+                  </g>
+                  <g
+                    class="revenue-point"
+                    tabindex="0"
+                    role="button"
+                    aria-label="May 14, revenue RM 38,900"
+                    data-date="May 14"
+                    data-revenue="RM 38,900"
+                    data-x="220"
+                  >
+                    <circle class="point-hit" cx="220" cy="47" r="13" />
+                    <circle class="point-halo" cx="220" cy="47" r="9" />
+                    <circle class="point-core" cx="220" cy="47" r="3.5" fill="#0d1117" stroke="#ffc869" stroke-width="2" />
+                  </g>
+                  <g
+                    class="revenue-point"
+                    tabindex="0"
+                    role="button"
+                    aria-label="June 18, revenue RM 47,350"
+                    data-date="Jun 18"
+                    data-revenue="RM 47,350"
+                    data-x="294"
+                  >
+                    <circle class="point-hit" cx="294" cy="35" r="13" />
+                    <circle class="point-halo" cx="294" cy="35" r="9" />
+                    <circle class="point-core" cx="294" cy="35" r="3.5" fill="#0d1117" stroke="#ffc869" stroke-width="2" />
+                  </g>
+                  <g
+                    class="revenue-point"
+                    tabindex="0"
+                    role="button"
+                    aria-label="July 22, revenue RM 56,780"
+                    data-date="Jul 22"
+                    data-revenue="RM 56,780"
+                    data-x="416"
+                  >
+                    <circle class="point-hit" cx="416" cy="10" r="13" />
+                    <circle class="point-halo" cx="416" cy="10" r="9" />
+                    <circle class="point-core" cx="416" cy="10" r="3.5" fill="#0d1117" stroke="#ffc869" stroke-width="2" />
+                  </g>
+                </svg>
+                <div class="revenue-axis" aria-hidden="true">
+                  <span>Feb 08</span><span>Mar 12</span><span>Apr 09</span><span>May 14</span><span>Jun 18</span><span>Jul 22</span>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="metric-card">
+            <div class="metric-head">
+              <span class="metric-label">Events Overview</span>
+              <svg class="metric-icon" width="25" height="25" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8" />
+                <path d="M7 3v4M17 3v4M3 10h18M8 15l2.2 2L16 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div class="metric-body">
+              <div>
+                <strong class="metric-value">08</strong>
+                <span class="metric-note">Across 4 venues</span>
+              </div>
+              <div class="status-list" aria-label="Event status breakdown">
+                <div class="status-item">
+                  <span class="status-key"><i class="status-dot"></i>Active</span><strong>4</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-key"><i class="status-dot pending"></i>Pending</span><strong>2</strong>
+                </div>
+                <div class="status-item">
+                  <span class="status-key"><i class="status-dot draft"></i>Draft</span><strong>2</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="managed-events-title">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">Event portfolio</span>
+              <h2 id="managed-events-title">Managed Events</h2>
+              <p class="section-copy">Monitor your active, pending, and draft productions.</p>
+            </div>
+            <div class="section-actions">
+              <div class="filter-tabs" role="tablist" aria-label="Filter events">
+                <button class="active" type="button" role="tab" aria-selected="true" data-filter="all">All</button>
+                <button type="button" role="tab" aria-selected="false" data-filter="live">Live</button>
+                <button type="button" role="tab" aria-selected="false" data-filter="pending">Pending</button>
+              </div>
+              <button class="icon-button active" id="grid-view" type="button" aria-label="Grid view" aria-pressed="true">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.8" />
+                  <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.8" />
+                  <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.8" />
+                  <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.8" />
+                </svg>
+              </button>
+              <button class="icon-button" id="list-view" type="button" aria-label="List view" aria-pressed="false">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="events-grid" id="events-grid">
+            <article class="event-card" data-status="live">
+              <div class="event-image" role="img" aria-label="Orange concert stage and crowd"></div>
+              <div class="event-content">
+                <div class="event-topline">
+                  <span class="status-badge">Active</span>
+                  <div class="event-menu">
+                    <button type="button" aria-label="Edit Neon Corn Festival">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="m4 20 4.2-1 10.5-10.5a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                      </svg>
+                    </button>
+                    <button type="button" aria-label="More options for Neon Corn Festival">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <circle cx="12" cy="5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="19" r="1.7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <h3>Neon Corn Festival</h3>
+                <div class="event-meta">
+                  <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z" stroke="currentColor" stroke-width="1.8" />
+                      <circle cx="12" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8" />
+                    </svg>
+                    Axiata Arena, Kuala Lumpur
+                  </span>
+                  <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8" />
+                      <path d="M7 3v4M17 3v4M3 10h18" stroke="currentColor" stroke-width="1.8" />
+                    </svg>
+                    24 Oct 2026
+                  </span>
+                </div>
+                <div class="progress-track" aria-label="78 percent sold"><div class="progress-bar"></div></div>
+                <div class="event-footer"><span>2,184 / 2,800 tickets</span><strong>78% sold</strong></div>
+              </div>
+            </article>
+
+            <article class="event-card" data-status="pending">
+              <div class="event-image second" role="img" aria-label="Orange concert lights above a crowd"></div>
+              <div class="event-content">
+                <div class="event-topline">
+                  <span class="status-badge pending">Pending</span>
+                  <div class="event-menu">
+                    <button type="button" aria-label="Edit Midnight Pulse Live">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="m4 20 4.2-1 10.5-10.5a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+                      </svg>
+                    </button>
+                    <button type="button" aria-label="More options for Midnight Pulse Live">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <circle cx="12" cy="5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="19" r="1.7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <h3>Midnight Pulse Live</h3>
+                <div class="event-meta">
+                  <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z" stroke="currentColor" stroke-width="1.8" />
+                      <circle cx="12" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8" />
+                    </svg>
+                    Zepp Kuala Lumpur
+                  </span>
+                  <span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.8" />
+                      <path d="M7 3v4M17 3v4M3 10h18" stroke="currentColor" stroke-width="1.8" />
+                    </svg>
+                    12 Nov 2026
+                  </span>
+                </div>
+                <div class="progress-track" aria-label="Awaiting approval"><div class="progress-bar pending"></div></div>
+                <div class="event-footer"><span>Awaiting admin approval</span><strong>Ready to review</strong></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="transactions-title">
+          <div class="section-head">
+            <div>
+              <span class="eyebrow">Blockchain activity</span>
+              <h2 id="transactions-title">Live Transactions</h2>
+              <p class="section-copy">Recent ticket purchases and NFT minting activity.</p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Wallet Address</th>
+                  <th>TX Hash</th>
+                  <th>Event</th>
+                  <th>Amount</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="transaction-type">SALE</span></td>
+                  <td class="mono">0x8F4...pL2w</td>
+                  <td class="mono">0x5v7Q...9kRt</td>
+                  <td>Neon Corn Festival</td>
+                  <td class="amount">RM 129.00</td>
+                  <td>2s ago</td>
+                </tr>
+                <tr>
+                  <td><span class="transaction-type mint">MINT</span></td>
+                  <td class="mono">0x4zRt...uN39</td>
+                  <td class="mono">0x2n1B...5uMx</td>
+                  <td>Neon Corn Festival</td>
+                  <td class="amount">RM 89.00</td>
+                  <td>14s ago</td>
+                </tr>
+                <tr>
+                  <td><span class="transaction-type">SALE</span></td>
+                  <td class="mono">0x2wAq...mZ8s</td>
+                  <td class="mono">0x9pPz...1vVb</td>
+                  <td>Electric Harvest</td>
+                  <td class="amount">RM 159.00</td>
+                  <td>42s ago</td>
+                </tr>
+                <tr>
+                  <td><span class="transaction-type mint">MINT</span></td>
+                  <td class="mono">0x9jKs...pI0o</td>
+                  <td class="mono">0x3mNr...8vWq</td>
+                  <td>Sunset Frequency</td>
+                  <td class="amount">RM 109.00</td>
+                  <td>1m ago</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+
+      <footer class="shell-footer">
+        <span>© 2026 CornShirt Hub. All rights reserved.</span>
+        <span class="prototype-note">Organizer dashboard design preview</span>
+      </footer>
+    </div>
+
+    <script>
+      const body = document.body;
+      const drawer = document.getElementById("role-nav-drawer");
+      const overlay = document.getElementById("nav-overlay");
+      const openButton = document.getElementById("open-menu");
+      const closeButton = document.getElementById("close-menu");
+      const filterButtons = document.querySelectorAll("[data-filter]");
+      const eventCards = document.querySelectorAll(".event-card");
+      const eventsGrid = document.getElementById("events-grid");
+      const gridView = document.getElementById("grid-view");
+      const listView = document.getElementById("list-view");
+      const revenueChart = document.querySelector(".revenue-chart");
+      const revenuePoints = document.querySelectorAll(".revenue-point");
+      const revenueTooltip = document.getElementById("revenue-tooltip");
+      const revenueTooltipDate = document.getElementById("revenue-tooltip-date");
+      const revenueTooltipValue = document.getElementById("revenue-tooltip-value");
+      const revenueGuide = document.getElementById("revenue-guide");
+
+      function setMenu(open) {
+        drawer.classList.toggle("open", open);
+        overlay.classList.toggle("open", open);
+        body.classList.toggle("menu-open", open);
+        drawer.setAttribute("aria-hidden", String(!open));
+        openButton.setAttribute("aria-expanded", String(open));
+      }
+
+      openButton.addEventListener("click", () => setMenu(true));
+      closeButton.addEventListener("click", () => setMenu(false));
+      overlay.addEventListener("click", () => setMenu(false));
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setMenu(false);
+      });
+
+      function showRevenueTooltip(point) {
+        const chartRect = revenueChart.getBoundingClientRect();
+        const pointRect = point.getBoundingClientRect();
+        const pointX = pointRect.left - chartRect.left + pointRect.width / 2;
+        const pointY = pointRect.top - chartRect.top + pointRect.height / 2;
+        const safeX = Math.min(Math.max(pointX, 76), chartRect.width - 76);
+
+        revenuePoints.forEach((item) => item.classList.toggle("active", item === point));
+        revenueTooltipDate.textContent = point.dataset.date;
+        revenueTooltipValue.textContent = point.dataset.revenue;
+        revenueTooltip.style.left = `${safeX}px`;
+        revenueTooltip.style.top = `${pointY}px`;
+        revenueTooltip.classList.toggle("below", pointY < 52);
+        revenueTooltip.classList.add("visible");
+        revenueGuide.setAttribute("x1", point.dataset.x);
+        revenueGuide.setAttribute("x2", point.dataset.x);
+        revenueGuide.classList.add("visible");
+      }
+
+      function hideRevenueTooltip() {
+        revenuePoints.forEach((item) => item.classList.remove("active"));
+        revenueTooltip.classList.remove("visible", "below");
+        revenueGuide.classList.remove("visible");
+      }
+
+      revenuePoints.forEach((point) => {
+        point.addEventListener("pointerenter", () => showRevenueTooltip(point));
+        point.addEventListener("pointerleave", hideRevenueTooltip);
+        point.addEventListener("focus", () => showRevenueTooltip(point));
+        point.addEventListener("blur", hideRevenueTooltip);
+        point.addEventListener("click", (event) => {
+          event.stopPropagation();
+          showRevenueTooltip(point);
+        });
+      });
+
+      document.addEventListener("pointerdown", (event) => {
+        if (!revenueChart.contains(event.target)) hideRevenueTooltip();
+      });
+
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const filter = button.dataset.filter;
+          filterButtons.forEach((item) => {
+            const selected = item === button;
+            item.classList.toggle("active", selected);
+            item.setAttribute("aria-selected", String(selected));
+          });
+          eventCards.forEach((card) => {
+            card.hidden = filter !== "all" && card.dataset.status !== filter;
+          });
+        });
+      });
+
+      gridView.addEventListener("click", () => {
+        eventsGrid.style.gridTemplateColumns = "";
+        gridView.classList.add("active");
+        listView.classList.remove("active");
+        gridView.setAttribute("aria-pressed", "true");
+        listView.setAttribute("aria-pressed", "false");
+      });
+
+      listView.addEventListener("click", () => {
+        eventsGrid.style.gridTemplateColumns = "1fr";
+        listView.classList.add("active");
+        gridView.classList.remove("active");
+        listView.setAttribute("aria-pressed", "true");
+        gridView.setAttribute("aria-pressed", "false");
+      });
+    </script>
+  </body>
+</html>

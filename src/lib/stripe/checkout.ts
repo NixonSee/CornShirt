@@ -1,3 +1,5 @@
+import "server-only";
+
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 import { getStripe } from "./stripe";
@@ -7,39 +9,55 @@ type CheckoutInput = {
   ticketTypeId: string;
   userId: string;
   origin: string;
+  idempotencyKey: string;
 };
 
 type CheckoutResult =
-  | { ok: true; url: string }
+  | { ok: true; url: string; operationId: string }
   | { ok: false; status: number; error: string };
 
-type TicketTypeRow = {
-  ticket_type_id: string;
-  event_id: string;
-  type_name: string | null;
-  price: number | string | null;
-  remaining_supply: number | null;
-  purchase_limit: number | null;
-};
-
-type EventRow = {
-  event_id: string;
+type ReservedPurchase = {
+  operation_id: string;
+  amount_sen: number;
+  currency: string;
   event_name: string;
-  status: string | null;
-  banner_image: string | null;
+  ticket_type_name: string;
+  wallet_address: string;
 };
-
-type ProfileRow = {
-  wallet_address: string | null;
-};
-
-function moneyToSen(value: number | string | null): number {
-  const amount = Number(value ?? 0);
-  return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
-}
 
 function text(value: unknown): string {
-  return typeof value === "string" ? value : "";
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function checkoutError(message: string): CheckoutResult {
+  const known: Record<string, { status: number; error: string }> = {
+    wallet_unavailable: {
+      status: 409,
+      error: "Your managed wallet is unavailable.",
+    },
+    event_unavailable: {
+      status: 409,
+      error: "This event is not available for purchase.",
+    },
+    ticket_type_unavailable: {
+      status: 404,
+      error: "Ticket type not found.",
+    },
+    sold_out: { status: 409, error: "This ticket type is sold out." },
+    purchase_limit: {
+      status: 409,
+      error: "You have reached the purchase limit for this ticket type.",
+    },
+  };
+
+  const match = Object.entries(known).find(([key]) => message.includes(key));
+  return match
+    ? { ok: false, ...match[1] }
+    : {
+        ok: false,
+        status: 500,
+        error: "Checkout could not be reserved.",
+      };
 }
 
 export async function createTicketCheckoutSession({
@@ -47,120 +65,131 @@ export async function createTicketCheckoutSession({
   ticketTypeId,
   userId,
   origin,
+  idempotencyKey,
 }: CheckoutInput): Promise<CheckoutResult> {
-  const [{ data: ticketType, error: ticketError }, { data: profile }] =
-    await Promise.all([
-      supabaseAdmin
-        .from("ticket_types")
-        .select(
-          "ticket_type_id, event_id, type_name, price, remaining_supply, purchase_limit",
-        )
-        .eq("ticket_type_id", ticketTypeId)
-        .maybeSingle(),
-      supabaseAdmin
-        .from("profiles")
-        .select("wallet_address")
-        .eq("user_id", userId)
-        .maybeSingle(),
-    ]);
+  const reservation = await supabaseAdmin
+    .rpc("reserve_primary_ticket", {
+      p_buyer_id: userId,
+      p_event_id: eventId,
+      p_ticket_type_id: ticketTypeId,
+      p_idempotency_key: idempotencyKey,
+    })
+    .single();
 
-  if (ticketError || !ticketType) {
-    return { ok: false, status: 404, error: "Ticket type not found." };
+  if (reservation.error || !reservation.data) {
+    return checkoutError(reservation.error?.message ?? "");
   }
 
-  const typedTicket = ticketType as TicketTypeRow;
-  if (typedTicket.event_id !== eventId) {
-    return { ok: false, status: 400, error: "Ticket type does not match event." };
+  const purchase = reservation.data as ReservedPurchase;
+  const existing = await supabaseAdmin
+    .from("ticket_operations")
+    .select("stripe_checkout_session_id")
+    .eq("operation_id", purchase.operation_id)
+    .eq("actor_user_id", userId)
+    .single();
+
+  const existingSessionId = existing.data?.stripe_checkout_session_id as
+    | string
+    | null
+    | undefined;
+
+  if (existingSessionId) {
+    const session = await getStripe().checkout.sessions.retrieve(
+      existingSessionId,
+    );
+    if (session.url && session.status === "open") {
+      return {
+        ok: true,
+        url: session.url,
+        operationId: purchase.operation_id,
+      };
+    }
   }
 
-  const { data: event, error: eventError } = await supabaseAdmin
-    .from("events")
-    .select("event_id, event_name, status, banner_image")
-    .eq("event_id", eventId)
-    .maybeSingle();
-
-  if (eventError || !event) {
-    return { ok: false, status: 404, error: "Event not found." };
-  }
-
-  const typedEvent = event as EventRow;
-  if (String(typedEvent.status ?? "").toLowerCase() !== "active") {
-    return { ok: false, status: 409, error: "This event is not active." };
-  }
-
-  if ((typedTicket.remaining_supply ?? 0) <= 0) {
-    return { ok: false, status: 409, error: "This ticket type is sold out." };
-  }
-
-  const walletAddress = (profile as ProfileRow | null)?.wallet_address ?? null;
-  if (!walletAddress) {
+  const currency = purchase.currency.toLowerCase();
+  if (
+    currency !== "myr" ||
+    !Number.isSafeInteger(purchase.amount_sen) ||
+    purchase.amount_sen <= 0
+  ) {
     return {
       ok: false,
       status: 409,
-      error: "Your managed wallet is unavailable.",
+      error: "Ticket price is not configured for MYR checkout.",
     };
   }
 
-  const ownedCount = await supabaseAdmin
-    .from("tickets")
-    .select("ticket_id", { count: "exact", head: true })
-    .eq("wallet_address", walletAddress)
-    .eq("ticket_type_id", ticketTypeId);
-
-  const purchaseLimit = typedTicket.purchase_limit ?? 1;
-  if ((ownedCount.count ?? 0) >= purchaseLimit) {
-    return {
-      ok: false,
-      status: 409,
-      error: "You have reached the purchase limit for this ticket type.",
-    };
-  }
-
-  const unitAmount = moneyToSen(typedTicket.price);
-  if (unitAmount <= 0) {
-    return { ok: false, status: 409, error: "Ticket price is unavailable." };
-  }
-
-  const session = await getStripe().checkout.sessions.create({
-    mode: "payment",
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: "myr",
-          unit_amount: unitAmount,
-          product_data: {
-            name: `${typedEvent.event_name} - ${typedTicket.type_name ?? "Admission"}`,
-            images: typedEvent.banner_image ? [typedEvent.banner_image] : undefined,
+  const session = await getStripe().checkout.sessions.create(
+    {
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency,
+            unit_amount: purchase.amount_sen,
+            product_data: {
+              name: `${purchase.event_name} - ${purchase.ticket_type_name}`,
+            },
           },
         },
+      ],
+      success_url: `${origin}/customer/tickets?purchase=${purchase.operation_id}`,
+      cancel_url: `${origin}/customer/events/${eventId}?checkout=cancelled`,
+      expires_at: Math.floor(Date.now() / 1000) + 35 * 60,
+      client_reference_id: userId,
+      metadata: {
+        kind: "primary_ticket",
+        operationId: purchase.operation_id,
+        userId,
       },
-    ],
-    success_url: `${origin}/customer/tickets?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/events/${eventId}?checkout=cancelled`,
-    client_reference_id: `${userId}:${ticketTypeId}`,
-    metadata: {
-      kind: "primary_ticket",
-      eventId,
-      ticketTypeId,
-      userId,
-      walletAddress,
     },
-  });
+    { idempotencyKey: `primary_checkout_${purchase.operation_id}` },
+  );
 
   if (!session.url) {
-    return { ok: false, status: 502, error: "Stripe did not return a checkout URL." };
+    return {
+      ok: false,
+      status: 502,
+      error: "Stripe did not return a checkout URL.",
+    };
   }
 
-  return { ok: true, url: session.url };
+  const attached = await supabaseAdmin
+    .from("ticket_operations")
+    .update({
+      stripe_checkout_session_id: session.id,
+      state: "checkout_created",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("operation_id", purchase.operation_id)
+    .eq("actor_user_id", userId)
+    .in("state", ["pending", "checkout_created"]);
+
+  if (attached.error) {
+    return {
+      ok: false,
+      status: 500,
+      error: "Checkout was created but could not be recorded.",
+    };
+  }
+
+  return {
+    ok: true,
+    url: session.url,
+    operationId: purchase.operation_id,
+  };
 }
 
 export function parseTicketCheckoutBody(body: unknown) {
   if (!body || typeof body !== "object") return null;
   const record = body as Record<string, unknown>;
-  const eventId = text(record.eventId).trim();
-  const ticketTypeId = text(record.ticketTypeId).trim();
+  const eventId = text(record.eventId);
+  const ticketTypeId = text(record.ticketTypeId);
+  const idempotencyKey = text(record.idempotencyKey);
 
-  return eventId && ticketTypeId ? { eventId, ticketTypeId } : null;
+  return eventId && ticketTypeId && /^[a-zA-Z0-9_-]{16,120}$/.test(idempotencyKey)
+    ? { eventId, ticketTypeId, idempotencyKey }
+    : null;
 }

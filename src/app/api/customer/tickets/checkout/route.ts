@@ -5,6 +5,7 @@ import {
   parseTicketCheckoutBody,
 } from "@/lib/stripe/checkout";
 import { authorizeApiRole } from "@/lib/requireRole";
+import { getPublicRequestOrigin } from "@/lib/requestOrigin";
 
 export async function POST(request: Request) {
   const auth = await authorizeApiRole(["customer", "user"]);
@@ -22,12 +23,16 @@ export async function POST(request: Request) {
     eventId: body.eventId,
     ticketTypeId: body.ticketTypeId,
     userId: auth.identity.user.id,
-    origin: new URL(request.url).origin,
+    origin: getPublicRequestOrigin(request),
+    idempotencyKey: body.idempotencyKey,
   });
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  return NextResponse.json({ url: result.url });
+  return NextResponse.json({
+    url: result.url,
+    operationId: result.operationId,
+  });
 }

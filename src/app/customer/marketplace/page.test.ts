@@ -12,13 +12,14 @@ test("Marketplace belongs only to customer navigation", () => {
   assert.ok(customer.indexOf("/customer/marketplace") < customer.indexOf("/customer/transactions"));
 });
 
-test("Marketplace exposes approved browsing controls", () => {
+test("Marketplace exposes browsing and Stripe resale checkout controls", () => {
   const source = readFileSync(
     new URL("./MarketplaceClient.tsx", import.meta.url),
     "utf8",
   );
   assert.match(source, /All listings/);
   assert.match(source, /My listings/);
-  assert.match(source, /Purchase unavailable/);
+  assert.match(source, /Buy with Stripe/);
+  assert.match(source, /\/checkout/);
   assert.match(source, /Cancel listing/);
 });

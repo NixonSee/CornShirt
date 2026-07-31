@@ -11,7 +11,7 @@ export default async function OrganizerLayout({
 }) {
   await requireRole(["organizer"]);
   return (
-    <div className="app-shell">
+    <div className="app-shell organizer-shell">
       <RoleNav role="organizer" />
       <main className="shell-main">{children}</main>
       <Footer />

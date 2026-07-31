@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { myrToSen } from "@/lib/currency";
 
 export interface LayoutCustomZone {
   id: string;
@@ -22,6 +23,8 @@ export interface EventLayout {
 export interface TicketTypeDraft {
   type_name: string;
   price: number;
+  price_sen: number;
+  currency: "MYR";
   total_supply: number;
   remaining_supply: number;
   venue_zone_id: string | null;
@@ -89,19 +92,24 @@ export async function buildTicketTypeRows(
 
   for (const [zoneId, entry] of pricingEntries) {
     const price = Number(entry?.price);
-    if (!Number.isFinite(price) || price < 0) {
+    const priceSen = myrToSen(price);
+    if (priceSen === null) {
       return {
         ok: false,
-        error: "Every priced zone needs a valid price.",
+        error:
+          "Every priced zone needs a positive MYR price with at most two decimal places.",
         status: 400,
       };
     }
+    const normalizedPrice = priceSen / 100;
 
     const fixed = fixedZoneMap.get(zoneId);
     if (fixed) {
       rows.push({
         type_name: fixed.label,
-        price,
+        price: normalizedPrice,
+        price_sen: priceSen,
+        currency: "MYR",
         total_supply: fixed.capacity,
         remaining_supply: fixed.capacity,
         venue_zone_id: zoneId,
@@ -122,7 +130,9 @@ export async function buildTicketTypeRows(
       }
       rows.push({
         type_name: custom.label?.trim() || "Zone",
-        price,
+        price: normalizedPrice,
+        price_sen: priceSen,
+        currency: "MYR",
         total_supply: capacity,
         remaining_supply: capacity,
         venue_zone_id: null,

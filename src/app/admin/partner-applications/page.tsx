@@ -15,8 +15,6 @@ export default async function PartnerApplicationsPage() {
 
   const apps = applications ?? [];
 
-  const docTypes = ["business_license", "owner_id_proof", "tax_certificate"];
-
   const appsWithDocs = await Promise.all(
     apps.map(async (app) => {
       const { data: docs } = await supabaseAdmin

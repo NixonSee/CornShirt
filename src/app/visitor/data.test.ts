@@ -248,3 +248,21 @@ test("shared event details place ticket options before the about section", () =>
   assert.match(styles, /\.event-detail-hero::after\s*\{/);
   assert.match(styles, /\.event-detail-hero::after\s*\{[\s\S]*?inset:\s*0;/);
 });
+
+test("sorts ticket types by natural alphabetical name", () => {
+  const event = eventData.mapEventRow({
+    ...databaseRow,
+    ticket_types: [
+      { ...databaseRow.ticket_types[0], ticket_type_id: "zone-c", type_name: "Zone C" },
+      { ...databaseRow.ticket_types[0], ticket_type_id: "zone-d", type_name: "Zone D" },
+      { ...databaseRow.ticket_types[0], ticket_type_id: "zone-e", type_name: "Zone E" },
+      { ...databaseRow.ticket_types[0], ticket_type_id: "zone-a", type_name: "Zone A" },
+      { ...databaseRow.ticket_types[0], ticket_type_id: "zone-b", type_name: "Zone B" },
+    ],
+  });
+
+  assert.deepEqual(
+    event.ticketTypes.map((ticket) => ticket.name),
+    ["Zone A", "Zone B", "Zone C", "Zone D", "Zone E"],
+  );
+});
