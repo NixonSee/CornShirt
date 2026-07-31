@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/common/Button";
 import { SeatMap } from "@/components/seatmap/SeatMap";
 import { DEFAULT_STAGE, type SeatZone } from "@/components/seatmap/types";
+import { parsePositiveMyrAmount } from "@/lib/currency";
 
 const CATEGORIES = ["Concert", "Festival", "Theatre", "Sports", "Comedy", "Other"];
 
@@ -112,7 +113,7 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
   // The venue's fixed zones, with the organizer's price merged in.
   const zones: SeatZone[] = (selectedVenue?.venue_zones ?? []).map((z) => {
     const raw = pricing[z.zone_id];
-    const price = raw !== undefined && raw !== "" ? Number(raw) : null;
+    const price = raw !== undefined ? parsePositiveMyrAmount(raw) : null;
     return {
       id: z.zone_id,
       kind: "fixed",
@@ -120,7 +121,7 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
       label: z.label,
       category: z.category,
       capacity: z.capacity,
-      price: price != null && Number.isFinite(price) ? price : null,
+      price,
     };
   });
 
@@ -187,9 +188,9 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
 
     // Every zone must be priced before submitting.
     for (const zone of zones) {
-      if (zone.price == null || zone.price < 0) {
+      if (zone.price == null) {
         setErrorMessage(
-          `Every zone must be priced before submitting — "${zone.label}" is still unpriced.`,
+          `Enter a positive MYR price with at most two decimal places for "${zone.label}".`,
         );
         setSelectedZoneId(zone.id);
         return;
@@ -492,9 +493,9 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
                       <input
                         id="zone-price"
                         type="number"
-                        min="0"
+                        min="0.01"
                         step="0.01"
-                        placeholder="0"
+                        placeholder="0.00"
                         value={pricing[selectedZone.id] ?? ""}
                         onChange={(e) =>
                           setZonePrice(selectedZone.id, e.target.value)
