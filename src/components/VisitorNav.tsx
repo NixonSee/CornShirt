@@ -1,48 +1,18 @@
-import Image from "next/image";
-import Link from "next/link";
+import SiteNav from "./nav/SiteNav";
 
 interface VisitorNavProps {
   active?: "about";
   loginHref?: string;
 }
 
+/**
+ * Public navigation. Thin adapter over the shared {@link SiteNav} so the
+ * visitor and public event pages keep their existing call shape; the links
+ * themselves come from `VISITOR_NAV` in navConfig.ts.
+ */
 export default function VisitorNav({
   active,
   loginHref = "/login",
 }: VisitorNavProps) {
-  return (
-    <header className="app-topbar visitor-nav">
-      <Link className="app-topbar-brand visitor-nav-brand" href="/visitor">
-        <Image
-          src="/CornShirt Hub.png"
-          alt="CornShirt Hub"
-          width={190}
-          height={50}
-          priority
-        />
-      </Link>
-
-      <nav
-        className="app-topbar-actions visitor-nav-actions"
-        aria-label="Visitor navigation"
-      >
-        <Link
-          className={`visitor-nav-link${active === "about" ? " active" : ""}`}
-          href="/visitor/about"
-          aria-current={active === "about" ? "page" : undefined}
-        >
-          About Us
-        </Link>
-        <Link
-          className="button-outline visitor-nav-action"
-          href="/visitor/apply"
-        >
-          Become an Organizer
-        </Link>
-        <Link className="button visitor-nav-action" href={loginHref}>
-          Log In
-        </Link>
-      </nav>
-    </header>
-  );
+  return <SiteNav role={null} active={active} loginHref={loginHref} />;
 }

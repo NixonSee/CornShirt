@@ -60,11 +60,25 @@
 
   --font-display: "Archivo", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, sans-serif;
+
+  /* Height of the fixed navbar card, and the gap between it and the viewport
+     edge. Read by .sitenav-spacer and every sticky panel that has to clear the
+     bar. Overridden per breakpoint in the NAV-2026 section at the end. */
+  --sitenav-h: 74px;
+  --sitenav-gap: 14px;
 }
 
 html {
   min-height: 100%;
   background: var(--background);
+  /* Opt the whole document into dark native UI: without this the browser
+     paints light default scrollbars, select popups and autofill on our dark
+     surfaces. */
+  color-scheme: dark;
+  /* Keep in-page anchors (/visitor#events) clear of the floating navbar card
+     and the gap above it. --sitenav-gap is declared further down; custom
+     properties resolve after the cascade, so the later value still applies. */
+  scroll-padding-top: calc(var(--sitenav-h) + var(--sitenav-gap) + 16px);
 }
 
 body {
@@ -3913,7 +3927,7 @@ tr:last-child td {
 
 .ce-aside {
   position: sticky;
-  top: 24px;
+  top: calc(var(--sitenav-h) + var(--sitenav-gap) + 24px);
   display: grid;
   gap: 12px;
 }
@@ -6994,6 +7008,11 @@ tr:last-child td {
 }
 
 /* Visitor navigation and About page */
+/* NOTE: the .visitor-nav-* rules below are superseded by the NAV-2026 section
+   at the end of this file (the public bar is now the shared SiteNav). They are
+   kept in place because visitor/about/page.test.ts asserts these rules exist.
+   Historical quirk: the sticky declaration here has no `top`, so it resolves to
+   `top: auto` and never actually stuck -- the public bar used to scroll away. */
 .visitor-nav {
   position: sticky;
   z-index: 50;
@@ -10702,7 +10721,7 @@ tr:last-child td {
 
 .ticket-options-panel {
   position: sticky;
-  top: 94px;
+  top: calc(var(--sitenav-h) + var(--sitenav-gap) + 20px);
 }
 
 .ticket-option-list {
@@ -11705,7 +11724,7 @@ tr:last-child td {
 
 .profile-secondary {
   position: sticky;
-  top: 94px;
+  top: calc(var(--sitenav-h) + var(--sitenav-gap) + 20px);
 }
 
 .profile-card,
@@ -12806,4 +12825,640 @@ body:has(.admin-shell) {
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+
+/* =========================================================================
+   NAV-2026 — unified fixed navbar (src/components/nav/SiteNav.tsx)
+   -------------------------------------------------------------------------
+   Appended last on purpose. This file is ordered chronologically and later
+   rules win at equal specificity, so these override the base bar at ~3470,
+   the visitor bar at ~7010 and the mobile rules at ~10910 with no !important.
+
+   Specificity note: the mobile rule
+       :where(...) > .app-topbar:not(.visitor-nav)
+   looks strong, but :where() contributes 0, leaving (0,2,0) — which ties with
+   .app-topbar.sitenav and loses on source order. That is why this block works.
+
+   Do not insert new rules after this section.
+   ========================================================================= */
+
+/* ---- 1. the bar ----
+   Layout only. Position, sizing and the (absent) background are set in
+   section 8 below, which supersedes this block.
+
+   Three explicit columns rather than space-between: the outer columns are
+   equal 1fr tracks, so the pill lands in the true centre of the bar no matter
+   how wide the logo or the account button are. Columns are assigned by number
+   so the logo stays hard-left and the account button hard-right even when the
+   pill is hidden at narrow widths (or absent, as on the apply page). */
+.app-topbar.sitenav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: clamp(10px, 2vw, 28px);
+  will-change: transform;
+}
+
+.app-topbar.sitenav .sitenav-brand {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.app-topbar.sitenav .sitenav-pill {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.app-topbar.sitenav .sitenav-actions {
+  grid-column: 3;
+  justify-self: end;
+}
+
+/* Replaces the flow the bar occupied before it became fixed. Works on both
+   page shapes: a flex item inside .app-shell, and a plain block on visitor
+   pages, which have no .app-shell wrapper at all. */
+.sitenav-spacer {
+  flex: 0 0 auto;
+  height: var(--sitenav-h);
+}
+
+/* The apply page keeps an in-flow sticky bar, so it needs no spacer and
+   .partner-apply-sidebar's existing top offset stays correct. */
+.app-topbar.sitenav.sitenav-static {
+  position: sticky;
+  top: 0;
+  transform: none;
+}
+
+/* ---- 2. brand ---- */
+.app-topbar.sitenav .sitenav-brand {
+  flex: 0 0 auto;
+}
+
+.app-topbar.sitenav .sitenav-brand img {
+  width: auto;
+  height: auto;
+  max-width: clamp(132px, 13vw, 190px);
+  max-height: calc(var(--sitenav-h) - 22px);
+  object-fit: contain;
+}
+
+/* ---- 3. centre pill ---- */
+.app-topbar.sitenav .sitenav-pill {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid #ffffff14;
+  border-radius: 999px;
+  background: #ffffff0d;
+}
+
+.app-topbar.sitenav .sitenav-pill-link {
+  display: inline-flex;
+  align-items: center;
+  padding-block: 9px;
+  padding-inline: clamp(9px, 1.15vw, 19px);
+  border-radius: 999px;
+  color: #b9b9b9;
+  font-size: clamp(11.5px, 0.95vw, 14px);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.app-topbar.sitenav .sitenav-pill-link:hover {
+  background: #ffffff12;
+  color: #f5f5f5;
+}
+
+.app-topbar.sitenav .sitenav-pill-link.is-active {
+  background: linear-gradient(135deg, #f6a730, #ffc869);
+  color: #14110a;
+  box-shadow: 0 4px 16px rgba(246, 167, 48, 0.32);
+}
+
+.app-topbar.sitenav .sitenav-pill-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* ---- 4. right cluster ----
+   (0,3,0) so it beats .visitor-nav-actions { display: contents } at ~10960
+   and { display: grid } at ~7414 without !important. */
+.app-topbar .sitenav-actions {
+  display: flex;
+  width: auto;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-topbar.sitenav .sitenav-cta {
+  display: inline-flex;
+  height: 42px;
+  align-items: center;
+  gap: 7px;
+  padding-inline: clamp(14px, 1.5vw, 24px);
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f6a730, #e57b1b);
+  color: #14110a;
+  font-size: clamp(12px, 0.95vw, 14px);
+  font-weight: 900;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.app-topbar.sitenav .sitenav-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
+/* The signed-in control is the account button; sign-out lives in its menu. */
+.app-topbar.sitenav .sitenav-account-trigger {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+}
+
+.app-topbar.sitenav .sitenav-cta:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* The drawer stays in the DOM at every width (the route-scoping rules depend
+   on it); only the button that opens it appears and disappears. */
+.app-topbar.sitenav .sitenav-burger {
+  display: none;
+  width: 44px;
+  height: 44px;
+}
+
+/* ---- 5. responsive ladder: show all links, shrink to fit ----
+   Admin carries 7 links (~1116px of intrinsic bar width) so it folds to the
+   drawer first; organizer/customer (5) and visitor (3) fold at the shared
+   mobile breakpoint. */
+@media (max-width: 1140px) {
+  .app-topbar.sitenav[data-audience="admin"] .sitenav-pill {
+    display: none;
+  }
+
+  .app-topbar.sitenav[data-audience="admin"] .sitenav-burger {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --sitenav-h: 66px;
+  }
+
+  .app-topbar.sitenav .sitenav-pill {
+    display: none;
+  }
+
+  .app-topbar.sitenav .sitenav-burger {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --sitenav-h: 60px;
+  }
+
+  .app-topbar.sitenav {
+    gap: 10px;
+    padding-inline: 14px;
+  }
+
+  .app-topbar.sitenav .sitenav-cta {
+    height: 38px;
+    padding-inline: 13px;
+    font-size: 12px;
+  }
+
+  /* Icon-only account button; the labelled actions stay in the menu/drawer. */
+  .app-topbar.sitenav .sitenav-account-trigger span,
+  .app-topbar.sitenav .sitenav-account-chevron {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .app-topbar.sitenav .sitenav-cta {
+    display: none;
+  }
+}
+
+/* ---- 6. reduced motion ----
+   A bar that teleports off-screen is worse than one that never hides, so pin
+   it open rather than merely dropping the transition. */
+@media (prefers-reduced-motion: reduce) {
+  .app-topbar.sitenav,
+  .app-topbar.sitenav .sitenav-cta,
+  .app-topbar.sitenav .sitenav-pill-link,
+  .nav-drawer,
+  .nav-overlay {
+    transition: none;
+  }
+
+  .app-topbar.sitenav.is-hidden {
+    transform: none;
+  }
+}
+
+/* ---- 7. themed scrollbars ----
+   IMPORTANT: when scrollbar-width/scrollbar-color is set on an element,
+   Chromium 121+ ignores that element's ::-webkit-scrollbar pseudo-elements
+   entirely. The two models must never target the same element, hence the
+   @supports split below. Putting both in one rule makes the webkit half
+   dead code.
+
+   A transparent track is deliberate: it reads correctly on both the #292929
+   surface family and the #0d1117 / #161b22 admin and organizer family. */
+@supports (scrollbar-color: auto) {
+  html,
+  body,
+  :where(
+    .modal-overlay,
+    .modal-card,
+    .table-card,
+    .admin-review-card,
+    .organizer-table-scroll,
+    .transaction-filters,
+    .marketplace-tabs,
+    .nav-drawer,
+    .shell-main,
+    pre,
+    textarea
+  ) {
+    scrollbar-width: thin;
+    scrollbar-color: #f6a730 transparent;
+  }
+}
+
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-color: #f6a730;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #ffc869;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Belt and braces: this bar intentionally hides its scrollbar. The rule at
+     ~4460 already wins on specificity, but state it here too so a future edit
+     to the universal rules above cannot resurrect it. */
+  .ticket-filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* =========================================================================
+   NAV-2026b — transparent bar, iOS-style glass, contained hero carousel
+   Continuation of the NAV-2026 section above; must stay last in the file.
+   ========================================================================= */
+
+/* ---- 8. Navbar card ----
+   The bar keeps the floating-card geometry (inset from the viewport edges,
+   capped width, centred) but paints no background of its own: no fill, no
+   backdrop blur, no border, no shadow. The logo, pill and account button sit
+   directly on the page.
+
+   Because nothing here blurs any more, descendants are free to use
+   backdrop-filter if that is ever wanted -- the nested-backdrop-root problem
+   only applied while this element had one. */
+:root {
+  --glass-soft-orange: rgba(246, 167, 48, 0.5);
+  --glass-soft-orange-deep: rgba(229, 123, 27, 0.38);
+}
+
+.app-topbar.sitenav {
+  position: fixed;
+  z-index: 45;
+  top: var(--sitenav-gap);
+  right: 0;
+  left: 0;
+  width: min(1560px, calc(100% - var(--sitenav-gap) * 2));
+  height: var(--sitenav-h);
+  min-height: var(--sitenav-h);
+  margin-inline: auto;
+  padding: 0 clamp(14px, 2vw, 26px);
+  border: 0;
+  border-radius: clamp(18px, 1.8vw, 26px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-topbar.sitenav.is-hidden {
+  transform: translateY(calc(-100% - var(--sitenav-gap) - 10px));
+}
+
+
+/* The card floats, so the spacer has to clear the card plus its top gap. */
+.sitenav-spacer {
+  flex: 0 0 auto;
+  height: calc(var(--sitenav-h) + var(--sitenav-gap));
+}
+
+/* The apply page keeps an in-flow card. */
+.app-topbar.sitenav.sitenav-static {
+  position: sticky;
+  top: var(--sitenav-gap);
+  margin-block: var(--sitenav-gap) 0;
+  transform: none;
+}
+
+/* ---- 9. controls inside the card ----
+   None of these blur — the card already does. They are light tints that read
+   as etched into the frosted pane. */
+.app-topbar.sitenav .sitenav-pill {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.app-topbar.sitenav .sitenav-pill-link {
+  position: relative;
+  color: rgba(255, 255, 255, 0.74);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transition:
+    background 170ms ease,
+    color 170ms ease;
+}
+
+/* Plain hover — no sweep, no sheen. */
+.app-topbar.sitenav .sitenav-pill-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+/* ---- selected: soft orange, tuned to sit in the glass ----
+   Translucent and desaturated so it reads as tinted frost rather than a solid
+   chip pasted on top. Warm off-white label, because a translucent orange fill
+   does not give dark text enough contrast. */
+.app-topbar.sitenav .sitenav-pill-link.is-active,
+.app-topbar.sitenav .sitenav-pill-link.is-active:hover {
+  border: 1px solid rgba(246, 167, 48, 0.42);
+  background: linear-gradient(
+    160deg,
+    var(--glass-soft-orange),
+    var(--glass-soft-orange-deep)
+  );
+  color: #fff3e0;
+  text-shadow: 0 1px 2px rgba(92, 47, 0, 0.5);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.34),
+    inset 0 -1px 4px rgba(140, 74, 0, 0.22),
+    0 2px 12px rgba(246, 167, 48, 0.26);
+}
+
+/* ---- right-hand controls ---- */
+.app-topbar.sitenav .sitenav-account-trigger,
+.app-topbar.sitenav .hamburger.sitenav-burger {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.18),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.14);
+}
+
+.app-topbar.sitenav .sitenav-account-trigger:hover,
+.app-topbar.sitenav .hamburger.sitenav-burger:hover {
+  border-color: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: none;
+}
+
+.app-topbar.sitenav .sitenav-account-trigger.open {
+  border-color: rgba(246, 167, 48, 0.45);
+  background: linear-gradient(
+    160deg,
+    var(--glass-soft-orange),
+    var(--glass-soft-orange-deep)
+  );
+  color: #fff3e0;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.34),
+    inset 0 -1px 4px rgba(140, 74, 0, 0.22);
+}
+
+/* The public Log In button stays a solid call to action, softened slightly so
+   it does not fight the frosted card. */
+.app-topbar.sitenav .sitenav-cta:not(.sitenav-account-trigger) {
+  border: 1px solid rgba(255, 214, 150, 0.4);
+  background: linear-gradient(
+    160deg,
+    rgba(246, 167, 48, 0.92),
+    rgba(229, 123, 27, 0.86)
+  );
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.42),
+    0 4px 16px rgba(246, 167, 48, 0.3);
+}
+
+.app-topbar.sitenav .sitenav-cta:not(.sitenav-account-trigger):hover {
+  transform: none;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.5),
+    0 6px 20px rgba(246, 167, 48, 0.42);
+}
+
+/* ---- 10. account menu (the only sign-out path) ----
+   No backdrop-filter here either: the menu is a descendant of the card, so its
+   own blur would sample the card's backdrop root and render blank. It uses an
+   opaque frosted fill with the same border/shadow language instead. */
+.app-topbar.sitenav .sitenav-account {
+  position: relative;
+}
+
+.app-topbar.sitenav .sitenav-account-chevron {
+  transition: transform 200ms ease;
+}
+
+.app-topbar.sitenav .sitenav-account-chevron.open {
+  transform: rotate(180deg);
+}
+
+.app-topbar.sitenav .sitenav-menu {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 12px);
+  right: 0;
+  display: grid;
+  min-width: 212px;
+  gap: 2px;
+  padding: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  background: linear-gradient(
+    160deg,
+    rgba(46, 46, 50, 0.97),
+    rgba(28, 28, 32, 0.97)
+  );
+  box-shadow:
+    inset 0 2px 6px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.16),
+    0 0 26px rgba(255, 255, 255, 0.05),
+    0 20px 48px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(-6px) scale(0.97);
+  transform-origin: top right;
+  transition:
+    opacity 190ms ease,
+    transform 190ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    visibility 190ms ease;
+  visibility: hidden;
+}
+
+.app-topbar.sitenav .sitenav-menu.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}
+
+.app-topbar.sitenav .sitenav-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.app-topbar.sitenav .sitenav-menu-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.app-topbar.sitenav .sitenav-menu-item.is-active {
+  background: linear-gradient(
+    160deg,
+    var(--glass-soft-orange),
+    var(--glass-soft-orange-deep)
+  );
+  color: #fff3e0;
+}
+
+.app-topbar.sitenav .sitenav-menu-signout {
+  margin-top: 3px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0 0 12px 12px;
+  color: #ff9a8b;
+}
+
+.app-topbar.sitenav .sitenav-menu-signout:hover {
+  background: rgba(216, 74, 74, 0.2);
+  color: #ffb4a8;
+}
+
+/* ---- 11. narrower gap on small screens ---- */
+@media (max-width: 640px) {
+  :root {
+    --sitenav-gap: 10px;
+  }
+}
+
+/* ---- 12. contained hero carousel ----
+   Was full-bleed; now an inset rounded card so the page background frames it,
+   matching the reference layout. Only HeroCarousel.tsx uses these classes. */
+.home-hero.hero-carousel {
+  width: min(1560px, calc(100% - clamp(16px, 3vw, 44px) * 2));
+  min-height: 0;
+  margin: clamp(10px, 1.6vw, 22px) auto 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: clamp(16px, 1.8vw, 26px);
+  background: #0b0b0b;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.home-hero.hero-carousel .home-hero-inner {
+  width: min(1180px, calc(100% - clamp(28px, 5vw, 76px)));
+  min-height: min(66vh, 600px);
+  padding: clamp(48px, 7vw, 88px) 0 clamp(56px, 7vw, 92px);
+}
+
+/* Keep the slide art inside the rounded corners. */
+.home-hero.hero-carousel .hero-slide {
+  border-radius: inherit;
+}
+
+@media (max-width: 640px) {
+  .home-hero.hero-carousel {
+    width: calc(100% - 20px);
+    border-radius: 14px;
+  }
+
+  .home-hero.hero-carousel .home-hero-inner {
+    min-height: 62vh;
+  }
+}
+
+/* ---- 13. reduced motion ----
+   Must stay after the frosted-card rules: media queries add no specificity, so
+   the .is-hidden pin below only wins by source order. */
+@media (prefers-reduced-motion: reduce) {
+  .app-topbar.sitenav,
+  .app-topbar.sitenav .sitenav-account-chevron,
+  .app-topbar.sitenav .sitenav-menu,
+  .app-topbar.sitenav .sitenav-pill-link {
+    transition: none;
+  }
+
+  /* A card that teleports off-screen is worse than one that never hides. */
+  .app-topbar.sitenav.is-hidden {
+    transform: none;
+  }
 }

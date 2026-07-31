@@ -6,15 +6,22 @@ function read(relativePath: string) {
   return readFileSync(new URL(relativePath, import.meta.url), "utf8");
 }
 
-test("all authenticated roles expose Profile only in the burger navigation", () => {
+test("all authenticated roles reach Profile from the account menu and the drawer", () => {
   const navigation = read("../navConfig.ts");
-  const roleNav = read("../RoleNav.tsx");
+  // Point at the implementation, not the RoleNav adapter, or this is vacuous.
+  const roleNav = read("../nav/SiteNav.tsx");
 
   assert.match(navigation, /\/customer\/profile/);
   assert.match(navigation, /\/organizer\/profile/);
   assert.match(navigation, /\/admin\/profile/);
+
+  // Profile is lifted out of the centre pill into the account menu...
+  assert.match(roleNav, /const profileItem = items\.find/);
+  assert.match(roleNav, /const pillItems = items\.filter/);
+  // ...which is the only place a signed-in user can sign out.
+  assert.match(roleNav, /sitenav-menu-signout/);
+  assert.doesNotMatch(roleNav, /sitenav-cta-signout/);
   assert.doesNotMatch(roleNav, /app-profile-link/);
-  assert.doesNotMatch(roleNav, /View profile/);
 });
 
 test("profile password form validates and updates only the signed-in user", () => {
