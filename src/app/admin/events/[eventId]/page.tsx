@@ -5,22 +5,21 @@ import { Card } from "@/components/common/Card";
 import { BackButton } from "@/components/common/BackButton";
 import { CancelEventButton } from "@/components/common/CancelEventButton";
 import { formatMyr } from "@/lib/currency";
+import { EventBanner } from "@/components/events/EventBanner";
+import { EventMetricCard } from "@/components/events/EventMetricCard";
+import {
+  buildEventChartPoints,
+  type EventTransactionRow,
+} from "@/lib/eventChartData";
 
 const NUMBER = new Intl.NumberFormat("en-US");
 
-function statusVariant(status: string | null): string {
-  switch ((status ?? "").toLowerCase()) {
-    case "active":
-      return "good";
-    case "pending":
-      return "warn";
-    case "rejected":
-    case "cancelled":
-    case "canceled":
-      return "bad";
-    default:
-      return "";
-  }
+function statusClass(status: string | null): string {
+  const s = (status ?? "").toLowerCase();
+  if (s === "active") return "active";
+  if (s === "pending") return "pending";
+  if (s === "rejected" || s === "cancelled" || s === "canceled") return "rejected";
+  return "";
 }
 
 function formatDate(value: string | null): string {
@@ -68,25 +67,52 @@ export default async function AdminEventDetailPage({
   const totalSupply = types.reduce((s: number, t: Record<string, unknown>) => s + ((t.total_supply as number) ?? 0), 0);
   const totalRevenue = types.reduce((s: number, t: Record<string, unknown>) => s + (t.revenue as number), 0);
 
+  const { data: tickets } = await supabaseAdmin
+    .from("tickets")
+    .select("ticket_id")
+    .eq("event_id", eventId);
+
+  const ticketIds = (tickets ?? []).map(
+    (ticket) => ticket.ticket_id as string,
+  );
+
+  let chartTransactions: EventTransactionRow[] = [];
+  if (ticketIds.length > 0) {
+    const CHUNK_SIZE = 1000;
+    const chunks = Array.from(
+      { length: Math.ceil(ticketIds.length / CHUNK_SIZE) },
+      (_, index) =>
+        ticketIds.slice(index * CHUNK_SIZE, (index + 1) * CHUNK_SIZE),
+    );
+
+    const results = await Promise.all(
+      chunks.map((chunk) =>
+        supabaseAdmin
+          .from("transactions")
+          .select("amount, created_at")
+          .in("ticket_id", chunk)
+          .eq("transaction_type", "purchase")
+          .order("created_at", { ascending: true }),
+      ),
+    );
+
+    chartTransactions = results.flatMap(
+      (result) => (result.data ?? []) as EventTransactionRow[],
+    );
+  }
+
+  const chartData = buildEventChartPoints(chartTransactions, totalSupply);
+
   return (
     <>
       <div className="top-row">
+        <span
+          className={`admin-event-status-badge admin-event-status-badge--${statusClass(event.status)}`.trim()}
+        >
+          {(event.status ?? "unknown").toUpperCase()}
+        </span>
         <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              flexWrap: "wrap",
-            }}
-          >
-            <h1>{event.event_name}</h1>
-            <span
-              className={`status ${statusVariant(event.status)}`.trim()}
-            >
-              {(event.status ?? "unknown").toUpperCase()}
-            </span>
-          </div>
+          <h1>{event.event_name}</h1>
           <p className="muted dashboard-subtitle">
             {event.artist_name && (
               <>
@@ -110,33 +136,62 @@ export default async function AdminEventDetailPage({
         </div>
       </div>
 
-      {event.banner_image && (
-        <div className="admin-event-banner">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+      {event.banner_image ? (
+        <div className="admin-event-hero">
+          <EventBanner
             src={event.banner_image}
             alt={`${event.event_name} banner`}
           />
+          <div className="admin-event-hero-metrics">
+            <EventMetricCard
+              value={NUMBER.format(totalSold)}
+              title={`Sold / ${NUMBER.format(totalSupply)} total`}
+              data={chartData}
+              dataKey="sales"
+              color="#36b56a"
+            />
+            <EventMetricCard
+              value={NUMBER.format(totalSupply - totalSold)}
+              title="Remaining supply"
+              data={chartData}
+              dataKey="remaining"
+              color="#f6a730"
+            />
+            <EventMetricCard
+              value={formatMyr(totalRevenue)}
+              title="Total revenue"
+              data={chartData}
+              dataKey="revenue"
+              color="#58a6ff"
+              className="metric-full"
+            />
+          </div>
         </div>
+      ) : (
+        <section className="grid-3" style={{ marginBottom: 24 }}>
+          <EventMetricCard
+            value={NUMBER.format(totalSold)}
+            title={`Sold / ${NUMBER.format(totalSupply)} total`}
+            data={chartData}
+            dataKey="sales"
+            color="#36b56a"
+          />
+          <EventMetricCard
+            value={NUMBER.format(totalSupply - totalSold)}
+            title="Remaining supply"
+            data={chartData}
+            dataKey="remaining"
+            color="#f6a730"
+          />
+          <EventMetricCard
+            value={formatMyr(totalRevenue)}
+            title="Total revenue"
+            data={chartData}
+            dataKey="revenue"
+            color="#58a6ff"
+          />
+        </section>
       )}
-
-      <section className="grid-3" style={{ marginBottom: 24 }}>
-        <Card
-          variant="metric"
-          value={NUMBER.format(totalSold)}
-          title={`Sold / ${NUMBER.format(totalSupply)} total`}
-        />
-        <Card
-          variant="metric"
-          value={NUMBER.format(totalSupply - totalSold)}
-          title="Remaining supply"
-        />
-        <Card
-          variant="metric"
-          value={formatMyr(totalRevenue)}
-          title="Total revenue"
-        />
-      </section>
 
       {event.description && (
         <Card

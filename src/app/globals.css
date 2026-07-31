@@ -2801,6 +2801,7 @@ tr:last-child td {
 
 .dashboard-subtitle {
   margin-top: 4px;
+  text-align: left;
 }
 
 .dashboard-panels {
@@ -7499,6 +7500,7 @@ tr:last-child td {
 }
 
 .app-shell:has(.side-nav a[href="/admin/events"].active) .top-row {
+  position: relative;
   overflow: hidden;
   align-items: flex-end;
   min-height: 172px;
@@ -7513,6 +7515,41 @@ tr:last-child td {
   box-shadow:
     0 24px 70px rgba(0, 0, 0, 0.48),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.admin-event-status-badge {
+  position: absolute;
+  top: clamp(22px, 4vw, 34px);
+  right: clamp(22px, 4vw, 34px);
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.admin-event-status-badge--active {
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.08);
+  color: rgb(74, 222, 128);
+}
+
+.admin-event-status-badge--pending {
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: rgba(234, 179, 8, 0.08);
+  color: rgb(234, 179, 8);
+}
+
+.admin-event-status-badge--rejected {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+  color: rgb(248, 113, 113);
 }
 
 .app-shell:has(.side-nav a[href="/admin/events"].active) .top-row h1 {
@@ -7550,22 +7587,162 @@ tr:last-child td {
   line-height: 1.7;
 }
 
-.admin-event-banner {
-  width: 100%;
-  height: clamp(180px, 20vw, 240px);
-  overflow: hidden;
+.admin-event-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 18px;
   margin-bottom: 24px;
+}
+
+.admin-event-hero-metrics {
+  flex: 1 1 300px;
+  min-width: 260px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.admin-event-hero-metrics .metric-full {
+  grid-column: 1 / -1;
+}
+
+.event-metric-card {
+  overflow: hidden;
+  padding: 16px 16px 12px;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent),
+    #0d1117;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.13);
+}
+
+.event-metric-card > strong {
+  display: block;
+  color: #f5f7fa;
+  font-family: var(--font-display), "Archivo", sans-serif;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.event-metric-card > span {
+  display: block;
+  margin-top: 5px;
+  color: #8d98a5;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.event-metric-chart {
+  width: 100%;
+  height: 96px;
+  margin-top: 8px;
+}
+
+.event-metric-chart .recharts-surface {
+  overflow: visible;
+}
+
+.event-metric-empty {
+  margin: 14px 0 4px;
+  color: #697582;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.event-banner {
+  flex: 1 1 360px;
+  min-width: 0;
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-lg);
   background: #101010;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 0.2s ease;
 }
 
-.admin-event-banner img {
+.event-banner:hover,
+.event-banner:focus-visible {
+  opacity: 0.85;
+  outline: none;
+}
+
+.event-banner img {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.event-banner-expand-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.event-banner:hover .event-banner-expand-hint {
+  opacity: 1;
+}
+
+.event-banner-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.86);
+  backdrop-filter: blur(6px);
+}
+
+.event-banner-lightbox img {
+  max-width: 92vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+}
+
+.event-banner-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.event-banner-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .app-shell:has(.side-nav a[href="/admin/events"].active) .top-row + div[style] {
