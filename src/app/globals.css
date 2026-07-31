@@ -6101,6 +6101,30 @@ tr:last-child td {
   box-shadow: 0 0 0 3px #f6a73024;
 }
 
+.partner-apply-phone-field {
+  display: flex;
+  align-items: stretch;
+}
+
+.partner-apply-phone-prefix {
+  display: flex;
+  align-items: center;
+  padding: 11px 13px;
+  border: 1px solid var(--input);
+  border-right: none;
+  border-radius: 11px 0 0 11px;
+  background: #1c1b17;
+  color: #777169;
+  font-size: 14px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.partner-apply-phone-field input {
+  border-radius: 0 11px 11px 0;
+  min-width: 0;
+}
+
 .partner-apply-actions {
   display: flex;
   justify-content: space-between;
