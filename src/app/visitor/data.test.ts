@@ -148,7 +148,7 @@ test("visitor keeps the shared public-navbar dimensions", () => {
 test("event section retains its compact dark responsive treatment", () => {
   const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
 
-  assert.match(styles, /\.events-section\s*\{[\s\S]*?background:\s*#000000/);
+  assert.match(styles, /\.events-section\s*\{[\s\S]*?background:\s*#0d1117/);
   assert.match(
     styles,
     /\.event-controls\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:/,

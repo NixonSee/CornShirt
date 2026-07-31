@@ -61,6 +61,7 @@ function failed(error: string, category: string): FinalizeResult {
 export async function createResaleCheckoutSession(input: {
   listingId: string;
   buyerId: string;
+  customerEmail: string;
   idempotencyKey: string;
   origin: string;
 }) {
@@ -127,6 +128,10 @@ export async function createResaleCheckoutSession(input: {
     {
       mode: "payment",
       payment_method_types: ["card"],
+      customer_email: input.customerEmail,
+      wallet_options: {
+        link: { display: "never" },
+      },
       line_items: [
         {
           quantity: 1,

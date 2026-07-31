@@ -755,7 +755,7 @@ tr:last-child td {
   width: 100%;
   margin: 0;
   padding: 64px max(16px, calc((100vw - 1180px) / 2));
-  background: #000000;
+  background: #0d1117;
 }
 
 .events-toolbar {
@@ -4750,17 +4750,102 @@ tr:last-child td {
   display: grid;
   width: 100%;
   justify-items: center;
-  gap: 10px;
   text-align: center;
 }
 
+.modal-overlay:has(.ticket-view-modal) {
+  background: rgba(2, 5, 9, 0.78);
+  backdrop-filter: blur(10px);
+}
+
 .ticket-view-modal {
-  width: min(100%, 540px);
+  position: relative;
+  width: min(100%, 460px);
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(246, 167, 48, 0.3);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(246, 167, 48, 0.14), transparent 42%),
+    #0d1117;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.72),
+    0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+}
+
+.ticket-view-modal > h2 {
+  margin: 0;
+  padding: 27px 80px 21px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f5f7fa;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.ticket-view-modal .modal-close-button {
+  position: absolute;
+  top: 19px;
+  right: 20px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8edf3;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.ticket-view-modal .modal-close-button:hover {
+  border-color: rgba(246, 167, 48, 0.7);
+  background: rgba(246, 167, 48, 0.12);
+  color: #f6a730;
+  transform: rotate(4deg);
+}
+
+.ticket-view-modal .modal-close-button:focus-visible {
+  outline: 3px solid rgba(246, 167, 48, 0.24);
+  outline-offset: 3px;
+}
+
+.ticket-view-modal .modal-body {
+  display: grid;
+  place-items: center;
+  padding: 34px 28px 38px;
 }
 
 .ticket-qr-large {
-  margin-bottom: 8px;
-  padding: 14px;
+  margin: 0;
+  padding: 18px;
+  border: 1px solid rgba(246, 167, 48, 0.35);
+  border-radius: 20px;
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.38),
+    0 0 30px rgba(246, 167, 48, 0.07);
+}
+
+.ticket-view-modal .ticket-qr-large svg {
+  display: block;
+  width: min(240px, 58vw);
+  height: auto;
+}
+
+.ticket-qr-modal .ticket-qr-instruction {
+  max-width: 280px;
+  margin: 18px 0 0;
+  color: #aeb7c2;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
 }
 
 .ticket-qr-modal strong {
@@ -10284,21 +10369,18 @@ tr:last-child td {
   z-index: 1;
 }
 
-/* Event detail premium checkout redesign */
 .event-detail-page {
   overflow: hidden;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 14% 0%, rgba(246, 167, 48, 0.13), transparent 30%),
-    radial-gradient(circle at 86% 12%, rgba(255, 200, 105, 0.075), transparent 26%),
-    linear-gradient(180deg, #050505 0%, #11100f 42%, #070707 100%);
+  background: #0d1117;
   color: #ffffff;
 }
 
 .event-detail-hero {
   min-height: clamp(560px, 66vw, 760px);
   align-items: flex-end;
-  border-bottom: 1px solid rgba(246, 167, 48, 0.16);
+  border-bottom: 0;
+  background-color: #050505;
   background-position: center top;
 }
 
@@ -10458,6 +10540,7 @@ tr:last-child td {
   width: min(1600px, calc(100% - clamp(28px, 4vw, 72px)));
   margin: 0 auto;
   padding: clamp(46px, 7vw, 88px) 0 clamp(64px, 8vw, 104px);
+  background: #0d1117;
   grid-template-columns: 1fr;
   gap: 24px;
 }
@@ -11088,6 +11171,28 @@ tr:last-child td {
     border-radius: 18px;
   }
 
+  .app-shell:has(.side-nav a[href="/customer/tickets"])
+    .ticket-view-modal {
+    padding: 0;
+    border-radius: 20px;
+  }
+
+  .ticket-view-modal > h2 {
+    padding: 23px 70px 18px 22px;
+    font-size: 20px;
+  }
+
+  .ticket-view-modal .modal-close-button {
+    top: 15px;
+    right: 16px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .ticket-view-modal .modal-body {
+    padding: 28px 20px 32px;
+  }
+
   .app-shell:has(.side-nav a[href="/customer/tickets"]) .modal-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -11108,7 +11213,7 @@ tr:last-child td {
   }
 
   .ticket-qr-large svg {
-    width: min(210px, 62vw);
+    width: min(220px, 62vw);
     height: auto;
   }
 

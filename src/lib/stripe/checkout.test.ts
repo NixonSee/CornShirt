@@ -21,6 +21,10 @@ test("ticket checkout route creates a customer-only Stripe Checkout session", ()
   assert.match(checkoutSource, /reserve_primary_ticket/);
   assert.match(checkoutSource, /amount_sen/);
   assert.match(checkoutSource, /mode:\s*"payment"/);
+  assert.match(checkoutSource, /customer_email:\s*customerEmail/);
+  assert.match(checkoutSource, /wallet_options:\s*\{/);
+  assert.match(checkoutSource, /link:\s*\{\s*display:\s*"never"\s*\}/);
+  assert.match(routeSource, /auth\.identity\.user\.email/);
   assert.match(checkoutSource, /metadata:\s*\{/);
   assert.match(checkoutSource, /eventId/);
   assert.match(checkoutSource, /ticketTypeId/);

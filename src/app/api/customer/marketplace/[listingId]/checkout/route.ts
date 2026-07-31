@@ -18,10 +18,19 @@ export async function POST(
     return Response.json({ error: "Invalid checkout request." }, { status: 400 });
   }
 
+  const customerEmail = auth.identity.user.email?.trim();
+  if (!customerEmail) {
+    return Response.json(
+      { error: "Your account email is unavailable." },
+      { status: 409 },
+    );
+  }
+
   const { listingId } = await params;
   const result = await createResaleCheckoutSession({
     listingId,
     buyerId: auth.identity.user.id,
+    customerEmail,
     idempotencyKey,
     origin: getPublicRequestOrigin(request),
   });

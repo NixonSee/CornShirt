@@ -8,6 +8,7 @@ type CheckoutInput = {
   eventId: string;
   ticketTypeId: string;
   userId: string;
+  customerEmail: string;
   origin: string;
   idempotencyKey: string;
 };
@@ -64,6 +65,7 @@ export async function createTicketCheckoutSession({
   eventId,
   ticketTypeId,
   userId,
+  customerEmail,
   origin,
   idempotencyKey,
 }: CheckoutInput): Promise<CheckoutResult> {
@@ -123,6 +125,10 @@ export async function createTicketCheckoutSession({
     {
       mode: "payment",
       payment_method_types: ["card"],
+      customer_email: customerEmail,
+      wallet_options: {
+        link: { display: "never" },
+      },
       line_items: [
         {
           quantity: 1,

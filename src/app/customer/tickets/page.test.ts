@@ -126,8 +126,15 @@ test("ticket list renders one ticket-shaped row with QR and safe actions", () =>
   assert.match(source, /<QRCode/);
   assert.match(source, /<Modal/);
   assert.match(source, />\s*View QR\s*</);
-  assert.match(source, /Ticket ID/);
-  assert.match(source, /navigator\.clipboard\.writeText/);
+  assert.doesNotMatch(source, /Ticket ID/);
+  assert.doesNotMatch(source, /navigator\.clipboard\.writeText/);
+  assert.match(source, /className="ticket-view-modal"[\s\S]*?showCloseButton/);
+  assert.match(source, /className="ticket-view-modal"[\s\S]*?actions=\{null\}/);
+  assert.match(source, /Scan this QR code at the entrance\./);
+  assert.match(
+    source,
+    /\["active", "valid"\]\.includes\(ticket\.status\.toLowerCase\(\)\)[\s\S]*?>\s*Transfer\s*</,
+  );
   assert.doesNotMatch(source, /Full QR value/);
   assert.match(source, />\s*Transfer\s*</);
   assert.match(source, /recipientEmail/);

@@ -52,6 +52,9 @@ test("resale checkout separates NFT failure from database reconciliation", () =>
   assert.match(route, /authorizeApiRole\(\["customer", "user"\]\)/);
   assert.match(resale, /reserve_resale_purchase/);
   assert.match(resale, /currency:\s*"myr"/);
+  assert.match(resale, /customer_email:\s*input\.customerEmail/);
+  assert.match(resale, /link:\s*\{\s*display:\s*"never"\s*\}/);
+  assert.match(route, /auth\.identity\.user\.email/);
   assert.match(resale, /getTicketOwner/);
   assert.match(resale, /transferTicket/);
   assert.match(resale, /finalize_resale_purchase/);
