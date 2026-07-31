@@ -1,7 +1,7 @@
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-const CANCELLABLE_STATUSES = new Set(["pending", "active"]);
+const CANCELLABLE_STATUSES = new Set(["active"]);
 
 export async function PUT(
   request: Request,
