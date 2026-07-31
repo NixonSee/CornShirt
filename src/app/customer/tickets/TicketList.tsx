@@ -5,9 +5,11 @@ import {
   Check,
   Copy,
   Hash,
+  Mail,
   MapPin,
   QrCode,
   ReceiptText,
+  ShieldCheck,
   Ticket as TicketIcon,
   UserRoundPlus,
 } from "lucide-react";
@@ -28,6 +30,26 @@ interface TicketListProps {
   tickets: readonly CustomerTicket[];
   errorMessage?: string;
 }
+
+type TicketFilter = "all" | "valid" | "listed" | "used";
+type TicketCategory = Exclude<TicketFilter, "all"> | "other";
+
+const TICKET_FILTERS: readonly {
+  value: TicketFilter;
+  label: string;
+}[] = [
+  { value: "all", label: "All" },
+  { value: "valid", label: "Valid" },
+  { value: "listed", label: "Listed" },
+  { value: "used", label: "Used" },
+];
+
+const TICKET_SORT_RANK: Record<TicketCategory, number> = {
+  valid: 0,
+  listed: 1,
+  used: 2,
+  other: 3,
+};
 
 function shortHash(value: string | null): string {
   if (!value) return "Transaction pending";
@@ -50,8 +72,29 @@ function statusVariant(status: string): string {
   }
 }
 
+function ticketCategory(ticket: CustomerTicket): TicketCategory {
+  const status = ticket.status.toLowerCase();
+
+  if (status === "used") return "used";
+  if (
+    ticket.hasActiveListing &&
+    ["active", "valid"].includes(status)
+  ) {
+    return "listed";
+  }
+  if (["active", "valid"].includes(status)) return "valid";
+  return "other";
+}
+
+function displayStatus(ticket: CustomerTicket): string {
+  if (ticketCategory(ticket) === "listed") return "LISTED";
+
+  return ticket.status;
+}
+
 export default function TicketList({ tickets, errorMessage }: TicketListProps) {
   const router = useRouter();
+  const [activeFilter, setActiveFilter] = useState<TicketFilter>("all");
   const [selectedTicket, setSelectedTicket] = useState<CustomerTicket | null>(
     null,
   );
@@ -71,6 +114,34 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
   const [transferError, setTransferError] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
   const transferKey = useRef<string | null>(null);
+  const ticketCounts: Record<TicketFilter, number> = {
+    all: tickets.length,
+    valid: 0,
+    listed: 0,
+    used: 0,
+  };
+
+  tickets.forEach((ticket) => {
+    const category = ticketCategory(ticket);
+    if (category !== "other") ticketCounts[category] += 1;
+  });
+
+  const visibleTickets = tickets
+    .map((ticket, index) => ({ ticket, index }))
+    .filter(
+      ({ ticket }) =>
+        activeFilter === "all" || ticketCategory(ticket) === activeFilter,
+    )
+    .sort(
+      (left, right) =>
+        TICKET_SORT_RANK[ticketCategory(left.ticket)] -
+          TICKET_SORT_RANK[ticketCategory(right.ticket)] ||
+        left.index - right.index,
+    )
+    .map(({ ticket }) => ticket);
+  const activeFilterLabel =
+    TICKET_FILTERS.find((filter) => filter.value === activeFilter)?.label ??
+    "selected";
 
   async function copyTicketId(value: string) {
     setCopyError("");
@@ -184,8 +255,26 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
 
   return (
     <>
-      <section className="ticket-stack" aria-label="Owned concert tickets">
-        {tickets.map((ticket) => (
+      <nav className="ticket-filter-bar" aria-label="Filter tickets by status">
+        {TICKET_FILTERS.map((filter) => (
+          <button
+            type="button"
+            className={`ticket-filter-chip${activeFilter === filter.value ? " active" : ""}`}
+            aria-pressed={activeFilter === filter.value}
+            key={filter.value}
+            onClick={() => setActiveFilter(filter.value)}
+          >
+            <span>{filter.label}</span>
+            <span className="ticket-filter-count">
+              {ticketCounts[filter.value]}
+            </span>
+          </button>
+        ))}
+      </nav>
+
+      {visibleTickets.length > 0 ? (
+        <section className="ticket-stack" aria-label="Owned concert tickets">
+          {visibleTickets.map((ticket) => (
           <article
             className="ticket-pass"
             key={ticket.id}
@@ -223,9 +312,14 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                   <dt>Status</dt>
                   <dd>
                     <span
-                      className={`status ${statusVariant(ticket.status)}`}
+                      className={`status ${statusVariant(displayStatus(ticket))}`}
+                      title={
+                        ticket.hasActiveListing
+                          ? "Listed on the Marketplace and waiting for a buyer"
+                          : undefined
+                      }
                     >
-                      {ticket.status}
+                      {displayStatus(ticket)}
                     </span>
                   </dd>
                 </div>
@@ -336,8 +430,15 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
               </div>
             </div>
           </article>
-        ))}
-      </section>
+          ))}
+        </section>
+      ) : (
+        <section className="ticket-filter-empty" role="status">
+          <TicketIcon aria-hidden="true" size={34} />
+          <h2>No {activeFilterLabel.toLowerCase()} tickets</h2>
+          <p>Choose another filter to view the rest of your collection.</p>
+        </section>
+      )}
 
       <Modal
         isOpen={selectedTicket !== null}
@@ -405,37 +506,67 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
       <Modal
         isOpen={transferTarget !== null}
         onClose={() => setTransferTarget(null)}
-        title="Transfer Ticket NFT"
+        title="Transfer ticket"
+        className="ticket-resale-modal ticket-transfer-modal"
+        showCloseButton
         actions={
           <>
             <Button variant="outline" onClick={() => setTransferTarget(null)}>
               Cancel
             </Button>
-            <Button loading={isTransferring} onClick={submitTransfer}>
-              Confirm transfer
+            <Button
+              disabled={!recipientEmail.trim()}
+              loading={isTransferring}
+              onClick={submitTransfer}
+            >
+              Transfer ticket
             </Button>
           </>
         }
       >
-        <div className="resale-form">
-          <p>
-            {transferTarget?.eventName} / {transferTarget?.ticketType}
-          </p>
-          <label>
-            <span>Recipient&apos;s registered email</span>
-            <input
-              type="email"
-              value={recipientEmail}
-              onChange={(event) => setRecipientEmail(event.target.value)}
-              placeholder="customer@example.com"
-              autoComplete="email"
-            />
+        <div className="ticket-transfer-form" data-testid="ticket-transfer-form">
+          <div className="resale-listing-ticket">
+            <span className="resale-listing-eyebrow">Ticket</span>
+            <strong>{transferTarget?.eventName}</strong>
+            <p>
+              {transferTarget?.ticketType}
+              <span aria-hidden="true">•</span>
+              {transferTarget?.tokenId}
+            </p>
+          </div>
+
+          <label className="ticket-transfer-field" htmlFor="recipient-email">
+            <span className="ticket-transfer-label">Recipient email</span>
+            <div className="ticket-transfer-control">
+              <span className="ticket-transfer-icon" aria-hidden="true">
+                <Mail size={18} />
+              </span>
+              <input
+                id="recipient-email"
+                type="email"
+                value={recipientEmail}
+                onChange={(event) => setRecipientEmail(event.target.value)}
+                placeholder="customer@example.com"
+                autoComplete="email"
+                aria-describedby="recipient-email-help"
+              />
+            </div>
+            <small id="recipient-email-help">
+              Use the email linked to the recipient&apos;s CornShirt account.
+            </small>
           </label>
-          <p className="muted">
-            This transfers the existing NFT without payment. If the event is
-            later cancelled, its refund returns to the latest Stripe payer,
-            who may be different from the recipient.
-          </p>
+
+          <div className="ticket-transfer-note">
+            <ShieldCheck aria-hidden="true" size={18} />
+            <p>
+              <strong>Direct NFT transfer</strong>
+              <span>
+                No payment is collected. If the event is cancelled, any refund
+                goes to the latest Stripe payer.
+              </span>
+            </p>
+          </div>
+
           {transferError ? (
             <p role="alert" className="customer-account-error">
               {transferError}

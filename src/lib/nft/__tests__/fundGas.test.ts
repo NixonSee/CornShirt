@@ -29,7 +29,7 @@ test("fundCustomerGas: balance exactly at threshold does not send funding", asyn
   const mod = await import(url.href);
 
   const fakePublicClient = {
-    getBalance: async () => parseEther("0.01"),
+    getBalance: async () => parseEther("0.001"),
     waitForTransactionReceipt: async () => ({ status: "success" }),
   };
 
@@ -40,12 +40,12 @@ test("fundCustomerGas: balance exactly at threshold does not send funding", asyn
   assert.equal(result.funded, false);
 });
 
-test("fundCustomerGas: balance below threshold sends 0.1 ETH", async () => {
+test("fundCustomerGas: balance below threshold sends 0.002 ETH", async () => {
   const url = new URL("../fundGas.ts", import.meta.url);
   const mod = await import(url.href);
 
   const fakePublicClient = {
-    getBalance: async () => parseEther("0.005"),
+    getBalance: async () => parseEther("0.0005"),
     waitForTransactionReceipt: async () => ({ status: "success" }),
   };
 

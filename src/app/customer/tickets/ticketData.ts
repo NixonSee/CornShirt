@@ -18,13 +18,12 @@ export interface CustomerTicket {
   accent: string;
 }
 
-const TICKET_ACCENTS = [
-  "#f6a730",
-  "#2563eb",
-  "#36b56a",
-  "#d84a4a",
-  "#a855f7",
-] as const;
+const TICKET_STATE_ACCENTS = {
+  valid: "#36b56a",
+  used: "#d84a4a",
+  listed: "#f6a730",
+  fallback: "#64748b",
+} as const;
 
 export function recordString(
   record: DatabaseRecord,
@@ -53,12 +52,27 @@ function formatDate(value: string | null): string {
   }).format(date);
 }
 
-function accentFor(ticketId: string): string {
-  const hash = [...ticketId].reduce(
-    (total, character) => total + character.charCodeAt(0),
-    0,
-  );
-  return TICKET_ACCENTS[hash % TICKET_ACCENTS.length];
+function accentFor(status: string, hasActiveListing: boolean): string {
+  const normalizedStatus = status.toLowerCase();
+
+  if (
+    ["used", "refunded", "cancelled", "canceled"].includes(normalizedStatus)
+  ) {
+    return TICKET_STATE_ACCENTS.used;
+  }
+
+  if (
+    hasActiveListing &&
+    ["active", "valid"].includes(normalizedStatus)
+  ) {
+    return TICKET_STATE_ACCENTS.listed;
+  }
+
+  if (["active", "valid"].includes(normalizedStatus)) {
+    return TICKET_STATE_ACCENTS.valid;
+  }
+
+  return TICKET_STATE_ACCENTS.fallback;
 }
 
 export function mapCustomerTickets(
@@ -94,6 +108,10 @@ export function mapCustomerTickets(
       "qr_code_data",
       "qr_value",
     );
+    const status = (
+      recordString(ticket, "status") ?? "active"
+    ).toUpperCase();
+    const hasActiveListing = activeListingTicketIds.has(id);
     const isNftBacked =
       recordString(ticket, "record_source") === "stripe_nft" &&
       Boolean(rawTokenId) &&
@@ -107,7 +125,7 @@ export function mapCustomerTickets(
       eventDate: formatDate(recordString(event, "event_date")),
       ticketType:
         recordString(ticketType, "type_name", "name") ?? "Admission",
-      status: (recordString(ticket, "status") ?? "active").toUpperCase(),
+      status,
       tokenId: rawTokenId ? `#${rawTokenId.replace(/^#/, "")}` : "Pending",
       transactionHash: recordString(
         ticket,
@@ -118,9 +136,9 @@ export function mapCustomerTickets(
       qrValue,
       isNftBacked,
       transferAllowed: recordBoolean(ticketType, "transfer_allowed"),
-      hasActiveListing: activeListingTicketIds.has(id),
+      hasActiveListing,
       refundEligible: recordBoolean(ticket, "refund_eligible"),
-      accent: accentFor(id),
+      accent: accentFor(status, hasActiveListing),
     };
   });
 }

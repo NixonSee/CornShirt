@@ -4,9 +4,8 @@ import {
   getContract,
 } from "./contract";
 import { createWalletClient, http, type Address } from "viem";
-import { hardhat } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
-import { HARDHAT_RPC_URL } from "@/utils/web3config";
+import { WEB3_CHAIN, getWeb3RpcUrl } from "@/utils/web3config";
 import artifact from "@/abi/CornShirtTicket.json";
 
 const abi = artifact.abi;
@@ -50,7 +49,11 @@ export async function transferTicket(
     : (() => {
         const account = privateKeyToAccount(customerPrivateKey);
         return {
-          walletClient: createWalletClient({ account, chain: hardhat, transport: http(HARDHAT_RPC_URL) }),
+          walletClient: createWalletClient({
+            account,
+            chain: WEB3_CHAIN,
+            transport: http(getWeb3RpcUrl()),
+          }),
         };
       })();
 

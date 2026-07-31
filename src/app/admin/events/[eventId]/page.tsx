@@ -101,7 +101,7 @@ export default async function AdminEventDetailPage({
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <BackButton />
-          {(event.status === "pending" || event.status === "active") && (
+          {event.status === "active" && (
             <CancelEventButton
               eventName={event.event_name}
               cancelUrl={`/api/admin/events/${eventId}/cancel`}
@@ -111,25 +111,11 @@ export default async function AdminEventDetailPage({
       </div>
 
       {event.banner_image && (
-        <div
-          style={{
-            width: "100%",
-            height: 240,
-            borderRadius: "var(--radius-lg)",
-            overflow: "hidden",
-            marginBottom: 24,
-            background: "var(--secondary)",
-          }}
-        >
+        <div className="admin-event-banner">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={event.banner_image}
             alt={`${event.event_name} banner`}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
           />
         </div>
       )}
