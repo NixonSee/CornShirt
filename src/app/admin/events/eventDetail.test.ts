@@ -43,10 +43,11 @@ test("admin cancellation is active-only while organizer withdrawal stays unchang
 });
 
 test("admin event banners use a dedicated edge-to-edge dark frame", () => {
-  assert.match(detailPage, /className="admin-event-banner"/);
-  assert.match(styles, /\.admin-event-banner\s*\{/);
+  assert.match(detailPage, /className="admin-event-hero"/);
+  assert.match(detailPage, /EventBanner/);
+  assert.match(styles, /\.admin-event-hero\s*\{/);
   assert.match(
     styles,
-    /\.admin-event-banner img\s*\{[^}]*display: block;[^}]*object-fit: cover;/s,
+    /\.event-banner img\s*\{[^}]*display: block;[^}]*object-fit: contain;/s,
   );
 });

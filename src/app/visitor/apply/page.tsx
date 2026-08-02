@@ -183,8 +183,14 @@ export default function ApplyPage() {
   return (
     <>
       <title>Become an Organizer — CornShirt</title>
-      <header className="app-topbar">
-        <Link className="app-topbar-brand" href="/visitor">
+      {/*
+        The wizard keeps its own header rather than rendering the shared nav:
+        it needs the "Back to events" escape hatch, and an in-flow sticky bar
+        (sitenav-static) so the sticky .partner-apply-sidebar keeps working.
+        The sitenav classes give it the same visual language as everywhere else.
+      */}
+      <header className="app-topbar sitenav sitenav-static" data-audience="apply">
+        <Link className="app-topbar-brand sitenav-brand" href="/visitor">
           <Image
             src="/CornShirt Hub.png"
             alt="CornShirt logo"
@@ -193,7 +199,10 @@ export default function ApplyPage() {
             priority
           />
         </Link>
-        <nav className="app-topbar-actions" aria-label="Application actions">
+        <nav
+          className="app-topbar-actions sitenav-actions"
+          aria-label="Application actions"
+        >
           <Button variant="outline" onClick={() => router.push("/visitor")}>
             <ArrowLeft size={16} /> Back to events
           </Button>
@@ -366,14 +375,22 @@ function PersonalStep({
           />
         </Field>
         <Field label="Phone number" hint="Optional">
-          <input
-            id="applicant-phone"
-            type="tel"
-            value={form.phone}
-            onChange={(event) => setField("phone", event.target.value)}
-            autoComplete="tel"
-            placeholder="e.g. +60 12-345 6789"
-          />
+          <div className="partner-apply-phone-field">
+            <span className="partner-apply-phone-prefix">+60</span>
+            <input
+              id="applicant-phone"
+              type="tel"
+              value={form.phone.startsWith("+60") ? form.phone.slice(3) : form.phone}
+              onChange={(event) =>
+                setField(
+                  "phone",
+                  event.target.value ? `+60${event.target.value}` : ""
+                )
+              }
+              autoComplete="tel"
+              placeholder="12-345 6789"
+            />
+          </div>
         </Field>
       </div>
     </div>
