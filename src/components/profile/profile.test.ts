@@ -10,6 +10,7 @@ test("all authenticated roles reach Profile from the account menu and the drawer
   const navigation = read("../navConfig.ts");
   // Point at the implementation, not the RoleNav adapter, or this is vacuous.
   const roleNav = read("../nav/SiteNav.tsx");
+  const globalStyles = read("../../app/globals.css");
 
   assert.match(navigation, /\/customer\/profile/);
   assert.match(navigation, /\/organizer\/profile/);
@@ -22,6 +23,12 @@ test("all authenticated roles reach Profile from the account menu and the drawer
   assert.match(roleNav, /sitenav-menu-signout/);
   assert.doesNotMatch(roleNav, /sitenav-cta-signout/);
   assert.doesNotMatch(roleNav, /app-profile-link/);
+
+  // Admin and organizer share the approved edge-aligned navbar geometry.
+  assert.match(
+    globalStyles,
+    /\.app-topbar\.sitenav:is\([\s\S]*?\[data-audience="organizer"\][\s\S]*?\[data-audience="admin"\][\s\S]*?\)\s*\{[\s\S]*?width:\s*100%;/,
+  );
 });
 
 test("profile password form validates and updates only the signed-in user", () => {

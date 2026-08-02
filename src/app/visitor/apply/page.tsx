@@ -192,10 +192,10 @@ export default function ApplyPage() {
       <header className="app-topbar sitenav sitenav-static" data-audience="apply">
         <Link className="app-topbar-brand sitenav-brand" href="/visitor">
           <Image
-            src="/CornShirt Hub.png"
+            src="/CornShirt_Hub-removedbg.png"
             alt="CornShirt logo"
             width={140}
-            height={40}
+            height={44}
             priority
           />
         </Link>

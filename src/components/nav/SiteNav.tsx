@@ -125,10 +125,10 @@ export default function SiteNav({
           }`}
         >
           <Image
-            src="/CornShirt Hub.png"
+            src="/CornShirt_Hub-removedbg.png"
             alt="CornShirt"
             width={190}
-            height={50}
+            height={60}
             priority
           />
         </Link>

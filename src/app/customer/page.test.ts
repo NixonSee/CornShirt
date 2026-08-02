@@ -53,14 +53,14 @@ test("customer account controls extend the visitor design responsively", () => {
   );
 });
 
-test("customer hero clears the navbar and favors the top of event artwork", () => {
+test("customer hero clears the navbar and uses the shared artwork focus", () => {
   assert.match(
     styles,
     /@media \(max-width: 560px\)[\s\S]*?\.customer-dashboard-main\s*\{[\s\S]*?padding-top:\s*4px;/,
   );
   assert.match(
     styles,
-    /\.customer-dashboard-main\s+\.hero-slide\s*\{[\s\S]*?background-position:\s*center 35%;/,
+    /\.customer-dashboard-main\s+\.hero-slide\s*\{[\s\S]*?background-position:\s*center 42%;/,
   );
 });
 

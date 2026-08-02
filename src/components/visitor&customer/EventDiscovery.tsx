@@ -85,9 +85,9 @@ export default function EventDiscovery({
   }
 
   return (
-    <>
+    <div className="event-discovery-surface">
       <HeroCarousel events={events} detailBasePath={detailBasePath} />
       <EventBrowser events={events} detailBasePath={detailBasePath} />
-    </>
+    </div>
   );
 }
