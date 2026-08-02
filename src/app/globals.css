@@ -246,6 +246,30 @@ p {
   color: #9e9e9e;
 }
 
+/* Authentication inputs stay light even when Chromium autofills saved
+   credentials. The document uses a dark native color scheme, which otherwise
+   repaints only the autofilled email field with a dark browser-owned fill. */
+.auth-card .field input {
+  color-scheme: light;
+  background: #ffffff;
+  color: #111111;
+  caret-color: #111111;
+}
+
+.auth-card .field input::placeholder {
+  color: #6b7280;
+}
+
+.auth-card .field input:-webkit-autofill,
+.auth-card .field input:-webkit-autofill:hover,
+.auth-card .field input:-webkit-autofill:focus,
+.auth-card .field input:-webkit-autofill:active {
+  -webkit-text-fill-color: #111111;
+  caret-color: #111111;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+}
+
 .button,
 .button-secondary,
 .button-outline {
@@ -3440,11 +3464,11 @@ tr:last-child td {
 }
 
 .customer-dashboard-main {
-  background: #000000;
+  background: #0d1117;
 }
 
 .customer-dashboard-main .hero-slide {
-  background-position: center 35%;
+  background-position: center 42%;
 }
 
 @media (max-width: 560px) {
@@ -13540,42 +13564,226 @@ body:has(.admin-shell) {
   }
 }
 
-/* ---- 12. contained hero carousel ----
+/* ---- 12. visitor/customer discovery shell ----
+   These two audiences share the public marketplace layout. Keep the page,
+   navbar area, carousel surround and event section on one continuous surface. */
+html:has(.app-topbar.sitenav[data-audience="visitor"]),
+html:has(.app-topbar.sitenav[data-audience="customer"]),
+body:has(.app-topbar.sitenav[data-audience="visitor"]),
+body:has(.app-topbar.sitenav[data-audience="customer"]),
+.app-shell:has(> .app-topbar.sitenav[data-audience="customer"]),
+.event-discovery-surface {
+  background: #0d1117;
+}
+
+.event-discovery-surface {
+  width: 100%;
+  min-width: 0;
+  padding-top: clamp(26px, 3vw, 48px);
+}
+
+body:has(.app-topbar.sitenav[data-audience="visitor"]) .state-page,
+body:has(.app-topbar.sitenav[data-audience="customer"]) .state-page {
+  background: #0d1117;
+}
+
+/* Every role uses the approved full-width header alignment. Equal outer grid
+   tracks keep the centre pill truly centred while the logo and account action
+   sit at the padded viewport edges. */
+.app-topbar.sitenav:is(
+    [data-audience="visitor"],
+    [data-audience="customer"],
+    [data-audience="organizer"],
+    [data-audience="admin"]
+  ) {
+  top: 0;
+  width: 100%;
+  height: 88px;
+  min-height: 88px;
+  padding: 14px clamp(22px, 3vw, 58px);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  border-radius: 0;
+  background: transparent;
+}
+
+.app-topbar.sitenav:is(
+      [data-audience="visitor"],
+      [data-audience="customer"],
+      [data-audience="organizer"],
+      [data-audience="admin"]
+    )
+  + .sitenav-spacer {
+  height: 88px;
+}
+
+/* ---- 13. contained hero carousel ----
    Was full-bleed; now an inset rounded card so the page background frames it,
    matching the reference layout. Only HeroCarousel.tsx uses these classes. */
 .home-hero.hero-carousel {
-  width: min(1560px, calc(100% - clamp(16px, 3vw, 44px) * 2));
+  width: min(1600px, calc(100% - clamp(44px, 8vw, 144px)));
+  height: clamp(450px, 36vw, 640px);
   min-height: 0;
-  margin: clamp(10px, 1.6vw, 22px) auto 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: clamp(16px, 1.8vw, 26px);
-  background: #0b0b0b;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  margin: 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: clamp(18px, 2vw, 28px);
+  background: #07090d;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
 }
 
 .home-hero.hero-carousel .home-hero-inner {
-  width: min(1180px, calc(100% - clamp(28px, 5vw, 76px)));
-  min-height: min(66vh, 600px);
-  padding: clamp(48px, 7vw, 88px) 0 clamp(56px, 7vw, 92px);
+  width: min(1180px, calc(100% - clamp(124px, 16vw, 256px)));
+  height: 100%;
+  min-height: 100%;
+  padding: clamp(42px, 6vw, 90px) 0 clamp(62px, 7vw, 94px);
 }
 
-/* Keep the slide art inside the rounded corners. */
 .home-hero.hero-carousel .hero-slide {
   border-radius: inherit;
+  background-position: center 42%;
+}
+
+.home-hero.hero-carousel .hero-slide::after {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(3, 5, 8, 0.9) 0%,
+      rgba(3, 5, 8, 0.45) 42%,
+      rgba(3, 5, 8, 0.05) 70%
+    ),
+    linear-gradient(0deg, rgba(3, 5, 8, 0.78) 0%, transparent 48%);
+}
+
+.home-hero.hero-carousel .home-hero-copy {
+  max-width: 690px;
+}
+
+.home-hero.hero-carousel h1 {
+  max-width: 690px;
+  margin: 0;
+  font-size: clamp(42px, 5vw, 72px);
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.home-hero.hero-carousel .hero-event-meta {
+  margin-top: 20px;
+}
+
+.home-hero.hero-carousel .button-row {
+  margin-top: 26px;
+}
+
+.home-hero.hero-carousel .button-row .button {
+  min-height: 46px;
+  padding-inline: 23px;
+  border-radius: 12px;
+}
+
+.event-discovery-surface .events-section {
+  padding-top: clamp(68px, 7vw, 104px);
+}
+
+.events-heading .section-kicker {
+  margin: 0 0 8px;
 }
 
 @media (max-width: 640px) {
+  .app-topbar.sitenav:is(
+      [data-audience="visitor"],
+      [data-audience="customer"],
+      [data-audience="organizer"],
+      [data-audience="admin"]
+    ) {
+    height: 76px;
+    min-height: 76px;
+    padding: 11px 16px;
+  }
+
+  .app-topbar.sitenav:is(
+        [data-audience="visitor"],
+        [data-audience="customer"],
+        [data-audience="organizer"],
+        [data-audience="admin"]
+      )
+    + .sitenav-spacer {
+    height: 76px;
+  }
+
+  .event-discovery-surface {
+    padding-top: 16px;
+  }
+
   .home-hero.hero-carousel {
-    width: calc(100% - 20px);
-    border-radius: 14px;
+    width: calc(100% - 24px);
+    height: min(610px, 72svh);
+    min-height: 500px;
+    border-radius: 20px;
   }
 
   .home-hero.hero-carousel .home-hero-inner {
-    min-height: 62vh;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    padding: 76px 26px 76px;
+  }
+
+  .home-hero.hero-carousel .hero-slide {
+    background-position: center 50%;
+  }
+
+  .home-hero.hero-carousel .hero-slide::after {
+    background: linear-gradient(
+      0deg,
+      rgba(3, 5, 8, 0.94) 0%,
+      rgba(3, 5, 8, 0.42) 62%,
+      rgba(3, 5, 8, 0.14) 100%
+    );
+  }
+
+  .home-hero.hero-carousel h1 {
+    font-size: clamp(37px, 12vw, 54px);
+  }
+
+  .home-hero.hero-carousel .hero-event-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .home-hero.hero-carousel .carousel-arrow {
+    top: 24px;
+    bottom: auto;
+    transform: none;
+  }
+
+  .home-hero.hero-carousel .carousel-arrow:hover {
+    transform: scale(1.04);
+  }
+
+  .event-discovery-surface .events-section {
+    padding-top: 48px;
   }
 }
 
-/* ---- 13. reduced motion ----
+@media (max-width: 400px) {
+  .app-topbar.sitenav:is(
+      [data-audience="visitor"],
+      [data-audience="customer"]
+    )
+    .sitenav-cta {
+    display: inline-flex;
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .app-topbar.sitenav[data-audience="visitor"] .sitenav-cta span {
+    display: none;
+  }
+}
+
+/* ---- 14. reduced motion ----
    Must stay after the frosted-card rules: media queries add no specificity, so
    the .is-hidden pin below only wins by source order. */
 @media (prefers-reduced-motion: reduce) {

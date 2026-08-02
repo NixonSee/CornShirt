@@ -33,7 +33,10 @@ export default function EventBrowser({
   return (
     <section id="events" className="events-section">
       <div className="events-toolbar">
-        <h2>Live events</h2>
+        <div className="events-heading">
+          <p className="section-kicker">Discover what&apos;s next</p>
+          <h2>Live events</h2>
+        </div>
 
         <div className="event-controls">
           <SearchBar

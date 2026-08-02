@@ -1,6 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -69,13 +74,23 @@ export default function HeroCarousel({
       <div className="home-hero-inner" aria-live="polite">
         <div className="home-hero-copy" key={activeEvent.id}>
           <h1>{activeEvent.title}</h1>
+          <div className="hero-event-meta">
+            <span>
+              <CalendarDays aria-hidden="true" size={17} />
+              {activeEvent.date}
+            </span>
+            <span>
+              <MapPin aria-hidden="true" size={17} />
+              {activeEvent.venue}
+            </span>
+          </div>
           <div className="button-row">
             <Button
               onClick={() =>
                 router.push(`${detailBasePath}/${activeEvent.id}`)
               }
             >
-              Details
+              View event
             </Button>
           </div>
         </div>
