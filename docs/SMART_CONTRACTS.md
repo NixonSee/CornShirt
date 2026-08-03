@@ -22,8 +22,8 @@ Next.js server ---- Stripe Test Mode Checkout in MYR
   |
   | Viem JSON-RPC
   v
-Local Hardhat / CornShirtTicket ERC-721
-  mint / ownerOf / safeTransferFrom / burnRefundedTicket
+Local Hardhat / CornShirtTicket ERC-721 + CornShirtMarketplace
+  mint / ownerOf / approval-based listing / settlement / burnRefundedTicket
   |
   v
 Supabase finalizes tickets, ownership, accounting, and workflow state
@@ -62,7 +62,9 @@ Customer wallets require local Hardhat ETH only when they sign an NFT transfer. 
 
 ## 5. Ticket NFT Contract
 
-`CornShirtTicket` is the only required contract. It should use OpenZeppelin ERC-721 and `AccessControl`.
+CornShirt uses `CornShirtTicket` for the NFT asset and
+`CornShirtMarketplace` for approval-based resale listings and settlement.
+Both contracts use OpenZeppelin `AccessControl`.
 
 Required roles:
 
@@ -79,6 +81,15 @@ Required interfaces:
 
 Public metadata must contain no secrets or reusable QR verification credentials.
 
+### Marketplace Contract
+
+`CornShirtMarketplace` stores a hashed listing reference, token ID, integer-MYR
+price in sen, seller, and event expiry. The NFT remains in the seller's managed
+wallet while listed. The seller approves the contract for that token, and only
+`SETTLER_ROLE` may settle a Stripe-confirmed resale. Settlement and duplicate
+payment references are rejected after use, and settlement is rejected at or
+after the event expiry timestamp.
+
 ### Transfer-Permission Limitation
 
 For the local managed-wallet prototype, transfer permission is enforced by server-side authorization before signing customer-wallet transactions. The standard NFT contract does not know the Supabase `transfer_allowed` value, so control of a private key could bypass that application rule.
@@ -91,7 +102,7 @@ The local deployment workflow must:
 
 1. Start a Hardhat node with a fixed local chain ID.
 2. Compile and deploy `CornShirtTicket`.
-3. Grant the minimum required minter and burner roles.
+3. Deploy `CornShirtMarketplace` with the Ticket NFT address and grant the minimum required minter, burner, and settler roles.
 4. Save the chain ID, contract address, deployment block, and deploy transaction hash.
 5. Configure the Next.js server with the local RPC URL and server-only platform signing key.
 6. Verify that the configured chain and deployed bytecode match before processing writes.
@@ -129,7 +140,7 @@ No replacement NFT is minted. A free transfer does not replace the last paid acq
 2. The server locks the listing and creates an idempotent resale operation.
 3. The server creates a Stripe Test Checkout Session from the authoritative listing amount in sen.
 4. A verified webhook confirms the buyer's test payment.
-5. The seller's managed wallet transfers the existing NFT to the buyer's managed wallet.
+5. The Marketplace contract transfers the approved existing NFT from the seller to the buyer before the listing expiry.
 6. The server waits for a successful receipt.
 7. Supabase updates ownership, marks the listing purchased, records payment references, and credits simulated seller proceeds in MYR.
 
@@ -164,6 +175,15 @@ Event cancellation is controlled by Supabase authorization. Only the event's app
 8. Supabase marks the ticket refunded, records the surrendering owner and refund beneficiary, and reverses the related simulated accounting entry.
 
 If the Stripe refund succeeds but NFT burning fails, the ticket becomes unusable immediately and the burn remains retryable. The same paid acquisition and ticket must never be refunded twice.
+
+## 10A. Normal Event Completion
+
+An active event remains live for three hours from `events.event_date`. At the
+deadline, Supabase marks it `completed`, expires unused valid tickets and active
+listings, and blocks purchase, transfer, resale, QR verification, and check-in.
+Used tickets remain used. No refund or NFT burn occurs: every issued NFT remains
+with its current owner as a collectible. Marketplace settlement independently
+enforces the same expiry timestamp on-chain.
 
 ## 11. Workflow State and Idempotency
 

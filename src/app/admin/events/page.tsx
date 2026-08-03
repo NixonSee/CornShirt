@@ -1,7 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { EventsPageClient } from "@/components/admin/EventsPageClient";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 
 export default async function EventsPage() {
+  await synchronizeFinishedEvents();
+
   const [eventsRes, ticketTypesRes, profilesRes] = await Promise.all([
     supabaseAdmin
       .from("events")

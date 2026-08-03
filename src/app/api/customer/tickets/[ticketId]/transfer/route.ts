@@ -1,5 +1,7 @@
 import type { Address } from "viem";
 
+import { isEventLive } from "@/lib/eventLifecycle";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { fundCustomerGas } from "@/lib/nft/fundGas";
 import { getTicketOwner } from "@/lib/nft/getOwner";
 import { transferTicket } from "@/lib/nft/transfer";
@@ -15,6 +17,7 @@ export async function POST(
 ) {
   const auth = await authorizeApiRole(["customer", "user"]);
   if (!auth.ok) return auth.response;
+  await synchronizeFinishedEvents();
 
   const body = (await request.json().catch(() => null)) as {
     recipientEmail?: unknown;
@@ -112,7 +115,7 @@ export async function POST(
   const [eventResult, typeResult, listingResult] = await Promise.all([
     supabaseAdmin
       .from("events")
-      .select("status")
+      .select("status, event_date")
       .eq("event_id", ticket.event_id)
       .single(),
     supabaseAdmin
@@ -129,7 +132,8 @@ export async function POST(
   ]);
 
   if (
-    eventResult.data?.status !== "active" ||
+    !eventResult.data ||
+    !isEventLive(eventResult.data) ||
     typeResult.data?.transfer_allowed !== true ||
     listingResult.data
   ) {

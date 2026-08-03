@@ -85,6 +85,8 @@ test("eligible tickets expose a resale listing modal", () => {
   assert.match(source, /data-testid="resale-listing-form"/);
   assert.match(source, /inputMode="decimal"/);
   assert.match(source, /return "LISTED"/);
+  assert.match(source, /return "COLLECTIBLE"/);
+  assert.match(source, /Check-in closed when the event ended/);
   assert.match(source, /waiting for a buyer/);
 });
 

@@ -13,8 +13,10 @@ tickets for resale, and present QR codes for organizer verification.
 - Viem, Solidity, OpenZeppelin, and Hardhat
 - Plain CSS, Lucide icons, Recharts, and `react-qr-code`
 
-The application uses one smart contract:
-`blockchain/contracts/CornShirtTicket.sol`.
+The application uses two smart contracts:
+
+- `blockchain/contracts/CornShirtTicket.sol` owns the ERC-721 ticket lifecycle.
+- `blockchain/contracts/CornShirtMarketplace.sol` owns time-limited resale listings and settlement.
 
 ## Setup
 
@@ -32,6 +34,15 @@ npm install
 cd ..
 ```
 
+For an existing Ticket NFT deployment, compile and deploy only the Marketplace
+contract so current NFTs keep their original contract address:
+
+```bash
+cd blockchain
+npm run compile
+npm run deploy:marketplace
+```
+
 Create `.env.local` in the project root. Do not commit this file.
 
 ```env
@@ -44,6 +55,7 @@ STRIPE_WEBHOOK_SECRET=
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 TICKET_NFT_CONTRACT_ADDRESS=
+MARKETPLACE_CONTRACT_ADDRESS=
 PLATFORM_CONTRACT_PRIVATE_KEY=
 HARDHAT_RPC_URL=http://127.0.0.1:8545
 WALLET_ENCRYPTION_KEY=

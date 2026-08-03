@@ -1,3 +1,4 @@
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -9,6 +10,7 @@ export async function PUT(
 ) {
   const auth = await authorizeApiRole(["organizer"]);
   if (!auth.ok) return auth.response;
+  await synchronizeFinishedEvents();
 
   const organizerId = auth.identity.user.id;
   const { eventId } = await params;

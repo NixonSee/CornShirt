@@ -29,6 +29,8 @@ Only customer accounts receive CornShirt-managed blockchain wallets.
 ### FR-02: Event Discovery
 
 - Visitors and customers shall browse active approved events.
+- An approved event shall remain live for three hours from its scheduled start, then disappear from public and customer event discovery.
+- Finished events shall transition to `completed`; valid unused tickets shall transition to `expired` without burning their NFTs.
 - Event details shall show artist, venue, date, ticket types, availability, transfer permission, and MYR price.
 - Unavailable or unapproved events shall not accept purchases.
 
@@ -67,6 +69,8 @@ Only customer accounts receive CornShirt-managed blockchain wallets.
 - Customers shall view owned tickets, status, event details, managed-wallet address, NFT reference, and QR code.
 - Only an authorized organizer for the ticket's event shall verify and use a currently valid ticket.
 - Repeated, invalid, refunded, cancelled, or wrong-event scans shall be rejected safely.
+- QR verification and check-in shall close when the event's three-hour live window ends.
+- Completed-event NFTs shall remain in customer wallets as collectibles.
 
 ### FR-08: Direct Transfer
 
@@ -80,7 +84,9 @@ Only customer accounts receive CornShirt-managed blockchain wallets.
 - Customers shall list eligible owned tickets at a positive MYR price with at most two decimal places.
 - Only one active listing shall exist per ticket.
 - A resale buyer shall pay through Stripe Test Mode.
-- After verified payment, the seller's managed wallet shall transfer the existing NFT to the buyer.
+- When the Marketplace contract is configured, the seller shall approve a time-limited on-chain listing while retaining NFT ownership until settlement.
+- After verified payment, the authorized Marketplace settlement role shall transfer the existing NFT to the buyer.
+- Marketplace settlement shall be rejected after the event's three-hour live window.
 - Seller proceeds shall be recorded as simulated MYR accounting only; Stripe Connect is not used.
 - Failed NFT delivery after payment shall remain recoverable or trigger exactly one Stripe test refund.
 

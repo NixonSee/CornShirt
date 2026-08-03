@@ -7,6 +7,8 @@ import {
   type Event,
   type EventRow,
 } from "@/app/visitor/data";
+import { getLiveEventCutoff } from "@/lib/eventLifecycle";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 const PUBLIC_EVENT_SELECT = `
@@ -47,10 +49,13 @@ const PUBLIC_EVENT_SELECT = `
 `;
 
 export async function getActiveEvents(): Promise<Event[]> {
+  await synchronizeFinishedEvents();
+
   const { data, error } = await supabaseAdmin
     .from("events")
     .select(PUBLIC_EVENT_SELECT)
     .eq("status", "active")
+    .gt("event_date", getLiveEventCutoff().toISOString())
     .order("event_date", { ascending: true });
 
   if (error) {
@@ -62,10 +67,13 @@ export async function getActiveEvents(): Promise<Event[]> {
 
 export const getActiveEventById = cache(
   async (eventId: string): Promise<Event | null> => {
+    await synchronizeFinishedEvents();
+
     const { data, error } = await supabaseAdmin
       .from("events")
       .select(PUBLIC_EVENT_SELECT)
       .eq("status", "active")
+      .gt("event_date", getLiveEventCutoff().toISOString())
       .eq("event_id", eventId)
       .maybeSingle();
 

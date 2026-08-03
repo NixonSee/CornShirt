@@ -1,3 +1,5 @@
+import { isEventLive } from "@/lib/eventLifecycle";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -10,6 +12,7 @@ export async function POST(
 
   const organizerId = auth.identity.user.id;
   const { ticketId } = await params;
+  await synchronizeFinishedEvents();
 
   const { data: ticket, error: ticketError } = await supabaseAdmin
     .from("tickets")
@@ -23,7 +26,7 @@ export async function POST(
 
   const { data: event, error: eventError } = await supabaseAdmin
     .from("events")
-    .select("event_id, organizer_id")
+    .select("event_id, organizer_id, status, event_date")
     .eq("event_id", ticket.event_id)
     .maybeSingle();
 
@@ -31,6 +34,12 @@ export async function POST(
     return Response.json(
       { error: "You are not authorized to use tickets for this event." },
       { status: 403 },
+    );
+  }
+  if (!isEventLive(event)) {
+    return Response.json(
+      { error: "This event has ended. Check-in is closed." },
+      { status: 409 },
     );
   }
   if (ticket.record_source !== "stripe_nft" || ticket.token_id == null) {

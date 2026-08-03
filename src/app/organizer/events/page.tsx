@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireRole } from "@/lib/requireRole";
 import { Card } from "@/components/common/Card";
 import { formatMyr } from "@/lib/currency";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 
 const NUMBER = new Intl.NumberFormat("en-US");
 
@@ -24,6 +25,7 @@ function statusVariant(status: string | null): string {
 
 export default async function MyEventsPage() {
   const { user } = await requireRole(["organizer"]);
+  await synchronizeFinishedEvents();
 
   const { data: events } = await supabaseAdmin
     .from("events")

@@ -31,3 +31,11 @@ must next run `2026-07-23-repair-resale-finalization.sql` once in the Supabase
 SQL Editor. The repair preserves existing data, allows the `purchased` listing
 status and `resale` transaction type, and replaces the idempotent resale
 finalization function.
+
+## Three-hour event lifecycle and Marketplace contract
+
+After the Stripe workflow and resale repair migrations, run
+`2026-08-03-three-hour-event-lifecycle.sql`. It adds the `completed` event and
+`expired` ticket/listing states, installs the service-role lifecycle function,
+and adds the on-chain Marketplace listing references. An active event remains
+live until exactly three hours after `events.event_date`.

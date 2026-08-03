@@ -9,11 +9,13 @@ import {
   type OrganizerTicketRow,
   type OrganizerTicketTypeRow,
 } from "@/lib/organizerDashboard";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { requireRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export default async function OrganizerDashboardPage() {
   const { user } = await requireRole(["organizer"]);
+  await synchronizeFinishedEvents();
 
   const eventsResult = await supabaseAdmin
     .from("events")
