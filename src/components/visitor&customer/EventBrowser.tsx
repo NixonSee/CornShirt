@@ -218,15 +218,17 @@ export default function EventBrowser({
                       href={`${detailBasePath}/${event.id}`}
                       aria-label={`View ${event.title} details`}
                     >
-                      <Image
-                        className="live-catalog-image"
-                        src={event.image}
-                        alt={`${event.title} event artwork`}
-                        width={800}
-                        height={450}
-                        sizes="(max-width: 700px) 100vw, (max-width: 940px) 50vw, 33vw"
-                        unoptimized
-                      />
+                      <span className="live-catalog-image-frame">
+                        <Image
+                          className="live-catalog-image"
+                          src={event.image}
+                          alt={`${event.title} event artwork`}
+                          width={800}
+                          height={450}
+                          sizes="(max-width: 700px) 100vw, (max-width: 940px) 50vw, 33vw"
+                          unoptimized
+                        />
+                      </span>
                       <span className="live-catalog-content">
                         <span className="live-event-type">{event.category}</span>
                         <strong className="live-catalog-title">{event.title}</strong>
