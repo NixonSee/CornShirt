@@ -14165,22 +14165,28 @@ body:has(.admin-shell) {
   color: inherit;
 }
 
+.live-catalog-image-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--live-line);
+  border-radius: 18px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
 .live-catalog-image {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  border: 1px solid var(--live-line);
-  border-radius: 18px;
+  height: 100%;
   object-fit: cover;
   object-position: center;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
   transition: filter 300ms ease, transform 300ms ease;
 }
 
 .live-catalog-card:hover .live-catalog-image {
   filter: saturate(1.08) brightness(1.03);
-  transform: none;
+  transform: scale(1.035);
 }
 
 .live-catalog-content {
@@ -14400,7 +14406,7 @@ body:has(.admin-shell) {
     gap: 28px;
   }
 
-  .live-catalog-image {
+  .live-catalog-image-frame {
     border-radius: 14px;
   }
 
