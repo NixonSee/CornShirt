@@ -59,6 +59,7 @@ const TRANSACTIONS_PAGE_SIZE = 10;
 
 const STATUS_COLORS: Record<string, string> = {
   active: "#36b56a",
+  completed: "#64748b",
   pending: "#f6a730",
   draft: "#7b8490",
   rejected: "#d84a4a",
@@ -68,6 +69,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_ORDER = [
   "active",
+  "completed",
   "pending",
   "draft",
   "rejected",

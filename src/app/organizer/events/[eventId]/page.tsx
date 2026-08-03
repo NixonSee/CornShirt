@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/requireRole";
 import { Card } from "@/components/common/Card";
 import { CancelEventButton } from "@/components/common/CancelEventButton";
 import { formatMyr } from "@/lib/currency";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 
 const NUMBER = new Intl.NumberFormat("en-US");
 
@@ -39,6 +40,7 @@ export default async function ManageEventPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { user } = await requireRole(["organizer"]);
+  await synchronizeFinishedEvents();
   const { eventId } = await params;
 
   const { data: event, error } = await supabaseAdmin

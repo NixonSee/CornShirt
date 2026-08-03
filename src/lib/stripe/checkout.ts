@@ -1,5 +1,7 @@
 import "server-only";
 
+import { isEventLive } from "@/lib/eventLifecycle";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 import { getStripe } from "./stripe";
@@ -69,6 +71,22 @@ export async function createTicketCheckoutSession({
   origin,
   idempotencyKey,
 }: CheckoutInput): Promise<CheckoutResult> {
+  await synchronizeFinishedEvents();
+
+  const event = await supabaseAdmin
+    .from("events")
+    .select("status, event_date")
+    .eq("event_id", eventId)
+    .maybeSingle();
+
+  if (event.error || !event.data || !isEventLive(event.data)) {
+    return {
+      ok: false,
+      status: 409,
+      error: "This event is not available for purchase.",
+    };
+  }
+
   const reservation = await supabaseAdmin
     .rpc("reserve_primary_ticket", {
       p_buyer_id: userId,

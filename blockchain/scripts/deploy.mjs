@@ -224,7 +224,71 @@ async function main() {
     );
   }
 
-  // Update only the deployed contract address in .env.local.
+  const marketplaceArtifactPath = path.resolve(
+    __dirname,
+    "..",
+    "artifacts",
+    "contracts",
+    "CornShirtMarketplace.sol",
+    "CornShirtMarketplace.json",
+  );
+
+  if (!fs.existsSync(marketplaceArtifactPath)) {
+    throw new Error(
+      `Contract artifact was not found at ${marketplaceArtifactPath}. Run "npx hardhat compile" first.`,
+    );
+  }
+
+  const marketplaceArtifact = JSON.parse(
+    fs.readFileSync(marketplaceArtifactPath, "utf8"),
+  );
+
+  console.log("\nDeploying CornShirtMarketplace...");
+  const marketplaceTransactionHash = await walletClient.deployContract({
+    account: deployerAccount,
+    abi: marketplaceArtifact.abi,
+    bytecode: marketplaceArtifact.bytecode,
+    args: [contractAddress],
+  });
+  const marketplaceReceipt = await publicClient.waitForTransactionReceipt({
+    hash: marketplaceTransactionHash,
+    confirmations: 1,
+  });
+
+  if (marketplaceReceipt.status !== "success" || !marketplaceReceipt.contractAddress) {
+    throw new Error("CornShirtMarketplace deployment failed.");
+  }
+
+  const marketplaceAddress = marketplaceReceipt.contractAddress;
+  const marketplace = getContract({
+    address: marketplaceAddress,
+    abi: marketplaceArtifact.abi,
+    client: {
+      public: publicClient,
+      wallet: walletClient,
+    },
+  });
+  const settlerRole = await marketplace.read.SETTLER_ROLE();
+  const [configuredTicketAddress, hasSettlerRole] = await Promise.all([
+    marketplace.read.ticketContract(),
+    marketplace.read.hasRole([settlerRole, deployerAccount.address]),
+  ]);
+
+  if (
+    configuredTicketAddress.toLowerCase() !== contractAddress.toLowerCase() ||
+    !hasSettlerRole
+  ) {
+    throw new Error("CornShirtMarketplace deployment verification failed.");
+  }
+
+  console.log("CornShirtMarketplace deployed to:", marketplaceAddress);
+  console.log(
+    "View contract:",
+    `https://sepolia.etherscan.io/address/${marketplaceAddress}`,
+  );
+  console.log("SETTLER_ROLE:", hasSettlerRole);
+
+  // Update only the deployed contract addresses in .env.local.
   let envContent = "";
 
   if (fs.existsSync(envPath)) {
@@ -236,12 +300,16 @@ async function main() {
     .filter(
       (line) =>
         line.trim() !== "" &&
-        !line.startsWith("TICKET_NFT_CONTRACT_ADDRESS="),
+        !line.startsWith("TICKET_NFT_CONTRACT_ADDRESS=") &&
+        !line.startsWith("MARKETPLACE_CONTRACT_ADDRESS="),
     );
 
   lines.push(`TICKET_NFT_CONTRACT_ADDRESS=${contractAddress}`);
+  lines.push(`MARKETPLACE_CONTRACT_ADDRESS=${marketplaceAddress}`);
 
   fs.writeFileSync(envPath, `${lines.join("\n")}\n`, "utf8");
+
+  console.log("Marketplace contract address was written to .env.local");
 
   console.log(
     "\n✔ TICKET_NFT_CONTRACT_ADDRESS was written to .env.local",

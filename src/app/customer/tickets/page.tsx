@@ -1,5 +1,6 @@
 import Footer from "@/components/Footer";
 import RoleNav from "@/components/RoleNav";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { requireRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
@@ -20,6 +21,7 @@ export default async function CustomerTicketsPage({
   searchParams: Promise<{ purchase?: string | string[] }>;
 }) {
   const { user } = await requireRole(["customer", "user"]);
+  await synchronizeFinishedEvents();
   const query = await searchParams;
   const operationId =
     typeof query.purchase === "string" ? query.purchase : null;

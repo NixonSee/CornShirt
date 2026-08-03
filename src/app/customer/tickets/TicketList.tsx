@@ -86,8 +86,17 @@ function ticketCategory(ticket: CustomerTicket): TicketCategory {
 
 function displayStatus(ticket: CustomerTicket): string {
   if (ticketCategory(ticket) === "listed") return "LISTED";
+  if (ticket.status.toLowerCase() === "expired") return "COLLECTIBLE";
 
   return ticket.status;
+}
+
+function canDisplayQr(ticket: CustomerTicket): boolean {
+  return (
+    ticket.status.toLowerCase() !== "expired" &&
+    ticket.isNftBacked &&
+    Boolean(ticket.qrValue)
+  );
 }
 
 export default function TicketList({ tickets, errorMessage }: TicketListProps) {
@@ -317,10 +326,12 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
             </div>
 
             <div className="ticket-pass-actions">
-              {ticket.qrValue && ticket.isNftBacked ? (
+              {canDisplayQr(ticket) ? (
                 <div className="ticket-mini-qr" aria-hidden="true">
-                  <QRCode value={ticket.qrValue} size={74} />
+                  <QRCode value={ticket.qrValue!} size={74} />
                 </div>
+              ) : ticket.status.toLowerCase() === "expired" ? (
+                <p className="muted">Event ended — collectible NFT</p>
               ) : (
                 <p className="muted">Legacy ticket — no on-chain QR</p>
               )}
@@ -331,8 +342,13 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                 <Button
                   variant="secondary"
                   icon={<QrCode size={17} />}
-                  disabled={!ticket.isNftBacked || !ticket.qrValue}
+                  disabled={!canDisplayQr(ticket)}
                   onClick={() => setSelectedTicket(ticket)}
+                  title={
+                    ticket.status.toLowerCase() === "expired"
+                      ? "Check-in closed when the event ended"
+                      : undefined
+                  }
                 >
                   View QR
                 </Button>

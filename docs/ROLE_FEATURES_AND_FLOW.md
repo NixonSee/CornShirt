@@ -104,17 +104,29 @@ No payment is created and no new NFT is minted. Before confirmation, disclose th
 ```text
 Seller lists eligible ticket at MYR price
   -> server verifies ownership and one-active-listing rule
+  -> seller wallet approves a Marketplace contract listing until event expiry
   -> buyer selects active listing
   -> server locks listing and creates resale operation
   -> Stripe Test Checkout Session is created in MYR
   -> verified webhook confirms payment
-  -> seller's managed wallet transfers existing NFT to buyer
+  -> Marketplace settlement role transfers the approved existing NFT to buyer
   -> local receipt succeeds
   -> Supabase updates ownership and listing
   -> simulated seller proceeds are credited in MYR
 ```
 
 Stripe Connect is not used. No real payout is made. If payment succeeds but NFT transfer fails, the operation stays recoverable; retry valid delivery or issue one Stripe test refund.
+
+## Normal Event Completion
+
+```text
+Event reaches three hours after its scheduled start
+  -> Supabase marks the event completed
+  -> public and customer Live events stop showing it
+  -> unused valid tickets and active listings expire
+  -> QR verification and check-in reject the event
+  -> issued NFTs remain in their current wallets as collectibles
+```
 
 ## Event Cancellation and Refund
 

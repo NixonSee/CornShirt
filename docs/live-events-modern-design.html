@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CornShirt Hub — Modern Live Events Design</title>
+  <style>
+    :root {
+      --page: #0d1117;
+      --surface: #141a22;
+      --surface-strong: #1a212b;
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #f7f8fa;
+      --muted: #9ba5b3;
+      --amber: #f5a623;
+      --amber-bright: #ffb83d;
+      --green: #48d383;
+      --shadow: 0 26px 80px rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { color-scheme: dark; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 84% 9%, rgba(245, 166, 35, 0.075), transparent 25rem),
+        var(--page);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+
+    .events-shell {
+      width: calc(100% - 48px);
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 76px 0 96px;
+    }
+
+    .events-heading {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 48px;
+      align-items: end;
+      margin-bottom: 34px;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 12px;
+      color: var(--amber-bright);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 5px rgba(245, 166, 35, 0.11);
+      content: "";
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 720px;
+      font-size: clamp(46px, 5vw, 76px);
+      font-weight: 760;
+      letter-spacing: -0.055em;
+      line-height: 0.96;
+    }
+
+    .intro {
+      max-width: 510px;
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .search-wrap {
+      position: relative;
+      width: min(320px, 32vw);
+      min-width: 0;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      top: 50%;
+      left: 17px;
+      width: 20px;
+      height: 20px;
+      color: #7f8996;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+
+    .search {
+      width: 100%;
+      height: 46px;
+      padding: 0 18px 0 50px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 8px;
+      outline: none;
+      background: #343434;
+      color: var(--text);
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .search::placeholder { color: #9da3ad; }
+
+    .search:focus {
+      border-color: rgba(245, 166, 35, 0.62);
+      box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.09);
+    }
+
+    .filter-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      height: 46px;
+      padding: 0 10px 0 14px;
+      border-radius: 8px;
+      background: #fff;
+      color: #161a20;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .filter-select-wrap select {
+      min-width: 90px;
+      border: 0;
+      outline: 0;
+      background: #fff;
+      color: #11161c;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin: 0 0 18px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: clamp(25px, 2.4vw, 36px);
+      letter-spacing: -0.035em;
+    }
+
+    .section-heading p {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .event-grid {
+      display: grid;
+      min-width: 0;
+      grid-template-columns: minmax(0, 1.4fr) minmax(330px, 0.85fr);
+      grid-template-rows: repeat(2, minmax(250px, 1fr));
+      gap: 18px;
+    }
+
+    .event-card {
+      position: relative;
+      min-width: 0;
+      min-height: 250px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      isolation: isolate;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+
+    .event-card:first-child { grid-row: 1 / span 2; }
+
+    .event-card::after {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(180deg, rgba(5, 8, 12, 0.04) 27%, rgba(5, 8, 12, 0.34) 51%, rgba(5, 8, 12, 0.98) 100%),
+        linear-gradient(90deg, rgba(5, 8, 12, 0.36), transparent 46%);
+      content: "";
+    }
+
+    .event-image {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 550ms cubic-bezier(.2,.7,.2,1), filter 550ms ease;
+    }
+
+    .event-card:hover .event-image {
+      transform: scale(1.035);
+      filter: saturate(1.08) brightness(1.04);
+    }
+
+    .event-card:focus-within {
+      outline: 2px solid var(--amber);
+      outline-offset: 3px;
+    }
+
+    .card-top {
+      position: absolute;
+      inset: 22px 22px auto;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      background: rgba(12, 18, 25, 0.7);
+      color: #f7fbf9;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      backdrop-filter: blur(12px);
+    }
+
+    .status::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(72, 211, 131, 0.14);
+      content: "";
+    }
+
+    .date-chip {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      background: rgba(12, 18, 25, 0.7);
+      text-align: center;
+      backdrop-filter: blur(12px);
+    }
+
+    .date-chip b {
+      display: block;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .date-chip span {
+      display: block;
+      margin-top: 3px;
+      color: var(--amber-bright);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .event-content {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 22px;
+      align-items: end;
+      padding: 30px;
+    }
+
+    .event-type {
+      margin: 0 0 8px;
+      color: var(--amber-bright);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .event-title {
+      margin: 0;
+      font-size: clamp(25px, 3vw, 44px);
+      font-weight: 760;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+
+    .event-card:not(:first-child) .event-title { font-size: clamp(23px, 2vw, 30px); }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px 20px;
+      margin-top: 14px;
+      color: #d7dde5;
+      font-size: 14px;
+      font-weight: 580;
+    }
+
+    .meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .meta svg {
+      width: 16px;
+      height: 16px;
+      color: var(--amber-bright);
+    }
+
+    .details-link {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 52px;
+      height: 52px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+    }
+
+    .details-link svg { width: 21px; height: 21px; }
+
+    .event-card:hover .details-link {
+      border-color: var(--amber);
+      background: var(--amber);
+      color: #11161c;
+      transform: translate(2px, -2px);
+    }
+
+    .catalog-section { margin-top: 72px; }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 34px 28px;
+    }
+
+    .catalog-card {
+      position: relative;
+      min-width: 0;
+      background: transparent;
+    }
+
+    .catalog-card::after { display: none; }
+
+    .catalog-card img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      object-fit: cover;
+      object-position: center;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+      transition: filter 300ms ease, transform 300ms ease;
+    }
+
+    .catalog-card:hover img {
+      transform: none;
+      filter: saturate(1.08) brightness(1.03);
+    }
+
+    .catalog-top { display: none; }
+
+    .catalog-content {
+      display: flex;
+      flex-direction: column;
+      padding: 14px 3px 0;
+    }
+
+    .catalog-content .event-type {
+      order: 3;
+      align-self: flex-start;
+      min-width: 76px;
+      padding: 4px 11px;
+      margin: 12px 0 0;
+      border: 1px solid rgba(72, 211, 131, 0.72);
+      border-radius: 999px;
+      color: #77e5a5;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-align: center;
+      box-shadow: 0 0 14px rgba(72, 211, 131, 0.1);
+    }
+
+    .catalog-title {
+      position: static;
+      order: 1;
+      display: block;
+      width: auto;
+      padding: 0;
+      margin: 0;
+      background: none;
+      font-size: clamp(18px, 1.35vw, 22px);
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      text-align: left;
+      text-shadow: none;
+    }
+
+    .catalog-title span {
+      max-width: none;
+    }
+
+    .catalog-content .meta {
+      order: 2;
+      display: grid;
+      gap: 3px;
+      margin-top: 7px;
+      padding: 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 560;
+    }
+
+    .catalog-link { display: none; }
+
+    .load-more-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 34px;
+    }
+
+    .load-more {
+      min-width: 210px;
+      height: 50px;
+      padding: 0 26px;
+      border: 1px solid rgba(245, 166, 35, 0.48);
+      border-radius: 999px;
+      background: rgba(245, 166, 35, 0.08);
+      color: var(--amber-bright);
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+    }
+
+    .load-more:hover {
+      background: var(--amber);
+      color: #11161c;
+      transform: translateY(-2px);
+    }
+
+    .empty-state {
+      display: none;
+      padding: 80px 24px;
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty-state strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: 22px;
+    }
+
+    @media (max-width: 940px) {
+      .events-heading { gap: 24px; }
+
+      .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+      .event-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: auto;
+      }
+
+      .event-card,
+      .event-card:first-child {
+        grid-row: auto;
+        min-height: 420px;
+      }
+
+      .event-card:first-child { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 700px) {
+      .events-shell {
+        width: calc(100% - 28px);
+        padding: 48px 0 64px;
+      }
+
+      .events-heading {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .intro { margin-top: 16px; font-size: 15px; }
+
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        margin: 8px 0 0;
+      }
+
+      .search-wrap { width: 100%; }
+      .filter-select-wrap {
+        min-width: 0;
+        width: 100%;
+        justify-content: space-between;
+        gap: 7px;
+        overflow: hidden;
+        padding-left: 10px;
+      }
+      .filter-select-wrap select { min-width: 0; width: 72px; }
+
+      .event-grid { grid-template-columns: 1fr; }
+
+      .event-card,
+      .event-card:first-child {
+        grid-column: auto;
+        min-height: 440px;
+        border-radius: 20px;
+      }
+
+      .card-top { inset: 16px 16px auto; }
+      .event-content { padding: 22px; }
+      .event-title,
+      .event-card:not(:first-child) .event-title { font-size: 30px; }
+      .meta { display: grid; gap: 7px; }
+      .details-link { width: 48px; height: 48px; }
+
+      .catalog-section { margin-top: 56px; }
+      .catalog-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+      }
+      .catalog-card { min-height: 0; }
+      .catalog-card img { border-radius: 14px; }
+      .catalog-content { padding-top: 11px; }
+      .catalog-title {
+        padding: 0;
+        font-size: 18px;
+      }
+      .catalog-content .meta { font-size: 12px; }
+      .section-heading { display: block; }
+      .section-heading p { margin-top: 7px; }
+    }
+
+    @media (max-width: 390px) {
+      .catalog-grid { grid-template-columns: 1fr; }
+      .catalog-title { font-size: 19px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="events-shell">
+    <header class="events-heading">
+      <div>
+        <p class="eyebrow">Discover what’s next</p>
+        <h1>Live events</h1>
+        <p class="intro">Find your next unforgettable night—from intimate stages to arena-sized experiences.</p>
+      </div>
+      <section class="toolbar" aria-label="Event search and filters">
+        <label class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path>
+          </svg>
+          <input class="search" id="eventSearch" type="search" placeholder="Search artists, venues..." autocomplete="off">
+        </label>
+        <label class="filter-select-wrap">
+          <span>Filter</span>
+          <select id="eventFilter" aria-label="Filter events by type">
+            <option value="all">All</option>
+            <option value="concert">Concerts</option>
+            <option value="festival">Festivals</option>
+          </select>
+        </label>
+      </section>
+    </header>
+
+    <div class="section-heading">
+      <h2>Featured this week</h2>
+      <p>Handpicked events worth knowing about</p>
+    </div>
+
+    <section class="event-grid" id="eventGrid" aria-live="polite">
+      <article class="event-card event-item" data-category="concert upcoming" data-search="eminem concert stadium merdeka">
+        <img class="event-image" src="../public/Bon Jovi - Banner_BG.png" alt="Rock band performing together beneath dramatic stage lighting">
+        <div class="card-top">
+          <span class="status">On sale</span>
+          <span class="date-chip"><b>01</b><span>Aug</span></span>
+        </div>
+        <div class="event-content">
+          <div>
+            <p class="event-type">Featured concert</p>
+            <h2 class="event-title">Eminem Concert</h2>
+            <div class="meta">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                Stadium Merdeka
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                2:42 pm
+              </span>
+            </div>
+          </div>
+          <a class="details-link" href="#" aria-label="View Eminem Concert details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="event-card event-item" data-category="concert upcoming" data-search="concert test stadium merdeka">
+        <img class="event-image" src="../public/Aerosmith - Banner_BG.png" alt="Live rock band performing beneath warm amber stage lighting">
+        <div class="card-top">
+          <span class="status">On sale</span>
+          <span class="date-chip"><b>04</b><span>Aug</span></span>
+        </div>
+        <div class="event-content">
+          <div>
+            <p class="event-type">Live concert</p>
+            <h2 class="event-title">Concert test</h2>
+            <div class="meta">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                Stadium Merdeka
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                3:08 pm
+              </span>
+            </div>
+          </div>
+          <a class="details-link" href="#" aria-label="View Concert test details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </a>
+        </div>
+      </article>
+
+      <article class="event-card event-item" data-category="concert upcoming" data-search="midnight riot live bukit jalil national stadium">
+        <img class="event-image" src="../public/Guns n Roses - Banner_BG.png" alt="Rock band performing together beneath red stage lighting">
+        <div class="card-top">
+          <span class="status">On sale</span>
+          <span class="date-chip"><b>18</b><span>Aug</span></span>
+        </div>
+        <div class="event-content">
+          <div>
+            <p class="event-type">Live concert</p>
+            <h2 class="event-title">Midnight Riot Live</h2>
+            <div class="meta">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                Bukit Jalil
+              </span>
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                8:30 pm
+              </span>
+            </div>
+          </div>
+          <a class="details-link" href="#" aria-label="View Midnight Riot Live details">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </a>
+        </div>
+      </article>
+    </section>
+
+    <section class="catalog-section" id="catalogSection">
+      <div class="section-heading">
+        <h2>All live events</h2>
+        <p><span id="catalogCount">7</span> more events</p>
+      </div>
+
+      <div class="catalog-grid" id="catalogGrid" aria-live="polite">
+        <article class="catalog-card event-item" data-category="concert upcoming" data-search="ac dc power up tour axiata arena">
+          <img src="../public/ACDC - Banner_BG.png" alt="AC/DC performing beneath warm concert lighting">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>22</b><span>Aug</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Rock</p>
+            <h3 class="catalog-title"><span>AC/DC Power Up Tour</span></h3>
+            <div class="meta"><span>Axiata Arena</span><span>22 Aug 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View AC/DC Power Up Tour details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="concert upcoming" data-search="blackpink born pink national stadium bukit jalil">
+          <img src="../public/BlackPink - Banner_BG.png" alt="BlackPink performing on a vivid concert stage">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>29</b><span>Aug</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Pop</p>
+            <h3 class="catalog-title"><span>BlackPink: Born Pink</span></h3>
+            <div class="meta"><span>National Stadium</span><span>29 Aug 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View BlackPink Born Pink details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="concert upcoming" data-search="guns n roses live surf beach sunway lagoon">
+          <img src="../public/Guns n Roses - Banner_BG.png" alt="Guns N' Roses performing under red stage lighting">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>05</b><span>Sep</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Rock</p>
+            <h3 class="catalog-title"><span>Guns N’ Roses: Live</span></h3>
+            <div class="meta"><span>Surf Beach, Sunway</span><span>5 Sep 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View Guns N' Roses Live details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="concert upcoming" data-search="bon jovi forever merdeka 118 park">
+          <img src="../public/Bon Jovi - Banner_BG.png" alt="Bon Jovi performing beneath arena spotlights">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>12</b><span>Sep</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Rock</p>
+            <h3 class="catalog-title"><span>Bon Jovi: Forever</span></h3>
+            <div class="meta"><span>Merdeka 118 Park</span><span>12 Sep 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View Bon Jovi Forever details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="concert upcoming" data-search="aerosmith peace out bukit kiara equestrian park">
+          <img src="../public/Aerosmith - Banner_BG.png" alt="Aerosmith performing together on stage">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>19</b><span>Sep</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Rock</p>
+            <h3 class="catalog-title"><span>Aerosmith: Peace Out</span></h3>
+            <div class="meta"><span>Bukit Kiara Park</span><span>19 Sep 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View Aerosmith Peace Out details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="festival upcoming" data-search="electric skyline festival kl base sungai besi">
+          <img src="../public/Background Login Image.png" alt="Crowd watching a large electronic music stage">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>26</b><span>Sep</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Electronic</p>
+            <h3 class="catalog-title"><span>Electric Skyline</span></h3>
+            <div class="meta"><span>KL Base, Sungai Besi</span><span>26 Sep 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View Electric Skyline details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="festival upcoming" data-search="afterdark sessions genting highlands">
+          <img src="../public/Background Image.png" alt="Crowd gathered beneath vivid amber festival lights">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>03</b><span>Oct</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Electronic</p>
+            <h3 class="catalog-title"><span>Afterdark Sessions</span></h3>
+            <div class="meta"><span>Genting Highlands</span><span>3 Oct 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View Afterdark Sessions details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="concert upcoming" data-search="high voltage live zepp kuala lumpur" data-deferred hidden>
+          <img src="../public/ACDC - Banner_BG.png" alt="Rock band performing beneath amber stage lights">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>10</b><span>Oct</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Rock</p><h3 class="catalog-title"><span>High Voltage Live</span></h3>
+            <div class="meta"><span>Zepp Kuala Lumpur</span><span>10 Oct 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View High Voltage Live details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="concert upcoming" data-search="runway lights live mega star arena" data-deferred hidden>
+          <img src="../public/BlackPink - Banner_BG.png" alt="Performers on a vivid pink concert stage">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>17</b><span>Oct</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Pop</p><h3 class="catalog-title"><span>Runway Lights Live</span></h3>
+            <div class="meta"><span>Mega Star Arena</span><span>17 Oct 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View Runway Lights Live details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+
+        <article class="catalog-card event-item" data-category="festival upcoming" data-search="neon fields festival sepang international circuit" data-deferred hidden>
+          <img src="../public/Background Login Image.png" alt="Large electronic music festival stage filled with blue light">
+          <div class="catalog-top"><span class="status">On sale</span><span class="catalog-date"><b>24</b><span>Oct</span></span></div>
+          <div class="catalog-content">
+            <p class="event-type">Electronic</p><h3 class="catalog-title"><span>Neon Fields Festival</span></h3>
+            <div class="meta"><span>Sepang Circuit</span><span>24 Oct 2026</span></div>
+            <a class="catalog-link" href="#" aria-label="View Neon Fields Festival details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+          </div>
+        </article>
+      </div>
+
+      <div class="load-more-wrap" id="loadMoreWrap">
+        <button class="load-more" id="loadMore" type="button">Load more events</button>
+      </div>
+    </section>
+
+    <div class="empty-state" id="emptyState">
+      <strong>No events found</strong>
+      Try a different artist, venue, or filter.
+    </div>
+  </main>
+
+  <script>
+    const search = document.getElementById('eventSearch');
+    const filter = document.getElementById('eventFilter');
+    const items = [...document.querySelectorAll('.event-item')];
+    const featuredGrid = document.getElementById('eventGrid');
+    const catalogSection = document.getElementById('catalogSection');
+    const catalogGrid = document.getElementById('catalogGrid');
+    const catalogCount = document.getElementById('catalogCount');
+    const loadMore = document.getElementById('loadMore');
+    const loadMoreWrap = document.getElementById('loadMoreWrap');
+    const empty = document.getElementById('emptyState');
+    let allEventsLoaded = false;
+
+    function updateEvents() {
+      const query = search.value.trim().toLowerCase();
+      const activeFilter = filter.value;
+      let visibleTotal = 0;
+      let visibleFeatured = 0;
+      let visibleCatalog = 0;
+      let deferredMatches = 0;
+
+      items.forEach((item) => {
+        const matchesSearch = item.dataset.search.includes(query);
+        const matchesFilter = activeFilter === 'all' || item.dataset.category.includes(activeFilter);
+        const isDeferred = item.hasAttribute('data-deferred');
+        const matches = matchesSearch && matchesFilter;
+        const show = matches && (!isDeferred || allEventsLoaded);
+
+        item.hidden = !show;
+        if (matches && isDeferred && !allEventsLoaded) deferredMatches += 1;
+        if (!show) return;
+
+        visibleTotal += 1;
+        if (item.classList.contains('event-card')) visibleFeatured += 1;
+        if (item.classList.contains('catalog-card')) visibleCatalog += 1;
+      });
+
+      featuredGrid.style.display = visibleFeatured ? '' : 'none';
+      catalogGrid.style.display = visibleCatalog ? '' : 'none';
+      catalogSection.style.display = visibleCatalog || deferredMatches ? '' : 'none';
+      catalogCount.textContent = visibleCatalog;
+      loadMoreWrap.style.display = deferredMatches ? 'flex' : 'none';
+      loadMore.textContent = deferredMatches === 1 ? 'Load 1 more event' : `Load ${deferredMatches} more events`;
+      empty.style.display = visibleTotal ? 'none' : 'block';
+    }
+
+    search.addEventListener('input', updateEvents);
+    filter.addEventListener('change', updateEvents);
+    loadMore.addEventListener('click', () => {
+      allEventsLoaded = true;
+      updateEvents();
+    });
+
+    document.querySelectorAll('.details-link, .catalog-link').forEach((link) => {
+      link.addEventListener('click', (event) => event.preventDefault());
+    });
+
+    updateEvents();
+  </script>
+</body>
+</html>

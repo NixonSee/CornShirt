@@ -11,6 +11,7 @@ import {
   buildEventChartPoints,
   type EventTransactionRow,
 } from "@/lib/eventChartData";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 
 const NUMBER = new Intl.NumberFormat("en-US");
 
@@ -37,6 +38,7 @@ export default async function AdminEventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   await requireRole(["admin"]);
+  await synchronizeFinishedEvents();
   const { eventId } = await params;
 
   const { data: event, error } = await supabaseAdmin

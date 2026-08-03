@@ -63,6 +63,25 @@ test("resale checkout separates NFT failure from database reconciliation", () =>
   assert.match(resale, /shouldAutoRefundResale/);
   assert.match(resale, /resale_delivery_refund_/);
   assert.match(resale, /idempotencyKey/);
+  assert.match(resale, /settleContractListing/);
+  assert.match(resale, /contract_listing_reference/);
+});
+
+test("three-hour lifecycle expires admission without burning collectible NFTs", () => {
+  const sql = source(
+    "../../../scripts/sql/2026-08-03-three-hour-event-lifecycle.sql",
+  );
+  const verify = source("../../app/api/organizer/tickets/verify/route.ts");
+  const contract = source(
+    "../../../blockchain/contracts/CornShirtMarketplace.sol",
+  );
+
+  assert.match(sql, /event_date \+ interval '3 hours' <= now\(\)/i);
+  assert.match(sql, /set status = 'completed'/i);
+  assert.match(sql, /set status = 'expired'/i);
+  assert.match(verify, /isEventLive\(event\)/);
+  assert.match(contract, /require\(block\.timestamp < listing\.expiresAt/);
+  assert.doesNotMatch(sql, /burnRefundedTicket/i);
 });
 
 test("resale repair migration supports purchased listings and resale records", () => {
