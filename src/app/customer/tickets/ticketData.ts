@@ -19,6 +19,7 @@ export interface CustomerTicket {
   isNftBacked: boolean;
   transferAllowed: boolean;
   hasActiveListing: boolean;
+  eventCancelled: boolean;
   originalPriceSen: number | null;
   maxResalePriceSen: number | null;
   refundEligible: boolean;
@@ -123,6 +124,7 @@ export function mapCustomerTickets(
       recordString(ticket, "record_source") === "stripe_nft" &&
       Boolean(rawTokenId) &&
       Boolean(qrValue);
+    const eventStatus = (recordString(event, "status") ?? "").toLowerCase();
     const originalPriceSen = getOriginalTicketPriceSen({
       priceSen: ticketType.price_sen,
       price: ticketType.price,
@@ -148,6 +150,7 @@ export function mapCustomerTickets(
       isNftBacked,
       transferAllowed: recordBoolean(ticketType, "transfer_allowed"),
       hasActiveListing,
+      eventCancelled: ["cancelled", "canceled"].includes(eventStatus),
       originalPriceSen,
       maxResalePriceSen:
         originalPriceSen === null

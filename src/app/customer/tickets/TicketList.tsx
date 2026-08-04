@@ -455,7 +455,8 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                     Claim refund
                   </Button>
                 ) : null}
-                {["active", "valid"].includes(ticket.status.toLowerCase()) ? (
+                {["active", "valid"].includes(ticket.status.toLowerCase()) &&
+                !ticket.eventCancelled ? (
                   <>
                     <Button
                       variant="outline"
