@@ -16,7 +16,7 @@ type RefundAssetOperation = {
 
 export type RefundAssetResult =
   | { ok: true; skipped?: boolean }
-  | { ok: false; error: string };
+  | { ok: false; error: string; category: string };
 
 async function loadRefundOperationById(
   operationId: string,
@@ -37,14 +37,23 @@ export async function finalizeTicketRefundAsset(
   operationId: string,
 ): Promise<RefundAssetResult> {
   const operation = await loadRefundOperationById(operationId);
-  if (!operation) return { ok: false, error: "Refund operation was not found." };
+  if (!operation) {
+    return {
+      ok: false,
+      error: "Refund operation was not found.",
+      category: "operation_not_found",
+    };
+  }
   if (operation.state === "completed") return { ok: true, skipped: true };
 
   let burnHash = operation.asset_transaction_hash;
   try {
-    const owner = await getTicketOwner(BigInt(operation.token_id)).catch(
-      () => null,
-    );
+    let owner = null;
+    try {
+      owner = await getTicketOwner(BigInt(operation.token_id));
+    } catch (ownerError) {
+      if (!burnHash) throw ownerError;
+    }
     if (owner) {
       if (owner.toLowerCase() !== operation.wallet_address.toLowerCase()) {
         throw new Error("Current NFT owner does not match.");
@@ -83,20 +92,30 @@ export async function finalizeTicketRefundAsset(
     if (finalized.error) throw new Error("Refund finalization failed.");
     return { ok: true };
   } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown";
+    const rpcUnavailable =
+      /http request failed|fetch failed|econnrefused|network error/i.test(
+        message,
+      );
+    const category = rpcUnavailable ? "blockchain_unavailable" : "nft_burn";
     console.error("Refunded Ticket NFT burn is pending retry", {
       operationId: operation.operation_id,
-      message: error instanceof Error ? error.message : "unknown",
+      category,
+      message,
     });
     await supabaseAdmin
       .from("ticket_operations")
       .update({
-        safe_error_category: "nft_burn",
+        safe_error_category: category,
         updated_at: new Date().toISOString(),
       })
       .eq("operation_id", operation.operation_id);
     return {
       ok: false,
-      error: "Payment was refunded, but NFT surrender is still being finalized.",
+      category,
+      error: rpcUnavailable
+        ? "Payment was refunded, but the blockchain service is currently unreachable. Start or reconnect the configured Hardhat RPC, then retry—no second refund will be created."
+        : "Payment was refunded, but NFT surrender is still being finalized. Retry safely—no second refund will be created.",
     };
   }
 }
@@ -112,7 +131,11 @@ export async function finalizeRefundAssetByStripeRefundId(
     .maybeSingle();
 
   if (operation.error) {
-    return { ok: false, error: "Refund operation could not be loaded." };
+    return {
+      ok: false,
+      error: "Refund operation could not be loaded.",
+      category: "storage",
+    };
   }
   if (!operation.data?.operation_id) return { ok: true, skipped: true };
   return finalizeTicketRefundAsset(operation.data.operation_id);

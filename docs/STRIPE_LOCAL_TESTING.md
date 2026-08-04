@@ -75,11 +75,17 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
 Configure `GMAIL_USER`, `GMAIL_APP_PASSWORD`, and
 `TRANSACTION_FROM_EMAIL` in `.env.local`, then run
-`scripts/sql/2026-08-04-transactional-email-deliveries.sql` before testing
-transaction emails. The successful purchase email goes to the address stored
+`scripts/sql/2026-08-04-transactional-email-deliveries.sql` and
+`scripts/sql/2026-08-04-transactional-email-event-cancellations.sql` before
+testing transaction emails. The successful purchase email goes to the address stored
 in the completed Stripe Checkout Session. Successful refund email goes to the
 original Stripe payer, while direct transfers and resale completion notify
 both parties.
+
+If the refund UI reports that the blockchain service is unreachable, Stripe
+has already accepted the refund but the local Hardhat node cannot be contacted
+to burn the Ticket NFT. Start the same Hardhat deployment used to mint the
+ticket and retry the claim; the stored refund ID prevents a duplicate refund.
 
 Copy the printed `whsec_...` value into `.env.local`, then restart
 `npm run dev`.

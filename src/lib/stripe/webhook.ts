@@ -329,7 +329,7 @@ export async function handleStripeWebhookEvent(
           assetResult.ok
             ? "Refund succeeded but its email is pending retry."
             : assetResult.error,
-          assetResult.ok ? "email" : "nft_burn",
+          assetResult.ok ? "email" : assetResult.category,
         );
     await finishStripeEvent(event.id, result);
     return result;

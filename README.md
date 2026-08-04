@@ -76,7 +76,9 @@ application.
 Transaction receipts and transfer/refund notices also require
 `scripts/sql/2026-08-04-transactional-email-deliveries.sql`. The delivery
 ledger makes email retries idempotent and keeps recipient records private to
-the service role.
+the service role. Run
+`scripts/sql/2026-08-04-transactional-email-event-cancellations.sql` after it
+to enable cancellation notices for every current NFT ticket holder.
 
 ## Development
 

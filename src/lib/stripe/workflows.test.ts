@@ -129,6 +129,9 @@ test("confirmed ticket workflows send idempotent transactional emails", () => {
   const sql = source(
     "../../../scripts/sql/2026-08-04-transactional-email-deliveries.sql",
   );
+  const cancellationSql = source(
+    "../../../scripts/sql/2026-08-04-transactional-email-event-cancellations.sql",
+  );
 
   assert.match(email, /claim_transactional_email/);
   assert.match(email, /finish_transactional_email/);
@@ -151,4 +154,8 @@ test("confirmed ticket workflows send idempotent transactional emails", () => {
   assert.match(sql, /notification_key text primary key/);
   assert.match(sql, /enable row level security/);
   assert.match(sql, /revoke all .* anon, authenticated/is);
+  assert.match(cancellationSql, /event_cancelled/);
+  assert.match(cancellationSql, /alter column operation_id drop not null/);
+  assert.match(notifications, /notifyEventCancellation/);
+  assert.match(notifications, /Open My Tickets & request refund/);
 });

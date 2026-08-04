@@ -17,8 +17,9 @@ export type TransactionalEmailInput = {
     | "direct_transfer_sent"
     | "direct_transfer_received"
     | "resale_sold"
-    | "resale_purchased";
-  operationId: string;
+    | "resale_purchased"
+    | "event_cancelled";
+  operationId: string | null;
   to: string;
   subject: string;
   eyebrow: string;
@@ -26,6 +27,8 @@ export type TransactionalEmailInput = {
   intro: string;
   details: EmailDetail[];
   note?: string;
+  actionLabel?: string;
+  actionUrl?: string;
 };
 
 export type TransactionalEmailResult = {
@@ -114,6 +117,9 @@ function renderText(input: TransactionalEmailInput): string {
     "",
     details,
     input.note ? `\n${input.note}` : "",
+    input.actionUrl
+      ? `\n${input.actionLabel ?? "Open CornShirt"}: ${input.actionUrl}`
+      : "",
     "",
     "CornShirt Hub",
   ]
@@ -144,6 +150,7 @@ function renderHtml(input: TransactionalEmailInput): string {
             <p style="margin:16px 0 24px;color:#b7c0cb;font-size:15px;line-height:1.65;">${escapeHtml(input.intro)}</p>
             <table role="presentation" style="width:100%;border-collapse:collapse;border-top:1px solid #30363d;border-bottom:1px solid #30363d;">${rows}</table>
             ${input.note ? `<p style="margin:22px 0 0;color:#8b949e;font-size:13px;line-height:1.6;">${escapeHtml(input.note)}</p>` : ""}
+            ${input.actionUrl ? `<p style="margin:24px 0 0;"><a href="${escapeHtml(input.actionUrl)}" style="display:inline-block;padding:13px 20px;border-radius:11px;background:#f6a730;color:#111820;font-size:14px;font-weight:800;text-decoration:none;">${escapeHtml(input.actionLabel ?? "Open CornShirt")}</a></p>` : ""}
           </div>
         </div>
       </div>

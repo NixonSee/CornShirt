@@ -340,3 +340,111 @@ export async function notifyStripeRefundSucceeded(
     refundReference: refundReference(refund),
   });
 }
+
+export async function notifyEventCancellation(input: {
+  eventId: string;
+  reason: string | null;
+}): Promise<{ recipients: number; sent: number; failed: number }> {
+  const [eventResult, ticketResult] = await Promise.all([
+    supabaseAdmin
+      .from("events")
+      .select("event_name, event_date, venue")
+      .eq("event_id", input.eventId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("tickets")
+      .select("ticket_id, user_id, acquisition_operation_id")
+      .eq("event_id", input.eventId)
+      .eq("record_source", "stripe_nft")
+      .not("token_id", "is", null)
+      .in("status", ["active", "valid"]),
+  ]);
+
+  if (eventResult.error || !eventResult.data || ticketResult.error) {
+    console.error("Cancellation email recipients could not be loaded", {
+      eventId: input.eventId,
+    });
+    return { recipients: 0, sent: 0, failed: 0 };
+  }
+
+  const tickets = ticketResult.data ?? [];
+  const ticketsByOwner = new Map<
+    string,
+    { count: number; operationId: string | null }
+  >();
+  for (const ticket of tickets) {
+    if (!ticket.user_id) continue;
+    const current = ticketsByOwner.get(ticket.user_id);
+    ticketsByOwner.set(ticket.user_id, {
+      count: (current?.count ?? 0) + 1,
+      operationId:
+        current?.operationId ?? ticket.acquisition_operation_id ?? null,
+    });
+  }
+
+  const userIds = [...ticketsByOwner.keys()];
+  if (userIds.length === 0) return { recipients: 0, sent: 0, failed: 0 };
+
+  const profiles = await supabaseAdmin
+    .from("profiles")
+    .select("user_id, name, email")
+    .in("user_id", userIds);
+  if (profiles.error) {
+    console.error("Cancellation email contacts could not be loaded", {
+      eventId: input.eventId,
+    });
+    return { recipients: userIds.length, sent: 0, failed: userIds.length };
+  }
+
+  const eventName = text(eventResult.data.event_name, "CornShirt live event");
+  const eventDate = formatEventDate(eventResult.data.event_date);
+  const venue = text(
+    eventResult.data.venue,
+    "See your ticket for venue details",
+  );
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
+  const ticketsUrl = `${baseUrl}/customer/tickets`;
+
+  const results = await Promise.all(
+    (profiles.data ?? []).map(async (profile) => {
+      const email = text(profile.email, "").toLowerCase();
+      const ownership = ticketsByOwner.get(profile.user_id);
+      if (!email || !ownership) return false;
+
+      const result = await sendTransactionalEmail({
+        notificationKey: `event-cancelled:${input.eventId}:${profile.user_id}`,
+        notificationType: "event_cancelled",
+        operationId: ownership.operationId,
+        to: email,
+        subject: `Event cancelled — ${eventName}`,
+        eyebrow: "Important event update",
+        title: `${eventName} has been cancelled.`,
+        intro: `${text(profile.name, "Hello")}, your ${ownership.count === 1 ? "ticket is" : `${ownership.count} tickets are`} now eligible for a refund request in CornShirt Hub.`,
+        details: [
+          { label: "Event", value: eventName },
+          { label: "Original date", value: eventDate },
+          { label: "Venue", value: venue },
+          { label: "Affected tickets", value: String(ownership.count) },
+          ...(input.reason
+            ? [{ label: "Cancellation reason", value: input.reason }]
+            : []),
+        ],
+        note: "If a ticket was transferred, the refund returns to the latest person who paid for that ticket through Stripe. Claiming the refund permanently surrenders the Ticket NFT.",
+        actionLabel: "Open My Tickets & request refund",
+        actionUrl: ticketsUrl,
+      });
+      return delivered(result);
+    }),
+  );
+
+  const sent = results.filter(Boolean).length;
+  return {
+    recipients: userIds.length,
+    sent,
+    failed: Math.max(0, userIds.length - sent),
+  };
+}

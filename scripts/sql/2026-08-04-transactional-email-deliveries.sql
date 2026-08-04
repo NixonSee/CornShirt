@@ -8,9 +8,10 @@ create table if not exists public.transactional_email_deliveries (
     'direct_transfer_sent',
     'direct_transfer_received',
     'resale_sold',
-    'resale_purchased'
+    'resale_purchased',
+    'event_cancelled'
   )),
-  operation_id uuid not null references public.ticket_operations(operation_id),
+  operation_id uuid references public.ticket_operations(operation_id),
   recipient_email text not null,
   status text not null default 'sending' check (status in ('sending', 'sent', 'failed')),
   attempts integer not null default 1,
