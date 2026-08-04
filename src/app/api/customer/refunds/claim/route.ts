@@ -1,21 +1,86 @@
-import { burnRefundedTicket } from "@/lib/nft/burn";
-import { getPublicClient } from "@/lib/nft/contract";
-import { getTicketOwner } from "@/lib/nft/getOwner";
 import { authorizeApiRole } from "@/lib/requireRole";
+import { resolveStripePaymentEmail } from "@/lib/stripe/customerEmail";
+import { finalizeTicketRefundAsset } from "@/lib/stripe/refund";
 import { getStripe } from "@/lib/stripe/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  maskEmail,
+  notifyRefundConfirmed,
+} from "@/lib/ticketNotifications";
 
 type RefundOperation = {
   operation_id: string;
   state: string;
   actor_user_id: string;
   recipient_user_id: string;
+  event_id: string;
+  ticket_type_id: string | null;
   amount_sen: number;
   currency: string;
   stripe_payment_intent_id: string;
   stripe_refund_id: string | null;
   asset_transaction_hash: `0x${string}` | null;
 };
+
+async function refundConfirmation(operation: RefundOperation) {
+  if (!operation.stripe_refund_id) {
+    return {
+      success: true,
+      refundStatus: "pending",
+      refundId: null,
+      recipientEmail: "the original Stripe payer",
+      amountSen: operation.amount_sen,
+      currency: operation.currency,
+      emailSent: false,
+    };
+  }
+
+  const [refund, stripeEmail, profileResult] = await Promise.all([
+    getStripe().refunds.retrieve(operation.stripe_refund_id),
+    resolveStripePaymentEmail(operation.stripe_payment_intent_id),
+    supabaseAdmin
+      .from("profiles")
+      .select("email")
+      .eq("user_id", operation.recipient_user_id)
+      .maybeSingle(),
+  ]);
+  const profileEmail =
+    typeof profileResult.data?.email === "string"
+      ? profileResult.data.email.trim().toLowerCase()
+      : null;
+  const recipientEmail = stripeEmail ?? profileEmail;
+  const destination = refund.destination_details;
+  const refundReference =
+    destination?.type === "card"
+      ? destination.card?.reference ?? null
+      : null;
+  const emailSent =
+    refund.status === "succeeded" && recipientEmail
+      ? await notifyRefundConfirmed({
+          operationId: operation.operation_id,
+          refundId: refund.id,
+          recipientEmail,
+          eventId: operation.event_id,
+          ticketTypeId: operation.ticket_type_id,
+          amountSen: refund.amount,
+          currency: refund.currency,
+          refundReference,
+        })
+      : false;
+
+  return {
+    success: true,
+    refundStatus: refund.status ?? "pending",
+    refundId: refund.id,
+    refundReference,
+    recipientEmail: recipientEmail
+      ? maskEmail(recipientEmail)
+      : "the original Stripe payer",
+    amountSen: refund.amount,
+    currency: refund.currency.toUpperCase(),
+    emailSent,
+  };
+}
 
 async function resolvePaymentIntent(
   directId: string | null,
@@ -53,14 +118,14 @@ export async function POST(request: Request) {
       supabaseAdmin
         .from("tickets")
         .select(
-          "ticket_id, event_id, status, refund_eligible, wallet_address, token_id, stripe_payment_intent, record_source",
+          "ticket_id, event_id, ticket_type_id, status, refund_eligible, wallet_address, token_id, stripe_payment_intent, record_source",
         )
         .eq("ticket_id", ticketId)
         .maybeSingle(),
       supabaseAdmin
         .from("ticket_operations")
         .select(
-          "operation_id, state, actor_user_id, recipient_user_id, amount_sen, currency, stripe_payment_intent_id, stripe_refund_id, asset_transaction_hash",
+          "operation_id, state, actor_user_id, recipient_user_id, event_id, ticket_type_id, amount_sen, currency, stripe_payment_intent_id, stripe_refund_id, asset_transaction_hash",
         )
         .eq("ticket_id", ticketId)
         .eq("operation_kind", "refund")
@@ -97,7 +162,7 @@ export async function POST(request: Request) {
 
   let operation = existingOperationResult.data as RefundOperation | null;
   if (operation?.state === "completed") {
-    return Response.json({ success: true, burned: true });
+    return Response.json({ ...(await refundConfirmation(operation)), burned: true });
   }
   if (
     !operation &&
@@ -175,6 +240,7 @@ export async function POST(request: Request) {
         actor_user_id: userId,
         recipient_user_id: acquisition.buyer_id,
         event_id: ticket.event_id,
+        ticket_type_id: ticket.ticket_type_id,
         ticket_id: ticketId,
         related_operation_id: acquisition.operation_id,
         amount_sen: amountSen,
@@ -184,7 +250,7 @@ export async function POST(request: Request) {
         token_id: ticket.token_id,
       })
       .select(
-        "operation_id, state, actor_user_id, recipient_user_id, amount_sen, currency, stripe_payment_intent_id, stripe_refund_id, asset_transaction_hash",
+        "operation_id, state, actor_user_id, recipient_user_id, event_id, ticket_type_id, amount_sen, currency, stripe_payment_intent_id, stripe_refund_id, asset_transaction_hash",
       )
       .single();
     if (inserted.error || !inserted.data) {
@@ -236,64 +302,24 @@ export async function POST(request: Request) {
     }
   }
 
-  let burnHash = operation.asset_transaction_hash;
-  try {
-    const owner = await getTicketOwner(BigInt(ticket.token_id)).catch(
-      () => null,
-    );
-    if (owner) {
-      if (owner.toLowerCase() !== walletAddress.toLowerCase()) {
-        throw new Error("Current NFT owner does not match.");
-      }
-      const burned = await burnRefundedTicket(
-        BigInt(ticket.token_id),
-        undefined,
-        async (hash) => {
-          const stored = await supabaseAdmin
-            .from("ticket_operations")
-            .update({
-              state: "asset_submitted",
-              asset_transaction_hash: hash,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("operation_id", operation!.operation_id);
-          if (stored.error) throw new Error("Burn submission was not recorded.");
-        },
+  const confirmation = await refundConfirmation(operation);
+  if (confirmation.refundStatus !== "succeeded") {
+    if (["failed", "canceled"].includes(confirmation.refundStatus)) {
+      return Response.json(
+        { ...confirmation, error: "Stripe did not complete the refund." },
+        { status: 502 },
       );
-      burnHash = burned.transactionHash;
-    } else if (burnHash) {
-      const receipt = await getPublicClient().getTransactionReceipt({
-        hash: burnHash,
-      });
-      if (receipt.status !== "success") {
-        throw new Error("Stored burn transaction reverted.");
-      }
-    } else {
-      throw new Error("NFT burn state could not be recovered.");
     }
+    return Response.json({ ...confirmation, burned: false }, { status: 202 });
+  }
 
-    const finalized = await supabaseAdmin.rpc("finalize_ticket_refund", {
-      p_operation_id: operation.operation_id,
-      p_asset_transaction_hash: burnHash,
-    });
-    if (finalized.error) throw new Error("Refund finalization failed.");
-  } catch (error) {
-    console.error("Refunded Ticket NFT burn is pending retry", {
-      operationId: operation.operation_id,
-      message: error instanceof Error ? error.message : "unknown",
-    });
+  const assetResult = await finalizeTicketRefundAsset(operation.operation_id);
+  if (!assetResult.ok) {
     return Response.json(
-      {
-        error:
-          "Payment was refunded, but NFT surrender is still being finalized. Retry safely.",
-      },
+      { ...confirmation, burned: false, error: assetResult.error },
       { status: 502 },
     );
   }
 
-  return Response.json({
-    success: true,
-    refundId: operation.stripe_refund_id,
-    burned: true,
-  });
+  return Response.json({ ...confirmation, burned: true });
 }

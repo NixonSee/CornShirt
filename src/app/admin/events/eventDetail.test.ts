@@ -40,6 +40,10 @@ test("admin cancellation is active-only while organizer withdrawal stays unchang
     organizerCancelRoute,
     /CANCELLABLE_STATUSES = new Set\(\["pending", "active"\]\)/,
   );
+  assert.match(adminCancelRoute, /notifyEventCancellation/);
+  assert.match(organizerCancelRoute, /notifyEventCancellation/);
+  assert.match(adminCancelRoute, /emailNotifications/);
+  assert.match(organizerCancelRoute, /emailNotifications/);
 });
 
 test("admin event banners use a dedicated edge-to-edge dark frame", () => {

@@ -60,10 +60,11 @@ PLATFORM_CONTRACT_PRIVATE_KEY=
 HARDHAT_RPC_URL=http://127.0.0.1:8545
 WALLET_ENCRYPTION_KEY=
 
-# Optional organizer rejection email configuration
+# Transaction and organizer-application email configuration
 GMAIL_USER=
 GMAIL_APP_PASSWORD=
 REJECT_FROM_EMAIL=
+TRANSACTION_FROM_EMAIL=
 ```
 
 `WALLET_ENCRYPTION_KEY` must be a base64-encoded 32-byte key.
@@ -71,6 +72,13 @@ REJECT_FROM_EMAIL=
 Review and run the required database migrations from `scripts/sql` in the
 Supabase SQL Editor. Migrations are not executed automatically by the
 application.
+
+Transaction receipts and transfer/refund notices also require
+`scripts/sql/2026-08-04-transactional-email-deliveries.sql`. The delivery
+ledger makes email retries idempotent and keeps recipient records private to
+the service role. Run
+`scripts/sql/2026-08-04-transactional-email-event-cancellations.sql` after it
+to enable cancellation notices for every current NFT ticket holder.
 
 ## Development
 
@@ -94,6 +102,11 @@ Stripe webhook forwarding is only required when testing payment workflows:
 ```bash
 stripe listen --forward-to localhost:3000/api/webhooks/stripe
 ```
+
+For a deployed Stripe webhook endpoint, enable `checkout.session.completed`,
+`refund.created`, and `refund.updated`. Purchase/resale email is sent only
+after ticket fulfillment succeeds; refund email is sent only when Stripe marks
+the refund `succeeded`.
 
 ## Verification
 

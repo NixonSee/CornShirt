@@ -16,6 +16,7 @@ import {
   transferTicket,
 } from "@/lib/nft/transfer";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { notifyResaleConfirmed } from "@/lib/ticketNotifications";
 import { loadManagedWalletSigner } from "@/lib/walletAccess";
 
 import {
@@ -23,6 +24,7 @@ import {
   shouldAutoRefundResale,
 } from "./resaleRecovery";
 import { getStripe } from "./stripe";
+import { checkoutCustomerEmail } from "./customerEmail";
 import type { FinalizeResult } from "./webhook";
 
 type ReservedResale = {
@@ -40,6 +42,7 @@ type ResaleOperation = {
   actor_user_id: string;
   seller_user_id: string;
   event_id: string;
+  ticket_type_id: string | null;
   amount_sen: number;
   currency: string;
   wallet_address: Address;
@@ -64,6 +67,32 @@ function paymentIntentId(session: Stripe.Checkout.Session): string | null {
 
 function failed(error: string, category: string): FinalizeResult {
   return { ok: false, error, category };
+}
+
+async function sendResaleEmails(
+  operation: ResaleOperation,
+  session: Stripe.Checkout.Session,
+  transactionHash: string | null,
+): Promise<FinalizeResult> {
+  if (!transactionHash) {
+    return failed("Resale transaction reference is unavailable.", "storage");
+  }
+
+  const delivered = await notifyResaleConfirmed({
+    operationId: operation.operation_id,
+    buyerEmail: checkoutCustomerEmail(session),
+    buyerUserId: operation.actor_user_id,
+    sellerUserId: operation.seller_user_id,
+    eventId: operation.event_id,
+    ticketTypeId: operation.ticket_type_id,
+    amountSen: Number(operation.amount_sen),
+    currency: operation.currency,
+    transactionHash,
+  });
+
+  return delivered
+    ? { ok: true, operationId: operation.operation_id }
+    : failed("Resale completed but its emails are pending retry.", "email");
 }
 
 export async function createResaleCheckoutSession(input: {
@@ -278,7 +307,7 @@ export async function finalizeResaleCheckout(
   const result = await supabaseAdmin
     .from("ticket_operations")
     .select(
-      "operation_id, state, actor_user_id, seller_user_id, event_id, amount_sen, currency, wallet_address, recipient_wallet_address, stripe_checkout_session_id, stripe_payment_intent_id, token_id, listing_id, asset_transaction_hash, retry_count",
+      "operation_id, state, actor_user_id, seller_user_id, event_id, ticket_type_id, amount_sen, currency, wallet_address, recipient_wallet_address, stripe_checkout_session_id, stripe_payment_intent_id, token_id, listing_id, asset_transaction_hash, retry_count",
     )
     .eq("operation_id", operationId)
     .eq("operation_kind", "resale_purchase")
@@ -287,7 +316,14 @@ export async function finalizeResaleCheckout(
   if (result.error || !operation) {
     return failed("Resale operation was not found.", "operation_not_found");
   }
-  if (operation.state === "completed" || operation.state === "refunded") {
+  if (operation.state === "completed") {
+    return sendResaleEmails(
+      operation,
+      session,
+      operation.asset_transaction_hash,
+    );
+  }
+  if (operation.state === "refunded") {
     return { ok: true, skipped: true, operationId };
   }
 
@@ -462,5 +498,5 @@ export async function finalizeResaleCheckout(
     );
   }
 
-  return { ok: true, operationId };
+  return sendResaleEmails(operation, session, transactionHash);
 }

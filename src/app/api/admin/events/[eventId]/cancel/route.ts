@@ -1,6 +1,7 @@
 import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { notifyEventCancellation } from "@/lib/ticketNotifications";
 
 const CANCELLABLE_STATUSES = new Set(["active"]);
 
@@ -82,5 +83,12 @@ export async function PUT(
     console.error("Failed to log admin activity:", logError.message);
   }
 
-  return Response.json({ success: true });
+  const emailNotifications = refundEligibleError
+    ? { recipients: 0, sent: 0, failed: 0 }
+    : await notifyEventCancellation({
+        eventId,
+        reason: reason || null,
+      });
+
+  return Response.json({ success: true, emailNotifications });
 }

@@ -8,11 +8,9 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/common";
+import PartnerApplyNav from "@/components/nav/PartnerApplyNav";
 import {
-  ArrowLeft,
   ArrowRight,
   Building2,
   Check,
@@ -183,31 +181,7 @@ export default function ApplyPage() {
   return (
     <>
       <title>Become an Organizer — CornShirt</title>
-      {/*
-        The wizard keeps its own header rather than rendering the shared nav:
-        it needs the "Back to events" escape hatch, and an in-flow sticky bar
-        (sitenav-static) so the sticky .partner-apply-sidebar keeps working.
-        The sitenav classes give it the same visual language as everywhere else.
-      */}
-      <header className="app-topbar sitenav sitenav-static" data-audience="apply">
-        <Link className="app-topbar-brand sitenav-brand" href="/visitor">
-          <Image
-            src="/CornShirt_Hub-removedbg.png"
-            alt="CornShirt logo"
-            width={140}
-            height={44}
-            priority
-          />
-        </Link>
-        <nav
-          className="app-topbar-actions sitenav-actions"
-          aria-label="Application actions"
-        >
-          <Button variant="outline" onClick={() => router.push("/visitor")}>
-            <ArrowLeft size={16} /> Back to events
-          </Button>
-        </nav>
-      </header>
+      <PartnerApplyNav />
 
       <main className="partner-apply-page">
         <section className="partner-apply-intro">
