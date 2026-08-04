@@ -60,6 +60,7 @@ test("customer login returns to the event without changing staff routing", () =>
 test("login requests password recovery through the auth callback route", () => {
   assert.equal(loginSource.includes("resetPasswordForEmail"), true);
   assert.equal(loginSource.includes("/auth/callback"), true);
+  assert.equal(loginSource.includes('searchParams.set("intent", "recovery")'), true);
   assert.equal(loginSource.includes("Forgot password?"), true);
   assert.equal(loginSource.includes("Check your email"), true);
 });
@@ -68,6 +69,7 @@ test("auth callback exchanges the PKCE code before set-password", () => {
   assert.equal(callbackSource.includes("exchangeCodeForSession"), true);
   assert.equal(callbackSource.includes('searchParams.get("code")'), true);
   assert.equal(callbackSource.includes('searchParams.get("type")'), true);
+  assert.equal(callbackSource.includes('searchParams.get("intent")'), true);
   assert.equal(callbackSource.includes("/auth/set-password"), true);
 });
 

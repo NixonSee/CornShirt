@@ -151,28 +151,31 @@ export default function ApplyPage() {
 
   if (success) {
     return (
-      <main className="partner-apply-success-page">
-        <section className="partner-apply-success-card">
-          <div className="partner-apply-success-icon" aria-hidden="true">
-            <CircleCheck size={34} strokeWidth={2.2} />
-          </div>
-          <span className="partner-apply-eyebrow">Application received</span>
-          <h1>You&apos;re one step closer to the stage.</h1>
-          <p>
-            Thanks for applying to become a CornShirt partner. Our team will
-            review your details and supporting documents, then contact you by
-            email.
-          </p>
-          <div className="partner-apply-success-timeline">
-            <SuccessStep label="Submitted" detail="Your application is safely with us." />
-            <SuccessStep label="Under review" detail="Our team checks your information." />
-            <SuccessStep label="Decision by email" detail="We will send you the next steps." />
-          </div>
-          <Button onClick={() => router.push("/visitor")} fullWidth>
-            Back to Browse
-          </Button>
-        </section>
-      </main>
+      <>
+        <PartnerApplyNav />
+        <main className="partner-apply-success-page">
+          <section className="partner-apply-success-card">
+            <div className="partner-apply-success-icon" aria-hidden="true">
+              <CircleCheck size={34} strokeWidth={2.2} />
+            </div>
+            <span className="partner-apply-eyebrow">Application received</span>
+            <h1>You&apos;re one step closer to the stage.</h1>
+            <p>
+              Thanks for applying to become a CornShirt partner. Our team will
+              review your details and supporting documents, then contact you by
+              email.
+            </p>
+            <div className="partner-apply-success-timeline">
+              <SuccessStep label="Submitted" detail="Your application is safely with us." />
+              <SuccessStep label="Under review" detail="Our team checks your information." />
+              <SuccessStep label="Decision by email" detail="We will send you the next steps." />
+            </div>
+            <Button onClick={() => router.push("/visitor")} fullWidth>
+              Back to Browse
+            </Button>
+          </section>
+        </main>
+      </>
     );
   }
 

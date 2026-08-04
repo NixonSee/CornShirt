@@ -40,6 +40,7 @@ test("maps live ticket ownership rows into display tickets", async () => {
         ticket_type_id: "type-1",
         type_name: "General Admission",
         transfer_allowed: true,
+        price_sen: 10_000,
       },
     ],
   );
@@ -50,6 +51,8 @@ test("maps live ticket ownership rows into display tickets", async () => {
   assert.equal(result[0].status, "VALID");
   assert.equal(result[0].transferAllowed, true);
   assert.equal(result[0].hasActiveListing, false);
+  assert.equal(result[0].originalPriceSen, 10_000);
+  assert.equal(result[0].maxResalePriceSen, 11_500);
   assert.equal(result[0].accent, "#36b56a");
   assert.equal(result[0].qrValue, "cornshirt:ticket-1");
   assert.equal(result[0].isNftBacked, true);
@@ -84,6 +87,8 @@ test("eligible tickets expose a resale listing modal", () => {
   assert.match(source, /showCloseButton/);
   assert.match(source, /data-testid="resale-listing-form"/);
   assert.match(source, /inputMode="decimal"/);
+  assert.match(source, /Maximum resale price:/);
+  assert.match(source, /original price \+ 15%/);
   assert.match(source, /return "LISTED"/);
   assert.match(source, /return "COLLECTIBLE"/);
   assert.match(source, /Check-in closed when the event ended/);
