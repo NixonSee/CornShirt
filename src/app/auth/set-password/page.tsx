@@ -89,9 +89,9 @@ export default function SetPasswordPage() {
           <div className="password-setup-loader">
             <Loader2 className="button-spinner" size={26} />
           </div>
-          <span className="password-setup-eyebrow">Secure invitation</span>
+          <span className="password-setup-eyebrow">Secure password change</span>
           <h1>Preparing your account</h1>
-          <p>We&apos;re verifying your invitation and setting up a safe session.</p>
+          <p>We&apos;re verifying your link and setting up a safe session.</p>
           <div className="password-setup-loading-line" aria-hidden="true"><span /></div>
         </section>
       </main>
@@ -105,15 +105,15 @@ export default function SetPasswordPage() {
           <div className="password-setup-success-icon" aria-hidden="true">
             <CheckCircle2 size={36} />
           </div>
-          <span className="password-setup-eyebrow">Account activated</span>
-          <h1>You&apos;re ready to take the stage.</h1>
+          <span className="password-setup-eyebrow">Password updated</span>
+          <h1>Your new password is ready.</h1>
           <p>
-            Your password is set and your organizer account is ready. Sign in
-            to start building your next live experience.
+            Your password has been securely saved. Sign in with your new
+            password to continue.
           </p>
           <div className="password-setup-ready-list">
             <span><Check size={15} /> Password secured</span>
-            <span><Check size={15} /> Organizer access enabled</span>
+            <span><Check size={15} /> Account access ready</span>
           </div>
           <Button onClick={goToLogin} fullWidth>
             Go to Login <ArrowRight size={17} />
@@ -136,15 +136,15 @@ export default function SetPasswordPage() {
               height={44}
               priority
             />
-            <span><ShieldCheck size={14} /> Invitation verified</span>
+            <span><ShieldCheck size={14} /> Secure link verified</span>
           </div>
 
           <header className="password-setup-header">
             <span className="password-setup-eyebrow">
-              <Sparkles size={13} /> Application approved
+              <Sparkles size={13} /> Account security
             </span>
-            <h1>Welcome to the stage.</h1>
-            <p>Create a secure password to activate your organizer account.</p>
+            <h1>Set your password.</h1>
+            <p>Choose a secure password for your CornShirt account.</p>
           </header>
 
           {passwordError && (
@@ -224,7 +224,7 @@ export default function SetPasswordPage() {
             </label>
 
             <Button type="submit" loading={isSubmitting} fullWidth>
-              Activate my account <ArrowRight size={17} />
+              Save password <ArrowRight size={17} />
             </Button>
           </form>
 

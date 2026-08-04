@@ -100,8 +100,10 @@ function LoginContent() {
     setIsResetting(true);
 
     try {
+      const recoveryCallback = new URL("/auth/callback", window.location.origin);
+      recoveryCallback.searchParams.set("intent", "recovery");
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: recoveryCallback.toString(),
       });
 
       if (error) {

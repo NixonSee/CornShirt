@@ -63,6 +63,11 @@ test("visitor surfaces share VisitorNav and the application keeps its focused he
   assert.match(partnerApplyNavSource, /Back to events/);
   assert.match(partnerApplyNavSource, /useScrollDirection/);
   assert.match(partnerApplyNavSource, /hidden \? "is-hidden"/);
+  assert.doesNotMatch(partnerApplyNavSource, /navConfig|sitenav-center/);
+  assert.match(
+    styles,
+    /\.app-topbar\.sitenav\.partner-apply-nav\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/,
+  );
 });
 
 test("about page uses the Editorial Trust content architecture", () => {

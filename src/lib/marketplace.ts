@@ -14,6 +14,11 @@ import {
   createContractListing,
 } from "@/lib/nft/marketplaceContract";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { formatMyr, myrToSen } from "@/lib/currency";
+import {
+  getMaximumResalePriceSen,
+  getOriginalTicketPriceSen,
+} from "@/lib/resalePricing";
 import { loadManagedWalletSigner } from "@/lib/walletAccess";
 import { hasMarketplaceContract } from "@/utils/web3config";
 
@@ -79,7 +84,7 @@ export async function createResaleListing(
     await Promise.all([
       supabaseAdmin
         .from("ticket_types")
-        .select("transfer_allowed")
+        .select("transfer_allowed, price, price_sen")
         .eq("ticket_type_id", ticket.ticket_type_id)
         .maybeSingle(),
       supabaseAdmin
@@ -115,6 +120,30 @@ export async function createResaleListing(
   if (ticketType?.transfer_allowed !== true) {
     return { status: 409, body: { error: "This ticket type does not allow resale." } };
   }
+  const originalPriceSen = getOriginalTicketPriceSen({
+    priceSen: ticketType.price_sen,
+    price: ticketType.price,
+  });
+  const maximumResalePriceSen = originalPriceSen === null
+    ? null
+    : getMaximumResalePriceSen(originalPriceSen);
+  const listingPriceSen = myrToSen(price);
+  if (listingPriceSen === null || maximumResalePriceSen === null) {
+    return {
+      status: 409,
+      body: { error: "The original ticket price could not be verified." },
+    };
+  }
+  if (listingPriceSen > maximumResalePriceSen) {
+    return {
+      status: 400,
+      body: {
+        error: `The maximum resale price is ${formatMyr(
+          maximumResalePriceSen / 100,
+        )} (original price + 15%).`,
+      },
+    };
+  }
   if (activeOperation) {
     return {
       status: 409,
@@ -146,7 +175,7 @@ export async function createResaleListing(
     seller_user_id: userId,
     seller_wallet_address: walletResult.wallet,
     price,
-    price_sen: Math.round(price * 100),
+    price_sen: listingPriceSen,
     currency: "MYR",
     status: usesContract ? "contract_pending" : "active",
   });
@@ -174,7 +203,7 @@ export async function createResaleListing(
         sellerPrivateKey: signer.privateKey,
         listingId,
         tokenId: BigInt(ticket.token_id),
-        priceInSen: BigInt(Math.round(price * 100)),
+        priceInSen: BigInt(listingPriceSen),
         expiresAt: eventEndsAt,
       });
       const activated = await supabaseAdmin

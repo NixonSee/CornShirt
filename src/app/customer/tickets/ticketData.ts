@@ -1,3 +1,8 @@
+import {
+  getMaximumResalePriceSen,
+  getOriginalTicketPriceSen,
+} from "@/lib/resalePricing";
+
 export type DatabaseRecord = Record<string, unknown>;
 
 export interface CustomerTicket {
@@ -14,6 +19,8 @@ export interface CustomerTicket {
   isNftBacked: boolean;
   transferAllowed: boolean;
   hasActiveListing: boolean;
+  originalPriceSen: number | null;
+  maxResalePriceSen: number | null;
   refundEligible: boolean;
   accent: string;
 }
@@ -116,6 +123,10 @@ export function mapCustomerTickets(
       recordString(ticket, "record_source") === "stripe_nft" &&
       Boolean(rawTokenId) &&
       Boolean(qrValue);
+    const originalPriceSen = getOriginalTicketPriceSen({
+      priceSen: ticketType.price_sen,
+      price: ticketType.price,
+    });
 
     return {
       id,
@@ -137,6 +148,11 @@ export function mapCustomerTickets(
       isNftBacked,
       transferAllowed: recordBoolean(ticketType, "transfer_allowed"),
       hasActiveListing,
+      originalPriceSen,
+      maxResalePriceSen:
+        originalPriceSen === null
+          ? null
+          : getMaximumResalePriceSen(originalPriceSen),
       refundEligible: recordBoolean(ticket, "refund_eligible"),
       accent: accentFor(status, hasActiveListing),
     };

@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const type = searchParams.get("type");
+  const intent = searchParams.get("intent");
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=no_code`);
@@ -44,8 +45,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=auth_failed&details=${message}`);
   }
 
-  if (type === "invite" || type === "recovery") {
-    return NextResponse.redirect(`${origin}/auth/set-password`);
+  if (
+    intent === "invite" ||
+    intent === "recovery" ||
+    type === "invite" ||
+    type === "recovery"
+  ) {
+    const flow = intent === "recovery" || type === "recovery"
+      ? "recovery"
+      : "invite";
+    return NextResponse.redirect(
+      `${origin}/auth/set-password?flow=${flow}`,
+    );
   }
 
   const {

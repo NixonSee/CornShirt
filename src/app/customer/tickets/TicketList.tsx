@@ -18,6 +18,7 @@ import { useRef, useState, type CSSProperties } from "react";
 import QRCode from "react-qr-code";
 
 import { Button, Modal } from "@/components/common";
+import { formatMyr, myrToSen } from "@/lib/currency";
 import {
   canListTicket,
   parseResaleMyrPrice,
@@ -166,6 +167,22 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
     const amount = parseResaleMyrPrice(price);
     if (amount === null) {
       setResaleError("Enter a positive MYR price with up to two decimal places.");
+      return;
+    }
+    const amountSen = myrToSen(amount);
+    if (
+      amountSen === null ||
+      resaleTicket.maxResalePriceSen === null
+    ) {
+      setResaleError("The ticket price could not be verified. Please try again later.");
+      return;
+    }
+    if (amountSen > resaleTicket.maxResalePriceSen) {
+      setResaleError(
+        `The maximum resale price is ${formatMyr(
+          resaleTicket.maxResalePriceSen / 100,
+        )}.`,
+      );
       return;
     }
     setIsListing(true);
@@ -470,7 +487,9 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                       status: ticket.status,
                       transferAllowed: ticket.transferAllowed,
                       hasActiveListing: ticket.hasActiveListing,
-                    }) && ticket.isNftBacked ? (
+                    }) &&
+                    ticket.isNftBacked &&
+                    ticket.maxResalePriceSen !== null ? (
                       <Button
                         variant="outline"
                         onClick={() => {
@@ -488,6 +507,8 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                         title={
                           !ticket.transferAllowed
                             ? "This ticket type does not allow resale"
+                            : ticket.maxResalePriceSen === null
+                              ? "The original ticket price is unavailable"
                             : ticket.hasActiveListing
                               ? "This ticket is already listed"
                               : "Only active tickets can be resold"
@@ -653,7 +674,9 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
               />
             </div>
             <small id="resale-price-help">
-              Enter the amount the buyer will pay.
+              Maximum resale price: {resaleTicket?.maxResalePriceSen
+                ? formatMyr(resaleTicket.maxResalePriceSen / 100)
+                : "Unavailable"} (original price + 15%).
             </small>
           </label>
 
