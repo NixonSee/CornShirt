@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AuthTokenInterceptor from "@/components/auth/AuthTokenInterceptor";
 
 export const metadata: Metadata = {
   title: "CornShirt",
@@ -16,7 +17,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <AuthTokenInterceptor />
+        {children}
+      </body>
     </html>
   );
 }
