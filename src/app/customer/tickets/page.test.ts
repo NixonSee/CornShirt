@@ -33,6 +33,7 @@ test("maps live ticket ownership rows into display tickets", async () => {
         artist_name: "Live Artist",
         venue: "Arena Hall",
         event_date: "2026-08-15T12:00:00.000Z",
+        status: "active",
       },
     ],
     [
@@ -51,11 +52,29 @@ test("maps live ticket ownership rows into display tickets", async () => {
   assert.equal(result[0].status, "VALID");
   assert.equal(result[0].transferAllowed, true);
   assert.equal(result[0].hasActiveListing, false);
+  assert.equal(result[0].eventCancelled, false);
   assert.equal(result[0].originalPriceSen, 10_000);
   assert.equal(result[0].maxResalePriceSen, 11_500);
   assert.equal(result[0].accent, "#36b56a");
   assert.equal(result[0].qrValue, "cornshirt:ticket-1");
   assert.equal(result[0].isNftBacked, true);
+});
+
+test("cancelled events are marked so transfer and resale actions can be removed", async () => {
+  const ticketData = await import("./ticketData.ts");
+  const [ticket] = ticketData.mapCustomerTickets(
+    [{ ticket_id: "cancelled-ticket", event_id: "cancelled-event", status: "valid" }],
+    [{ event_id: "cancelled-event", status: "cancelled" }],
+    [],
+  );
+
+  assert.equal(ticket.eventCancelled, true);
+
+  const source = readFileSync(listUrl, "utf8");
+  assert.match(
+    source,
+    /\["active", "valid"\]\.includes\(ticket\.status\.toLowerCase\(\)\) &&[\s\S]*?!ticket\.eventCancelled/,
+  );
 });
 
 test("ticket colors communicate valid, used, and active resale states", async () => {
