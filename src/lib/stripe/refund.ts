@@ -18,6 +18,9 @@ export type RefundAssetResult =
   | { ok: true; skipped?: boolean }
   | { ok: false; error: string; category: string };
 
+const REFUND_RECONCILIATION_ATTEMPTS = 5;
+const REFUND_RECONCILIATION_DELAY_MS = 250;
+
 async function loadRefundOperationById(
   operationId: string,
 ): Promise<RefundAssetOperation | null> {
@@ -31,6 +34,72 @@ async function loadRefundOperationById(
     .maybeSingle();
 
   return result.error ? null : (result.data as RefundAssetOperation | null);
+}
+
+async function clearRefundAssetError(operationId: string): Promise<void> {
+  await supabaseAdmin
+    .from("ticket_operations")
+    .update({ safe_error_category: null, updated_at: new Date().toISOString() })
+    .eq("operation_id", operationId)
+    .eq("state", "completed");
+}
+
+/**
+ * The claim request and Stripe's refund webhook can finish at nearly the same
+ * time. If one worker burns the NFT first, the other worker's burn will fail
+ * even though the refund is fully complete. Re-read the shared operation and
+ * recover the confirmed burn before showing an error to the customer.
+ */
+async function reconcileRefundCompletion(
+  operationId: string,
+): Promise<boolean> {
+  for (let attempt = 0; attempt < REFUND_RECONCILIATION_ATTEMPTS; attempt += 1) {
+    const current = await loadRefundOperationById(operationId);
+    if (current?.state === "completed") {
+      await clearRefundAssetError(operationId);
+      return true;
+    }
+
+    if (current?.asset_transaction_hash) {
+      try {
+        const receipt = await getPublicClient().getTransactionReceipt({
+          hash: current.asset_transaction_hash,
+        });
+        if (receipt.status === "success") {
+          const finalized = await supabaseAdmin.rpc("finalize_ticket_refund", {
+            p_operation_id: current.operation_id,
+            p_asset_transaction_hash: current.asset_transaction_hash,
+          });
+          if (!finalized.error) {
+            await clearRefundAssetError(operationId);
+            return true;
+          }
+        }
+      } catch {
+        // The competing transaction may still be waiting for its receipt.
+      }
+    }
+
+    if (attempt < REFUND_RECONCILIATION_ATTEMPTS - 1) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, REFUND_RECONCILIATION_DELAY_MS),
+      );
+    }
+  }
+
+  return false;
+}
+
+function refundFailureCategory(message: string): string {
+  if (/http request failed|fetch failed|econnrefused|network error/i.test(message)) {
+    return "blockchain_unavailable";
+  }
+  if (/owner does not match/i.test(message)) return "ownership_mismatch";
+  if (/reverted/i.test(message)) return "nft_burn_reverted";
+  if (/recorded|finalization failed/i.test(message)) {
+    return "database_finalization";
+  }
+  return "nft_burn";
 }
 
 export async function finalizeTicketRefundAsset(
@@ -90,14 +159,15 @@ export async function finalizeTicketRefundAsset(
       p_asset_transaction_hash: burnHash,
     });
     if (finalized.error) throw new Error("Refund finalization failed.");
+    await clearRefundAssetError(operation.operation_id);
     return { ok: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown";
-    const rpcUnavailable =
-      /http request failed|fetch failed|econnrefused|network error/i.test(
-        message,
-      );
-    const category = rpcUnavailable ? "blockchain_unavailable" : "nft_burn";
+    if (await reconcileRefundCompletion(operation.operation_id)) {
+      return { ok: true };
+    }
+
+    const category = refundFailureCategory(message);
     console.error("Refunded Ticket NFT burn is pending retry", {
       operationId: operation.operation_id,
       category,
@@ -113,9 +183,13 @@ export async function finalizeTicketRefundAsset(
     return {
       ok: false,
       category,
-      error: rpcUnavailable
+      error: category === "blockchain_unavailable"
         ? "Payment was refunded, but the blockchain service is currently unreachable. Start or reconnect the configured Hardhat RPC, then retry—no second refund will be created."
-        : "Payment was refunded, but NFT surrender is still being finalized. Retry safely—no second refund will be created.",
+        : category === "ownership_mismatch"
+          ? "Payment was refunded, but the NFT owner does not match the ticket record. Contact support to reconcile ownership; no second refund will be created."
+          : category === "database_finalization"
+            ? "Payment and NFT surrender succeeded, but the ticket record is still being finalized. Retry safely—no second refund will be created."
+            : "Payment was refunded, but NFT surrender is still being finalized. Retry safely—no second refund will be created.",
     };
   }
 }

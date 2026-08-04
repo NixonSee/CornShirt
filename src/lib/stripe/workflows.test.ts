@@ -148,6 +148,9 @@ test("confirmed ticket workflows send idempotent transactional emails", () => {
   assert.match(refund, /finalizeTicketRefundAsset/);
   assert.match(refundService, /finalize_ticket_refund/);
   assert.match(refundService, /finalizeRefundAssetByStripeRefundId/);
+  assert.match(refundService, /reconcileRefundCompletion/);
+  assert.match(refundService, /current\?\.state === "completed"/);
+  assert.match(refundService, /safe_error_category: null/);
   assert.match(ui, /Stripe refund successful/);
   assert.match(ui, /Confirmation email sent/);
   assert.match(sql, /transactional_email_deliveries/);
