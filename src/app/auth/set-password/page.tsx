@@ -27,49 +27,18 @@ export default function SetPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const recoveryCode = queryParams.get("code");
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get("access_token");
-    const refreshToken = hashParams.get("refresh_token");
+    async function confirmSession() {
+      const { data, error } = await supabase.auth.getSession();
 
-    async function establishRecoverySession() {
-      if (!recoveryCode && !accessToken && !refreshToken) {
-        router.replace("/login?error=no_token");
-        return;
-      }
-
-      if (!recoveryCode && (!accessToken || !refreshToken)) {
-        router.replace("/login?error=no_tokens");
-        return;
-      }
-
-      if (recoveryCode) {
-        const { data, error } = await supabase.auth.getSession();
-
-        if (error || !data.session) {
-          router.replace("/login?error=auth_failed");
-          return;
-        }
-
-        setStep("form");
-        return;
-      }
-
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken!,
-        refresh_token: refreshToken!,
-      });
-
-      if (error) {
-        router.replace("/login?error=auth_failed");
+      if (error || !data.session) {
+        router.replace("/login?error=no_session");
         return;
       }
 
       setStep("form");
     }
 
-    void establishRecoverySession();
+    void confirmSession();
   }, [router]);
 
   const passwordChecks = [
