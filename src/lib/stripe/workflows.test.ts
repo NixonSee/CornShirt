@@ -109,5 +109,46 @@ test("webhook claims events and validates authoritative payment fields", () => {
   assert.match(webhook, /operation\.currency/);
   assert.match(webhook, /recoverMintResult/);
   assert.match(webhook, /primary_delivery_refund_/);
+  assert.match(webhook, /notifyPurchaseConfirmed/);
+  assert.match(webhook, /refund\.created/);
+  assert.match(webhook, /refund\.updated/);
+  assert.match(webhook, /notifyStripeRefundSucceeded/);
   assert.match(webhook, /finish_stripe_webhook/);
+});
+
+test("confirmed ticket workflows send idempotent transactional emails", () => {
+  const email = source("../transactionalEmail.ts");
+  const notifications = source("../ticketNotifications.ts");
+  const transfer = source(
+    "../../app/api/customer/tickets/[ticketId]/transfer/route.ts",
+  );
+  const refund = source("../../app/api/customer/refunds/claim/route.ts");
+  const refundService = source("./refund.ts");
+  const resale = source("./resale.ts");
+  const ui = source("../../app/customer/tickets/TicketList.tsx");
+  const sql = source(
+    "../../../scripts/sql/2026-08-04-transactional-email-deliveries.sql",
+  );
+
+  assert.match(email, /claim_transactional_email/);
+  assert.match(email, /finish_transactional_email/);
+  assert.match(email, /GMAIL_APP_PASSWORD/);
+  assert.match(notifications, /checkoutCustomerEmail|buyerEmail/);
+  assert.match(notifications, /notifyPurchaseConfirmed/);
+  assert.match(notifications, /notifyRefundConfirmed/);
+  assert.match(transfer, /notifyDirectTransferConfirmed/);
+  assert.match(resale, /notifyResaleConfirmed/);
+  assert.match(refund, /resolveStripePaymentEmail/);
+  assert.match(refund, /refundStatus/);
+  assert.match(refund, /recipientEmail/);
+  assert.match(refund, /confirmation\.refundStatus !== "succeeded"/);
+  assert.match(refund, /finalizeTicketRefundAsset/);
+  assert.match(refundService, /finalize_ticket_refund/);
+  assert.match(refundService, /finalizeRefundAssetByStripeRefundId/);
+  assert.match(ui, /Stripe refund successful/);
+  assert.match(ui, /Confirmation email sent/);
+  assert.match(sql, /transactional_email_deliveries/);
+  assert.match(sql, /notification_key text primary key/);
+  assert.match(sql, /enable row level security/);
+  assert.match(sql, /revoke all .* anon, authenticated/is);
 });

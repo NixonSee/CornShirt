@@ -2,6 +2,7 @@
 
 import {
   CalendarDays,
+  CircleCheck,
   Hash,
   Mail,
   MapPin,
@@ -31,6 +32,16 @@ interface TicketListProps {
 
 type TicketFilter = "all" | "valid" | "listed" | "used";
 type TicketCategory = Exclude<TicketFilter, "all"> | "other";
+
+type RefundConfirmation = {
+  refundStatus: string;
+  refundId: string | null;
+  refundReference?: string | null;
+  recipientEmail: string;
+  amountSen: number;
+  currency: string;
+  emailSent: boolean;
+};
 
 const TICKET_FILTERS: readonly {
   value: TicketFilter;
@@ -111,6 +122,8 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
   const [isListing, setIsListing] = useState(false);
   const [refundTicket, setRefundTicket] = useState<CustomerTicket | null>(null);
   const [refundError, setRefundError] = useState("");
+  const [refundConfirmation, setRefundConfirmation] =
+    useState<RefundConfirmation | null>(null);
   const [isRefunding, setIsRefunding] = useState(false);
   const [transferTarget, setTransferTarget] = useState<CustomerTicket | null>(
     null,
@@ -182,12 +195,23 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ticketId: refundTicket.id }),
     });
-    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    const body = (await response.json().catch(() => ({}))) as Partial<
+      RefundConfirmation & { error: string }
+    >;
     setIsRefunding(false);
     if (!response.ok) {
       setRefundError(body.error ?? "Refund could not be processed.");
       return;
     }
+    setRefundConfirmation({
+      refundStatus: body.refundStatus ?? "pending",
+      refundId: body.refundId ?? null,
+      refundReference: body.refundReference ?? null,
+      recipientEmail: body.recipientEmail ?? "the original Stripe payer",
+      amountSen: Number(body.amountSen ?? 0),
+      currency: body.currency ?? "MYR",
+      emailSent: body.emailSent === true,
+    });
     setRefundTicket(null);
     router.refresh();
   }
@@ -247,6 +271,55 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
 
   return (
     <>
+      {refundConfirmation ? (
+        <section
+          className={`refund-confirmation${
+            refundConfirmation.refundStatus === "succeeded"
+              ? " is-success"
+              : " is-pending"
+          }`}
+          role="status"
+        >
+          <CircleCheck aria-hidden="true" size={24} />
+          <div>
+            <strong>
+              {refundConfirmation.refundStatus === "succeeded"
+                ? "Stripe refund successful"
+                : "Stripe refund submitted"}
+            </strong>
+            <p>
+              {new Intl.NumberFormat("en-MY", {
+                style: "currency",
+                currency: refundConfirmation.currency,
+              }).format(refundConfirmation.amountSen / 100)}{" "}
+              {refundConfirmation.refundStatus === "succeeded"
+                ? "was returned"
+                : "is being returned"}{" "}
+              to the original payment method for{" "}
+              <b>{refundConfirmation.recipientEmail}</b>.
+            </p>
+            <small>
+              Refund ID: {refundConfirmation.refundId ?? "Pending"}
+              {refundConfirmation.refundReference
+                ? ` · Reference: ${refundConfirmation.refundReference}`
+                : ""}
+              {refundConfirmation.refundStatus === "succeeded"
+                ? refundConfirmation.emailSent
+                  ? " · Confirmation email sent"
+                  : " · Confirmation email pending retry"
+                : " · Email will be sent after Stripe confirms the refund"}
+            </small>
+          </div>
+          <button
+            type="button"
+            aria-label="Dismiss refund confirmation"
+            onClick={() => setRefundConfirmation(null)}
+          >
+            ×
+          </button>
+        </section>
+      ) : null}
+
       <nav className="ticket-filter-bar" aria-label="Filter tickets by status">
         {TICKET_FILTERS.map((filter) => (
           <button

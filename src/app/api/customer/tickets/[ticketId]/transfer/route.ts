@@ -7,6 +7,7 @@ import { getTicketOwner } from "@/lib/nft/getOwner";
 import { transferTicket } from "@/lib/nft/transfer";
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { notifyDirectTransferConfirmed } from "@/lib/ticketNotifications";
 import { loadManagedWalletSigner } from "@/lib/walletAccess";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -177,7 +178,18 @@ export async function POST(
 
   let operationId = String(existing.data?.operation_id ?? "");
   if (existing.data?.state === "completed") {
-    return Response.json({ success: true, operationId });
+    const transactionHash = String(existing.data.asset_transaction_hash ?? "");
+    const emailsSent = transactionHash
+      ? await notifyDirectTransferConfirmed({
+          operationId,
+          senderUserId: senderId,
+          recipientUserId: recipient.user_id,
+          eventId: ticket.event_id,
+          ticketTypeId: ticket.ticket_type_id,
+          transactionHash,
+        })
+      : false;
+    return Response.json({ success: true, operationId, emailsSent });
   }
 
   if (
@@ -190,7 +202,15 @@ export async function POST(
       p_asset_transaction_hash: existing.data.asset_transaction_hash,
     });
     if (!finalized.error) {
-      return Response.json({ success: true, operationId });
+      const emailsSent = await notifyDirectTransferConfirmed({
+        operationId,
+        senderUserId: senderId,
+        recipientUserId: recipient.user_id,
+        eventId: ticket.event_id,
+        ticketTypeId: ticket.ticket_type_id,
+        transactionHash: existing.data.asset_transaction_hash,
+      });
+      return Response.json({ success: true, operationId, emailsSent });
     }
   }
 
@@ -264,7 +284,16 @@ export async function POST(
     });
     if (finalized.error) throw new Error("Transfer finalization failed.");
 
-    return Response.json({ success: true, operationId });
+    const emailsSent = await notifyDirectTransferConfirmed({
+      operationId,
+      senderUserId: senderId,
+      recipientUserId: recipient.user_id,
+      eventId: ticket.event_id,
+      ticketTypeId: ticket.ticket_type_id,
+      transactionHash: result.transactionHash,
+    });
+
+    return Response.json({ success: true, operationId, emailsSent });
   } catch (error) {
     console.error("Direct ticket transfer failed", {
       operationId,
