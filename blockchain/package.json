@@ -10,7 +10,7 @@
     "compile": "hardhat compile",
     "node": "hardhat node",
     "check:sepolia": "node scripts/deploy.mjs --check",
-    "deploy": "hardhat run scripts/deploy.mjs --network localhost",
+    "deploy": "hardhat run scripts/deploy.mjs --network sepolia",
     "deploy:marketplace": "node scripts/deploy-marketplace.mjs",
     "test:ticket": "hardhat run test/CornShirtTicket.test.ts --network localhost",
     "test:marketplace": "hardhat run test/CornShirtMarketplace.test.ts --network localhost"

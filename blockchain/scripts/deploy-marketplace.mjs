@@ -26,14 +26,16 @@ function required(name) {
 
 async function main() {
   const rpcUrl = required("SEPOLIA_RPC_URL");
-  const rawPrivateKey = required("SEPOLIA_PRIVATE_KEY");
+  const rawPrivateKey = required("PLATFORM_CONTRACT_PRIVATE_KEY");
   const ticketAddress = getAddress(required("TICKET_NFT_CONTRACT_ADDRESS"));
   const deployerKey = rawPrivateKey.startsWith("0x")
     ? rawPrivateKey
     : `0x${rawPrivateKey}`;
 
   if (!/^0x[a-fA-F0-9]{64}$/.test(deployerKey)) {
-    throw new Error("SEPOLIA_PRIVATE_KEY must contain 64 hexadecimal characters.");
+    throw new Error(
+      "PLATFORM_CONTRACT_PRIVATE_KEY must contain 64 hexadecimal characters.",
+    );
   }
 
   const account = privateKeyToAccount(deployerKey);
@@ -52,7 +54,9 @@ async function main() {
     publicClient.getCode({ address: ticketAddress }),
   ]);
   if (chainId !== sepolia.id) {
-    throw new Error(`Expected Sepolia chain ID ${sepolia.id}, received ${chainId}.`);
+    throw new Error(
+      `Expected Sepolia chain ID ${sepolia.id}, received ${chainId}.`,
+    );
   }
   if (!ticketBytecode || ticketBytecode === "0x") {
     throw new Error("No Ticket NFT contract exists at TICKET_NFT_CONTRACT_ADDRESS.");
@@ -129,4 +133,3 @@ main().catch((error) => {
   );
   process.exitCode = 1;
 });
-
