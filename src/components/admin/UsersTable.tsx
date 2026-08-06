@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { Modal } from "@/components/common/Modal";
@@ -155,16 +156,12 @@ export function UsersTable({ users, currentUserId }: Props) {
                   </div>
                 </td>
                 <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                  <span
-                    style={{
-                      color: "var(--primary)",
-                      fontWeight: 800,
-                      fontSize: 13,
-                      cursor: "default",
-                    }}
+                  <Link
+                    href={`/admin/users/${u.user_id}`}
+                    className="view-profile-link"
                   >
-                    View profile
-                  </span>
+                    View Profile
+                  </Link>
                 </td>
               </tr>
             ))}

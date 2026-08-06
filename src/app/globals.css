@@ -420,6 +420,18 @@ p {
   margin-bottom: 22px;
 }
 
+.view-profile-link {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.view-profile-link:hover {
+  text-decoration: underline;
+}
+
 .panel {
   padding: 20px;
 }
