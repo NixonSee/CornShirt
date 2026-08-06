@@ -2288,6 +2288,41 @@ tr:last-child td {
   outline-offset: 2px;
 }
 
+.application-detail-modal {
+  position: relative;
+}
+
+.application-detail-modal .modal-close-button {
+  position: absolute;
+  top: 17px;
+  right: 18px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #393939;
+  border-radius: 10px;
+  background: transparent;
+  color: #9d9d9d;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.application-detail-modal .modal-close-button:hover {
+  border-color: #505050;
+  background: #242424;
+  color: #ffffff;
+}
+
+.application-detail-modal .modal-close-button:focus-visible {
+  outline: 3px solid rgba(246, 167, 48, 0.24);
+  outline-offset: 2px;
+}
+
 .cancel-event-modal .modal-body {
   display: grid;
   gap: 20px;
