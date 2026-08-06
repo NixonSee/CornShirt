@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/requireRole";
 import { Card } from "@/components/common/Card";
 import { BackButton } from "@/components/common/BackButton";
 import { CancelEventButton } from "@/components/common/CancelEventButton";
+import { EventReviewButtons } from "@/components/common/EventReviewButtons";
 import { formatMyr } from "@/lib/currency";
 import { EventBanner } from "@/components/events/EventBanner";
 import { EventMetricCard } from "@/components/events/EventMetricCard";
@@ -128,6 +129,9 @@ export default async function AdminEventDetailPage({
           </p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
+          {event.status === "pending" && (
+            <EventReviewButtons eventId={eventId} eventName={event.event_name} />
+          )}
           <BackButton />
           {event.status === "active" && (
             <CancelEventButton
