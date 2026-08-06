@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/common";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import {
+  PASSWORD_MIN_LENGTH,
+  passwordPolicyError,
+} from "@/lib/passwordPolicy";
 import {
   ArrowRight,
   Check,
@@ -41,22 +46,15 @@ export default function SetPasswordPage() {
     void confirmSession();
   }, [router]);
 
-  const passwordChecks = [
-    password.length >= 6,
-    /[A-Z]/.test(password) && /[a-z]/.test(password),
-    /\d/.test(password),
-    /[^A-Za-z0-9]/.test(password),
-  ];
-  const strength = passwordChecks.filter(Boolean).length;
   const passwordsMatch = confirm.length > 0 && password === confirm;
-  const strengthLabel = ["Enter a password", "Basic", "Good", "Strong", "Excellent"][strength];
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setPasswordError("");
 
-    if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters.");
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setPasswordError(policyError);
       return;
     }
 
@@ -162,10 +160,10 @@ export default function SetPasswordPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
                   autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={PASSWORD_MIN_LENGTH}
                 />
                 <button
                   type="button"
@@ -177,17 +175,7 @@ export default function SetPasswordPage() {
               </div>
             </label>
 
-            <div className="password-strength" aria-live="polite">
-              <div className="password-strength-bars" aria-hidden="true">
-                {[1, 2, 3, 4].map((level) => (
-                  <span key={level} className={strength >= level ? "is-active" : ""} />
-                ))}
-              </div>
-              <div>
-                <span>{strengthLabel}</span>
-                <small>Use mixed case, a number, and a symbol for extra strength.</small>
-              </div>
-            </div>
+            <PasswordStrengthMeter password={password} />
 
             <label className="password-setup-field">
               <span>Confirm password</span>
@@ -200,7 +188,7 @@ export default function SetPasswordPage() {
                   placeholder="Re-enter your password"
                   autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={PASSWORD_MIN_LENGTH}
                   aria-describedby="password-match-status"
                 />
                 {confirm.length > 0 && (

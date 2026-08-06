@@ -6,6 +6,11 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import {
+  PASSWORD_MIN_LENGTH,
+  passwordPolicyError,
+} from "@/lib/passwordPolicy";
 import {
   getSafeEventReturnTo,
   withEventReturnTo,
@@ -19,6 +24,7 @@ function RegisterContent() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState("");
@@ -77,8 +83,14 @@ function RegisterContent() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    if (password.length < 6) {
-      setErrorMessage("Password must contain at least 6 characters.");
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setErrorMessage(policyError);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
       return;
     }
 
@@ -181,10 +193,10 @@ function RegisterContent() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="new-password"
-                placeholder="Create a password"
+                placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                minLength={6}
+                minLength={PASSWORD_MIN_LENGTH}
                 required
               />
 
@@ -197,6 +209,43 @@ function RegisterContent() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+
+            <PasswordStrengthMeter password={password} />
+          </div>
+
+          <div className="field">
+            <label htmlFor="confirm-password">Confirm password</label>
+
+            <div className="password-field">
+              <input
+                id="confirm-password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                minLength={PASSWORD_MIN_LENGTH}
+                aria-describedby="register-password-match-status"
+                required
+              />
+            </div>
+
+            <small
+              id="register-password-match-status"
+              className={`password-match-status ${
+                confirmPassword.length === 0
+                  ? ""
+                  : password === confirmPassword
+                    ? "is-match"
+                    : "is-mismatch"
+              }`}
+            >
+              {confirmPassword.length === 0
+                ? "Enter the same password again."
+                : password === confirmPassword
+                  ? "Passwords match."
+                  : "Passwords do not match yet."}
+            </small>
           </div>
 
           {errorMessage ? (

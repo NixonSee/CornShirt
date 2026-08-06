@@ -34,7 +34,9 @@ test("all authenticated roles reach Profile from the account menu and the drawer
 test("profile password form validates and updates only the signed-in user", () => {
   const form = read("./ChangePasswordForm.tsx");
 
-  assert.match(form, /password\.length < 8/);
+  assert.match(form, /passwordPolicyError\(password\)/);
+  assert.match(form, /PASSWORD_MIN_LENGTH/);
+  assert.match(form, /PasswordStrengthMeter/);
   assert.match(form, /password !== confirmation/);
   assert.match(form, /supabase\.auth\.updateUser\(\{ password \}\)/);
   assert.doesNotMatch(form, /supabaseAdmin/);

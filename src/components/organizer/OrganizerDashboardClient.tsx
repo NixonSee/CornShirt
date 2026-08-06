@@ -31,6 +31,12 @@ import {
   type DailyRevenuePoint,
   type OrganizerEventSummary,
 } from "@/lib/organizerDashboard";
+import {
+  filterOrganizerEvents,
+  ORGANIZER_EVENT_FILTERS,
+  organizerEventFilterLabel,
+  type OrganizerEventFilter,
+} from "@/lib/organizerEventFilters";
 
 export interface OrganizerDashboardTransaction {
   transaction_id: string;
@@ -51,7 +57,6 @@ interface OrganizerDashboardClientProps {
   loadError?: string;
 }
 
-type EventFilter = "all" | "live" | "pending";
 type EventView = "grid" | "list";
 
 const NUMBER = new Intl.NumberFormat("en-MY");
@@ -140,7 +145,7 @@ export function OrganizerDashboardClient({
   transactions,
   loadError,
 }: OrganizerDashboardClientProps) {
-  const [filter, setFilter] = useState<EventFilter>("all");
+  const [filter, setFilter] = useState<OrganizerEventFilter>("all");
   const [view, setView] = useState<EventView>("grid");
   const [txPage, setTxPage] = useState(1);
 
@@ -176,15 +181,10 @@ export function OrganizerDashboardClient({
     );
   }, [events]);
 
-  const filteredEvents = useMemo(() => {
-    if (filter === "live") {
-      return events.filter((event) => normalizedStatus(event.status) === "active");
-    }
-    if (filter === "pending") {
-      return events.filter((event) => normalizedStatus(event.status) === "pending");
-    }
-    return events;
-  }, [events, filter]);
+  const filteredEvents = useMemo(
+    () => filterOrganizerEvents(events, filter),
+    [events, filter],
+  );
 
   const revenueTrend = useMemo(
     () => getRevenueTrend(revenueSeries),
@@ -414,7 +414,7 @@ export function OrganizerDashboardClient({
               role="tablist"
               aria-label="Filter managed events"
             >
-              {(["all", "live", "pending"] as EventFilter[]).map((value) => (
+              {ORGANIZER_EVENT_FILTERS.map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -423,7 +423,7 @@ export function OrganizerDashboardClient({
                   className={filter === value ? "active" : undefined}
                   onClick={() => setFilter(value)}
                 >
-                  {value.charAt(0).toUpperCase() + value.slice(1)}
+                  {organizerEventFilterLabel(value)}
                 </button>
               ))}
             </div>
