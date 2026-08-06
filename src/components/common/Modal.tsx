@@ -15,7 +15,7 @@ interface ModalProps {
   showCloseButton?: boolean;
 }
 
-function subscribe(callback: () => void) {
+function subscribe() {
   return () => {};
 }
 
