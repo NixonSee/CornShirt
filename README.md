@@ -18,7 +18,7 @@ Browser (visitor, customer, organizer, or admin)
       Next.js pages and API routes
        /          |             \
       v           v              v
-Supabase      Stripe Test     Local Hardhat contracts
+Supabase      Stripe Test     Sepolia contracts
 Auth + data   MYR payments    Ticket ownership,
 workflows     and refunds     resale, and burns
       \           |              /
@@ -127,8 +127,8 @@ workflows     and refunds     resale, and burns
 
 This guide runs the Next.js application on `http://localhost:3000`. The local
 application connects to a Supabase demo project, Stripe Test Mode, Gmail SMTP,
-and a local Hardhat blockchain. Use demo/test credentials only; no production
-or live credentials are required for local assessment.
+and contracts deployed on the Sepolia testnet. Use demo/test credentials only;
+no production or live payment credentials are required for local assessment.
 
 ### 1. Prerequisites
 
@@ -139,12 +139,15 @@ Install or create:
 - A Stripe account in **Test Mode** and the Stripe CLI for local webhooks
 - [`cloudflared`](https://developers.cloudflare.com/tunnel/downloads/) for the
   temporary HTTPS URL used by the mobile QR scanner
-- The local Hardhat blockchain workspace included in this repository
+- A Sepolia HTTP RPC endpoint
+- A dedicated testnet wallet funded with enough Sepolia ETH for contract
+  deployment and application transactions
+- The Hardhat contract workspace included in this repository
 - A Gmail account with an app password for complete transactional workflows
 
-The application runtime uses Hardhat at `http://127.0.0.1:8545`. Keep the
-Hardhat node running while using blockchain-backed ticket features. Its state
-is temporary and is cleared whenever the node is restarted.
+The application runtime uses Sepolia chain ID `11155111`. A local Hardhat node
+is not required to run the application; it is used only for optional contract
+integration tests.
 
 ### 2. Install dependencies
 
@@ -163,23 +166,32 @@ installation.
 ### 3. Connect Supabase
 
 Use the supplied CornShirt demo Supabase project, which already contains the
-required schema and reference data. Confirm the following project resources
-and settings are available:
+required schema, database functions, and reference data. Confirm the following
+project resources and settings are available:
 
-- Create a public Storage bucket named `event-banners` for organizer event
-  images.
+- Confirm that a public Storage bucket named `event-banners` exists for
+  organizer event images.
 - A private `partner-documents` bucket is created on the first application if
   absent; it may also be created beforehand.
 - The supplied CornShirt demo database already contains the fixed venue and
   `venue_zones` records used by event creation. No admin seeding step is
   required.
-- Enable email/password authentication. The current customer registration flow
-  expects sign-up to establish a session so it can create the profile and
-  provision the wallet immediately.
+- Enable email/password authentication. For the current local prototype, turn
+  off **Confirm email** in the Supabase Email provider settings. Registration
+  needs the sign-up session to create the customer profile and managed wallet,
+  then redirects the customer to the login page.
 - Add `http://localhost:3000/auth/callback` to the allowed Auth redirect URLs.
 - Bootstrap the first admin as a Supabase Auth user with a matching `profiles`
-  row whose role is `admin`. Later organizers should be created through the
-  partner-approval invitation flow.
+  row whose role is `admin`. This manual bootstrap is acceptable for the local
+  demo; it may be prepared before assessment and its login credentials shared
+  privately. Later organizers should be created through the partner-approval
+  invitation flow.
+
+The workflow migrations under `scripts/sql` are tracked because application
+tests and database workflows depend on them. The supplied demo project already
+has these migrations applied, so do not run them again during normal lecturer
+setup. They are retained for preparing or repairing another compatible copy of
+the CornShirt database. They do not replace the base database schema.
 
 ### 4. Configure environment variables
 
@@ -199,8 +211,8 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Local Hardhat blockchain
-HARDHAT_RPC_URL=http://127.0.0.1:8545
+# Sepolia testnet blockchain
+SEPOLIA_RPC_URL=
 PLATFORM_CONTRACT_PRIVATE_KEY=
 TICKET_NFT_CONTRACT_ADDRESS=
 MARKETPLACE_CONTRACT_ADDRESS=
@@ -223,9 +235,9 @@ Environment notes:
   `NEXT_PUBLIC_SITE_URL` builds organizer invite links. For this local setup,
   keep both values set to `http://localhost:3000`.
 - `PLATFORM_CONTRACT_PRIVATE_KEY` is used at runtime to mint, settle, burn, and
-  fund managed customer wallets with local Hardhat test ETH. Use the private
-  key of the first account printed by `npm run hardhat:node`; it receives the
-  required contract roles during local deployment.
+  fund managed customer wallets with Sepolia test ETH. Use a dedicated funded
+  Sepolia wallet only. The same wallet deploys the contracts and receives the
+  required contract roles.
 - `MARKETPLACE_CONTRACT_ADDRESS` is required for the complete on-chain resale
   flow.
 - `TRANSACTION_FROM_EMAIL` falls back to `REJECT_FROM_EMAIL`, then
@@ -241,21 +253,28 @@ Store the result only in `WALLET_ENCRYPTION_KEY`. Changing this key after
 wallets have been created prevents the server from decrypting their existing
 private keys.
 
-### 5. Prepare the local Hardhat contracts
+### 5. Prepare the Sepolia contracts
 
-Start the local Hardhat node before deploying the contracts. The complete
-terminal commands are listed under [Start the application](#8-start-the-application).
-The deployment writes `TICKET_NFT_CONTRACT_ADDRESS` and
-`MARKETPLACE_CONTRACT_ADDRESS` to the root `.env.local`.
+Set `SEPOLIA_RPC_URL` and `PLATFORM_CONTRACT_PRIVATE_KEY`, then compile and
+deploy both contracts from the repository root:
 
-The Hardhat blockchain exists only while its node is running. After restarting
-the node, deploy both contracts again before starting Next.js. Tickets created
-against an earlier Hardhat session refer to blockchain state that no longer
-exists, so use fresh test purchases after a restart.
+```bash
+npm run hardhat:compile
+npm run hardhat:deploy
+```
 
-Do not expose `PLATFORM_CONTRACT_PRIVATE_KEY` to client components. Hardhat's
-pre-funded test keys are public development credentials and must never be used
-on a real blockchain network.
+The deployment verifies Sepolia chain ID `11155111`, deploys the Ticket and
+Marketplace contracts, verifies their required roles, and writes
+`TICKET_NFT_CONTRACT_ADDRESS` and `MARKETPLACE_CONTRACT_ADDRESS` to the root
+`.env.local`. It then exits and does not need to remain running.
+
+The deployed Sepolia contracts persist between local application restarts. Do
+not redeploy unless a contract changed or a fresh testnet deployment is
+intended. Existing database tickets must continue using the contract addresses
+under which they were minted.
+
+Never expose `PLATFORM_CONTRACT_PRIVATE_KEY` to client components, commit it,
+or use a wallet containing real funds.
 
 ### 6. Configure the Stripe CLI
 
@@ -287,34 +306,13 @@ not Nodemailer.
 ### 8. Start the application
 
 After dependencies, Supabase, `.env.local`, the Stripe CLI, `cloudflared`, and
-Gmail are configured, open **four terminals** in the
-repository root.
+Gmail are configured, and the Sepolia contracts from step 5 are available,
+open **three terminals** in the repository root.
 
-#### Terminal 1 - Local Hardhat blockchain
+#### Terminal 1 - Stripe listener
 
-Start the local blockchain and keep it running:
-
-```bash
-npm run hardhat:node
-```
-
-Hardhat prints its pre-funded development accounts and private keys. Set
-`PLATFORM_CONTRACT_PRIVATE_KEY` in `.env.local` to the first account's private
-key. This key is only for the disposable local Hardhat network.
-
-#### Terminal 2 - Deploy contracts, then run the Stripe listener
-
-After Terminal 1 is ready, compile and deploy both contracts from the repository
-root:
-
-```bash
-npm run hardhat:compile
-npm run hardhat:deploy
-```
-
-The deployment exits after writing the new contract addresses to `.env.local`.
-It does not need to remain running. In the same terminal, sign in to the Stripe
-CLI once, then forward Stripe Test Mode events to the local webhook route:
+Sign in to the Stripe CLI once, then forward Stripe Test Mode events to the
+local webhook route:
 
 ```bash
 stripe login
@@ -328,11 +326,11 @@ into `.env.local`:
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
-Keep Terminal 2 running. A new signing secret may be generated when the Stripe
+Keep Terminal 1 running. A new signing secret may be generated when the Stripe
 listener is restarted; if it changes, update `.env.local` and restart Terminal
-3.
+2.
 
-#### Terminal 3 - Next.js application
+#### Terminal 2 - Next.js application
 
 Start the local application from the repository root:
 
@@ -347,38 +345,40 @@ On Windows PowerShell, use this command if the execution policy blocks
 npm.cmd run dev
 ```
 
-Keep Terminal 3 running and open <http://localhost:3000>.
+Keep Terminal 2 running and open <http://localhost:3000>.
 
-#### Terminal 4 - Temporary HTTPS URL for the mobile scanner
+#### Terminal 3 - Temporary HTTPS URL for the mobile scanner
 
-After Terminal 3 is running, expose the local application through a Cloudflare
+After Terminal 2 is running, expose the local application through a Cloudflare
 Quick Tunnel:
 
 ```bash
 cloudflared tunnel --url http://localhost:3000
 ```
 
-No Cloudflare account is required for a Quick Tunnel. Terminal 4 prints a
+No Cloudflare account is required for a Quick Tunnel. Terminal 3 prints a
 temporary address similar to:
 
 ```text
 https://random-words.trycloudflare.com
 ```
 
-Keep Terminal 4 running and open that HTTPS address on the organizer's phone.
+Keep Terminal 3 running and open that HTTPS address on the organizer's phone.
 The address changes whenever the tunnel is restarted. Quick Tunnels are for
 local testing only: anyone who knows the temporary address can reach the local
-development application, so stop Terminal 4 after testing and do not share the
+development application, so stop Terminal 3 after testing and do not share the
 URL publicly.
 
 #### Services that do not need another terminal
 
 - Supabase is accessed through the demo project values in `.env.local`.
 - Gmail SMTP is accessed through `GMAIL_USER` and `GMAIL_APP_PASSWORD`.
+- Sepolia is accessed through `SEPOLIA_RPC_URL`; no local blockchain process
+  needs to remain running.
 
-Terminals 1, 2, 3, and 4 must remain running during the complete local test.
-If Terminal 1 is stopped or restarted, repeat the contract deployment in
-Terminal 2 and restart the Next.js application in Terminal 3.
+Terminals 1, 2, and 3 must remain running during the complete local test. The
+Sepolia deployment is persistent and does not need to be repeated when these
+local processes restart.
 
 An initial end-to-end setup normally follows this order:
 
@@ -389,17 +389,18 @@ An initial end-to-end setup normally follows this order:
 4. Register a customer and confirm that the managed wallet reaches `ready`.
 5. Buy a ticket with Stripe's test card `4242 4242 4242 4242`, any future
    expiry, and any CVC.
-6. In Terminal 2, confirm that `checkout.session.completed` reaches the local
+6. In Terminal 1, confirm that `checkout.session.completed` reaches the local
    webhook and returns HTTP 200.
 7. In the customer session, open **My Tickets** and **Transactions**. Confirm
    that the purchase is recorded, then open **View QR** for the ticket.
 8. On the organizer's phone, open the temporary HTTPS `trycloudflare.com`
-   address printed in Terminal 4 and sign in as the organizer. The phone and
+   address printed in Terminal 3 and sign in as the organizer. The phone and
    computer have separate browser sessions, so the customer remains signed in
    on the computer.
-9. On the phone, login as organizer and go to `verify-ticket`, allow camera access, and scan
-   the customer's QR code displayed on the computer.
-10. Confirm that the scanner shows a result of a valid ticket, then select **Check in ticket**
+9. On the phone, log in as the organizer, open `/organizer/verify-ticket`,
+   allow camera access, and scan the customer's QR code displayed on the
+   computer.
+10. Confirm that the scanner shows a valid ticket, select **Check in ticket**,
     and verify that it changes to **Checked in**.
 11. Return to the customer session, refresh **My Tickets**, and confirm that the
     ticket is marked as `used` and no longer offers transfer or resale actions.
@@ -407,7 +408,7 @@ An initial end-to-end setup normally follows this order:
 The scanner can access the camera over `http://localhost:3000` on the same
 computer because browsers treat localhost as a trustworthy context. A phone is
 not accessing the computer's localhost, however, so use the HTTPS Quick Tunnel
-from Terminal 4 for the mobile organizer scanner. Do not use a plain LAN URL
+from Terminal 3 for the mobile organizer scanner. Do not use a plain LAN URL
 such as `http://192.168.x.x:3000` for camera testing.
 
 ## Main routes
@@ -433,8 +434,9 @@ npm run lint
 npm run build
 ```
 
-Contract integration tests use the same local Hardhat node. If Terminal 1 from
-the local startup instructions is not already running, start it in one terminal:
+Contract integration tests intentionally use a disposable local Hardhat node
+instead of Sepolia. These tests are separate from the application runtime.
+Start the test node in one terminal:
 
 ```bash
 npm run hardhat:node
@@ -447,7 +449,7 @@ npm run test:contracts
 ```
 
 The application tests are predominantly unit and source-contract tests. A
-fully automated Supabase + Stripe webhook + local Hardhat end-to-end suite and
+fully automated Supabase + Stripe webhook + Sepolia end-to-end suite and
 an admin reconciliation endpoint are not currently included; use
 `docs/SYSTEM_TESTING_GUIDE.md` for the manual end-to-end and authorization
 matrix.
@@ -460,7 +462,7 @@ your organization's rules.
 
 ```text
 blockchain/contracts/   ERC-721 ticket and resale Marketplace contracts
-blockchain/scripts/     Local Hardhat deployment and contract verification
+blockchain/scripts/     Sepolia deployment and contract verification
 blockchain/test/        Local Hardhat integration tests
 docs/                   Design, routes, architecture, and testing guides
 public/                 Logos, event artwork, images, and videos
@@ -468,7 +470,7 @@ src/abi/                Ticket contract ABI consumed by the server
 src/app/                App Router pages and authenticated API routes
 src/components/         Shared, role-specific, QR, event, and profile UI
 src/lib/                Supabase, Stripe, wallet, NFT, email, and workflow logic
-src/utils/              Local Hardhat runtime configuration
+src/utils/              Sepolia runtime configuration
 ```
 
 Generated directories such as `.next`, `node_modules`,
@@ -477,9 +479,9 @@ committed.
 
 ## Additional documentation
 
-- `docs/SPECS.md` — functional and non-functional requirements
-- `docs/ROLE_FEATURES_AND_FLOW.md` — role workflows and failure handling
-- `docs/API_AND_ROUTES.md` — API responsibilities
-- `docs/SMART_CONTRACTS.md` — payment and NFT architecture
-- `docs/STRIPE_LOCAL_TESTING.md` — local Stripe workflow testing
-- `docs/SYSTEM_TESTING_GUIDE.md` — full manual system test plan
+- `docs/SPECS.md` - functional and non-functional requirements
+- `docs/ROLE_FEATURES_AND_FLOW.md` - role workflows and failure handling
+- `docs/API_AND_ROUTES.md` - API responsibilities
+- `docs/SMART_CONTRACTS.md` - payment and NFT architecture
+- `docs/STRIPE_LOCAL_TESTING.md` - local Stripe workflow testing
+- `docs/SYSTEM_TESTING_GUIDE.md` - full manual system test plan

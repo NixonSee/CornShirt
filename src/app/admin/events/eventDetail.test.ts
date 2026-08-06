@@ -22,11 +22,14 @@ const styles = readFileSync(
   "utf8",
 );
 
-test("pending admin event details do not expose cancellation or review actions", () => {
-  assert.match(detailPage, /event\.status === "active"/);
-  assert.doesNotMatch(
+test("pending details expose review controls while cancellation stays active-only", () => {
+  assert.match(
     detailPage,
-    /event\.status === "pending".*CancelEventButton/s,
+    /event\.status === "pending"\s*&&\s*\(\s*<EventReviewButtons/,
+  );
+  assert.match(
+    detailPage,
+    /event\.status === "active"\s*&&\s*\(\s*<CancelEventButton/,
   );
   assert.doesNotMatch(detailPage, /\/approve|\/reject/);
 });
