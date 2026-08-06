@@ -130,7 +130,7 @@ export function UsersTable({ users, currentUserId }: Props) {
                     {formatDate(u.created_at)}
                   </span>
                 </td>
-                <td>
+                <td style={{ verticalAlign: "middle" }}>
                   <div className="button-row" style={{ marginTop: 0 }}>
                     {u.role !== "admin" && u.user_id !== currentUserId && (
                       u.status === "deactivated" ? (
