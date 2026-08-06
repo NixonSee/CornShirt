@@ -183,6 +183,10 @@
   box-shadow: 0 0 0 3px rgba(246, 167, 48, 0.1);
 }
 
+.passwordStrength {
+  grid-column: 1 / -1;
+}
+
 .passwordButton {
   grid-column: 1 / -1;
   width: fit-content;
@@ -319,6 +323,7 @@
   }
 
   .passwordButton,
+  .passwordStrength,
   .formMessage {
     grid-column: auto;
   }

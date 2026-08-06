@@ -2,26 +2,8 @@ import Link from "next/link";
 import { PlusCircle } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { requireRole } from "@/lib/requireRole";
-import { Card } from "@/components/common/Card";
-import { formatMyr } from "@/lib/currency";
 import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
-
-const NUMBER = new Intl.NumberFormat("en-US");
-
-function statusVariant(status: string | null): string {
-  switch ((status ?? "").toLowerCase()) {
-    case "active":
-      return "good";
-    case "pending":
-      return "warn";
-    case "rejected":
-    case "cancelled":
-    case "canceled":
-      return "bad";
-    default:
-      return "";
-  }
-}
+import MyEventsClient, { type MyEventDisplay } from "./MyEventsClient";
 
 export default async function MyEventsPage() {
   const { user } = await requireRole(["organizer"]);
@@ -70,6 +52,19 @@ export default async function MyEventsPage() {
     ticketMap.set(event.event_id, { sold, supply, revenue });
   }
 
+  const displayEvents: MyEventDisplay[] = (events ?? []).map((event) => ({
+    event_id: event.event_id,
+    event_name: event.event_name,
+    artist_name: event.artist_name,
+    venue: event.venue,
+    status: event.status,
+    ...(ticketMap.get(event.event_id) ?? {
+      sold: 0,
+      supply: 0,
+      revenue: 0,
+    }),
+  }));
+
   return (
     <>
       <div className="top-row">
@@ -85,71 +80,7 @@ export default async function MyEventsPage() {
         </Link>
       </div>
 
-      {(events ?? []).length === 0 ? (
-        <div className="empty-state dashboard-empty">
-          <p>
-            No events yet
-            <span className="muted">
-              Create your first event to start selling tickets.
-            </span>
-          </p>
-        </div>
-      ) : (
-        <Card variant="table">
-          <table>
-            <thead>
-              <tr>
-                <th>Event</th>
-                <th>Status</th>
-                <th>Sold</th>
-                <th>Revenue</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {(events ?? []).map((event) => {
-                const info = ticketMap.get(event.event_id);
-                return (
-                  <tr key={event.event_id}>
-                    <td>
-                      <strong>{event.event_name}</strong>
-                      <br />
-                      <span className="muted event-meta">
-                        {[event.artist_name, event.venue]
-                          .filter(Boolean)
-                          .join(" · ") || "—"}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={`status ${statusVariant(event.status)}`.trim()}
-                      >
-                        {(event.status ?? "unknown").toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      {info
-                        ? `${NUMBER.format(info.sold)} / ${NUMBER.format(info.supply)}`
-                        : "—"}
-                    </td>
-                    <td>
-                      {info ? formatMyr(info.revenue) : "—"}
-                    </td>
-                    <td>
-                      <Link
-                        className="button"
-                        href={`/organizer/events/${event.event_id}`}
-                      >
-                        Manage
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Card>
-      )}
+      <MyEventsClient events={displayEvents} />
     </>
   );
 }

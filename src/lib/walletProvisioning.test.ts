@@ -8,54 +8,10 @@ import {
   type WalletProvisioningDependencies,
 } from "./walletProvisioningCore";
 
-const sqlPath = new URL(
-  "../../scripts/sql/create-custodial-wallets.sql",
-  import.meta.url,
-);
-
-test("wallet migration creates a server-only custodial table and atomic RPC", () => {
-  const sql = readFileSync(sqlPath, "utf8");
-
-  assert.match(sql, /add column if not exists wallet_status text/i);
-  assert.match(sql, /add column if not exists wallet_error text/i);
-  assert.match(sql, /create table if not exists public\.custodial_wallets/i);
-  assert.match(sql, /enable row level security/i);
-  assert.match(
-    sql,
-    /create or replace function public\.provision_customer_wallet/i,
-  );
-  assert.match(sql, /insert into public\.custodial_wallets/i);
-  assert.match(sql, /update public\.profiles/i);
-  assert.match(sql, /wallet_status = 'ready'/i);
-  assert.match(sql, /v_role not in \('customer', 'user'\)/i);
-  assert.match(
-    sql,
-    /revoke all on function public\.provision_customer_wallet/i,
-  );
-  assert.match(
-    sql,
-    /grant execute on function public\.provision_customer_wallet/i,
-  );
-
-  const normalized = sql.toLowerCase();
-  const functionBody = normalized.slice(
-    normalized.indexOf("create or replace function public.provision_customer_wallet"),
-  );
-  const insertIndex = functionBody.indexOf(
-    "insert into public.custodial_wallets",
-  );
-  const updateIndex = functionBody.indexOf("update public.profiles");
-  assert.ok(insertIndex >= 0 && updateIndex > insertIndex);
-  assert.doesNotMatch(
-    sql,
-    /grant\s+select[^;]*custodial_wallets[^;]*to\s+authenticated/i,
-  );
-});
-
-const privateKey =
+const TEST_PRIVATE_KEY =
   "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" as const;
-const generatedAddress = "0x1111111111111111111111111111111111111111";
-const encrypted = {
+const TEST_WALLET_ADDRESS = "0x1111111111111111111111111111111111111111";
+const MOCK_ENCRYPTED_WALLET = {
   ciphertext: "ciphertext",
   iv: "iv",
   authTag: "tag",
@@ -70,10 +26,10 @@ function dependencies(
       kind: "pending",
       walletAddress: null,
     }),
-    generateWallet: () => ({ address: generatedAddress, privateKey }),
-    encryptWallet: () => encrypted,
+    generateWallet: () => ({ address: TEST_WALLET_ADDRESS, privateKey: TEST_PRIVATE_KEY }),
+    encryptWallet: () => MOCK_ENCRYPTED_WALLET,
     persistWallet: async () => ({
-      walletAddress: generatedAddress,
+      walletAddress: TEST_WALLET_ADDRESS,
       walletStatus: "ready",
       created: true,
     }),
@@ -89,17 +45,17 @@ test("returns an existing ready wallet without generating another key", async ()
     dependencies({
       loadWalletState: async () => ({
         kind: "ready",
-        walletAddress: generatedAddress,
+        walletAddress: TEST_WALLET_ADDRESS,
       }),
       generateWallet: () => {
         generated = true;
-        return { address: generatedAddress, privateKey };
+        return { address: TEST_WALLET_ADDRESS, privateKey: TEST_PRIVATE_KEY };
       },
     }),
   );
 
   assert.equal(result.created, false);
-  assert.equal(result.walletAddress, generatedAddress);
+  assert.equal(result.walletAddress, TEST_WALLET_ADDRESS);
   assert.equal(generated, false);
 });
 
@@ -110,10 +66,10 @@ test("generates, encrypts, and atomically persists a pending customer wallet", a
     dependencies({
       persistWallet: async (input) => {
         persistedUserId = input.userId;
-        assert.equal(input.walletAddress, generatedAddress);
-        assert.deepEqual(input.encrypted, encrypted);
+        assert.equal(input.walletAddress, TEST_WALLET_ADDRESS);
+        assert.deepEqual(input.encrypted, MOCK_ENCRYPTED_WALLET);
         return {
-          walletAddress: generatedAddress,
+          walletAddress: TEST_WALLET_ADDRESS,
           walletStatus: "ready",
           created: true,
         };
@@ -134,11 +90,11 @@ test("rejects inconsistent records without generating a replacement", async () =
       dependencies({
         loadWalletState: async () => ({
           kind: "inconsistent",
-          walletAddress: generatedAddress,
+          walletAddress: TEST_WALLET_ADDRESS,
         }),
         generateWallet: () => {
           generated = true;
-          return { address: generatedAddress, privateKey };
+          return { address: TEST_WALLET_ADDRESS, privateKey: TEST_PRIVATE_KEY };
         },
       }),
     ),
@@ -184,12 +140,12 @@ test("server adapter keeps generation and encrypted persistence server-only", ()
 test("validates the untyped provisioning RPC result", () => {
   assert.deepEqual(
     parseProvisioningRpcResult({
-      wallet_address: generatedAddress,
+      wallet_address: TEST_WALLET_ADDRESS,
       wallet_status: "ready",
       created: true,
     }),
     {
-      walletAddress: generatedAddress,
+      walletAddress: TEST_WALLET_ADDRESS,
       walletStatus: "ready",
       created: true,
     },
@@ -198,7 +154,7 @@ test("validates the untyped provisioning RPC result", () => {
   assert.throws(
     () =>
       parseProvisioningRpcResult({
-        wallet_address: generatedAddress,
+        wallet_address: TEST_WALLET_ADDRESS,
         wallet_status: "pending",
         created: false,
       }),

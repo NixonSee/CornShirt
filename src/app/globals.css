@@ -7461,14 +7461,14 @@ tr:last-child td {
   box-shadow: 0 0 9px #f6a73052;
 }
 
-.password-strength > div:last-child {
+.password-strength-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.password-strength > div:last-child > span {
+.password-strength-summary > span {
   color: var(--primary);
   font-size: 10px;
   font-weight: 800;
@@ -7486,6 +7486,20 @@ tr:last-child td {
 
 .password-match-status.is-mismatch {
   color: #ff958c;
+}
+
+.password-strength-shared {
+  margin-top: 0;
+}
+
+.password-strength-shared .password-policy-hint {
+  display: block;
+  line-height: 1.45;
+}
+
+.auth-card .password-strength-shared small,
+.auth-card .password-match-status {
+  font-size: 11px;
 }
 
 .password-setup-trust {
@@ -7717,7 +7731,7 @@ tr:last-child td {
     margin-bottom: 24px;
   }
 
-  .password-strength > div:last-child {
+  .password-strength-summary {
     align-items: flex-start;
     flex-direction: column;
     gap: 3px;
@@ -13087,6 +13101,8 @@ tr:last-child td {
   display: flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
   padding: 4px;
   border: 1px solid #30363d;
   border-radius: 9px;
@@ -13094,6 +13110,7 @@ tr:last-child td {
 }
 
 .organizer-filter-tabs button {
+  flex: 0 0 auto;
   min-height: 36px;
   padding: 7px 12px;
   border: 0;
@@ -13103,6 +13120,13 @@ tr:last-child td {
   cursor: pointer;
   font-size: 12px;
   font-weight: 800;
+  white-space: nowrap;
+}
+
+.organizer-my-events-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
 }
 
 .organizer-filter-tabs button:hover,

@@ -39,6 +39,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 .env*.local
+!.env.example
 
 # vercel
 .vercel
@@ -52,3 +53,14 @@ opencode.json
 
 # Local isolated feature worktrees
 .worktrees/
+
+# Local database reference files
+/scripts/sql/
+
+# Local internal and historical documentation
+/docs/AGENTS.md
+/docs/CLAUDE.md
+/docs/CODEX.md
+/docs/COMPONENTS.md
+/docs/DESIGN.md
+/docs/UNFINISHED_FEATURES_TODO.md

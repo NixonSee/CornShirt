@@ -45,6 +45,17 @@ test("registration forwards the selected event to login", () => {
   );
 });
 
+test("registration and password setup share the strong password policy", () => {
+  [registerSource, setPasswordSource].forEach((source) => {
+    assert.equal(source.includes("PASSWORD_MIN_LENGTH"), true);
+    assert.equal(source.includes("passwordPolicyError"), true);
+    assert.equal(source.includes("PasswordStrengthMeter"), true);
+  });
+
+  assert.equal(registerSource.includes("confirmPassword"), true);
+  assert.equal(registerSource.includes("Passwords do not match."), true);
+});
+
 test("customer login returns to the event without changing staff routing", () => {
   assert.equal(
     loginSource.includes(

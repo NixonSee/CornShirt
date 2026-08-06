@@ -3,6 +3,11 @@
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/common";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import {
+  PASSWORD_MIN_LENGTH,
+  passwordPolicyError,
+} from "@/lib/passwordPolicy";
 import { supabase } from "@/lib/supabaseClient";
 import styles from "./ProfilePage.module.css";
 
@@ -18,8 +23,9 @@ export function ChangePasswordForm() {
     setError("");
     setSuccess("");
 
-    if (password.length < 8) {
-      setError("Use at least 8 characters for your new password.");
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setError(policyError);
       return;
     }
 
@@ -47,7 +53,10 @@ export function ChangePasswordForm() {
       <div className={styles.cardHeading}>
         <div>
           <h2>Change password</h2>
-          <p>Choose a unique password with at least 8 characters.</p>
+          <p>
+            Choose a unique password with at least {PASSWORD_MIN_LENGTH}{" "}
+            characters. Passphrases and spaces are welcome.
+          </p>
         </div>
       </div>
 
@@ -58,18 +67,22 @@ export function ChangePasswordForm() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            minLength={8}
+            minLength={PASSWORD_MIN_LENGTH}
             autoComplete="new-password"
             required
           />
         </label>
+        <PasswordStrengthMeter
+          password={password}
+          className={styles.passwordStrength}
+        />
         <label>
           <span>Confirm new password</span>
           <input
             type="password"
             value={confirmation}
             onChange={(event) => setConfirmation(event.target.value)}
-            minLength={8}
+            minLength={PASSWORD_MIN_LENGTH}
             autoComplete="new-password"
             required
           />
