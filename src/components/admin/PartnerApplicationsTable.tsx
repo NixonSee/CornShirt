@@ -256,11 +256,8 @@ export function PartnerApplicationsTable({
         onClose={() => setDetailApp(null)}
         title="Application details"
         wide
-        actions={
-          <Button variant="primary" onClick={() => setDetailApp(null)}>
-            Close
-          </Button>
-        }
+        showCloseButton
+        className="application-detail-modal"
       >
         {detailApp && (
           <div className="application-detail">
