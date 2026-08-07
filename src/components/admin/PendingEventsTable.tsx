@@ -108,8 +108,11 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
               <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                 <span className="status warn">PENDING</span>
               </td>
-              <td>
-                <div className="button-row" style={{ marginTop: 0 }}>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
+                <div
+                  className="button-row"
+                  style={{ marginTop: 0, justifyContent: "center" }}
+                >
                   <EventReviewButtons eventId={ev.event_id} eventName={ev.event_name} />
                 </div>
               </td>
