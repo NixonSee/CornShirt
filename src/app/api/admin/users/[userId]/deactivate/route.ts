@@ -72,6 +72,19 @@ export async function POST(
     return Response.json({ error: updateError.message }, { status: 500 });
   }
 
+  try {
+    const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(
+      userId,
+      { ban_duration: "876000h" },
+    );
+
+    if (banError) {
+      console.error("Failed to ban deactivated user:", banError.message);
+    }
+  } catch (banError) {
+    console.error("Failed to ban deactivated user:", banError instanceof Error ? banError.message : banError);
+  }
+
   const { error: logError } = await supabaseAdmin
     .from("admin_activity_logs")
     .insert({

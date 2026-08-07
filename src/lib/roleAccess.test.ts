@@ -49,6 +49,16 @@ test("central role authorization verifies identity before profile roles", () => 
   assert.match(guard, /redirect\("\/visitor"\)/);
 });
 
+test("role authorization rejects deactivated accounts", () => {
+  const guard = read("./requireRole.ts");
+  assert.match(guard, /\.select\("role, status"\)/);
+  assert.match(guard, /profile\.status === "deactivated"/);
+  assert.match(guard, /status:\s*"deactivated"/);
+  assert.match(guard, /redirect\("\/login\?error=deactivated"\)/);
+  assert.match(guard, /result\.status === "deactivated"/);
+  assert.match(guard, /Account deactivated/);
+});
+
 test("all dashboard route trees have server role layouts", () => {
   const expectations = [
     ["../app/admin/layout.tsx", '["admin"]'],

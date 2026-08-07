@@ -38,3 +38,21 @@ test("reactivation email failures never fail the request", () => {
   const catchIndex = routeSource.indexOf("catch (emailError)", emailIndex);
   assert.ok(emailIndex >= 0 && catchIndex > emailIndex);
 });
+
+test("reactivation unbans the auth user so login works again", () => {
+  assert.match(routeSource, /auth\.admin\.updateUserById\(/);
+  assert.match(routeSource, /ban_duration:\s*"none"/);
+});
+
+test("auth user is unbanned only after the profile update succeeds", () => {
+  const updateIndex = routeSource.indexOf('status: "active"');
+  const unbanIndex = routeSource.indexOf("updateUserById");
+  assert.ok(updateIndex >= 0 && unbanIndex > updateIndex);
+});
+
+test("unban failures never fail the request", () => {
+  assert.match(routeSource, /Failed to unban reactivated user/);
+  const unbanIndex = routeSource.indexOf("updateUserById");
+  const catchIndex = routeSource.indexOf("catch (unbanError)", unbanIndex);
+  assert.ok(unbanIndex >= 0 && catchIndex > unbanIndex);
+});

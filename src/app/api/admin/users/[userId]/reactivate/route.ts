@@ -44,6 +44,19 @@ export async function POST(
     return Response.json({ error: updateError.message }, { status: 500 });
   }
 
+  try {
+    const { error: unbanError } = await supabaseAdmin.auth.admin.updateUserById(
+      userId,
+      { ban_duration: "none" },
+    );
+
+    if (unbanError) {
+      console.error("Failed to unban reactivated user:", unbanError.message);
+    }
+  } catch (unbanError) {
+    console.error("Failed to unban reactivated user:", unbanError instanceof Error ? unbanError.message : unbanError);
+  }
+
   const { error: logError } = await supabaseAdmin
     .from("admin_activity_logs")
     .insert({

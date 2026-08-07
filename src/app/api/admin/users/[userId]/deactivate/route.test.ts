@@ -36,3 +36,21 @@ test("deactivation email failures never fail the request", () => {
   const catchIndex = routeSource.indexOf("catch (emailError)", emailIndex);
   assert.ok(emailIndex >= 0 && catchIndex > emailIndex);
 });
+
+test("deactivation bans the auth user so existing sessions are revoked", () => {
+  assert.match(routeSource, /auth\.admin\.updateUserById\(/);
+  assert.match(routeSource, /ban_duration:\s*"876000h"/);
+});
+
+test("auth user is banned only after the profile update succeeds", () => {
+  const updateIndex = routeSource.indexOf('status: "deactivated"');
+  const banIndex = routeSource.indexOf("updateUserById");
+  assert.ok(updateIndex >= 0 && banIndex > updateIndex);
+});
+
+test("ban failures never fail the request", () => {
+  assert.match(routeSource, /Failed to ban deactivated user/);
+  const banIndex = routeSource.indexOf("updateUserById");
+  const catchIndex = routeSource.indexOf("catch (banError)", banIndex);
+  assert.ok(banIndex >= 0 && catchIndex > banIndex);
+});
