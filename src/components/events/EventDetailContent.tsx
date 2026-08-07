@@ -14,15 +14,14 @@ interface EventDetailContentProps {
 function getHeroDateParts(event: Event): {
   date: string;
   time: string;
-  timezone: string;
 } {
   if (!event.dateTime) {
-    return { date: event.date, time: "", timezone: "" };
+    return { date: event.date, time: "" };
   }
 
   const date = new Date(event.dateTime);
   if (Number.isNaN(date.getTime())) {
-    return { date: event.date, time: "", timezone: "" };
+    return { date: event.date, time: "" };
   }
 
   return {
@@ -35,7 +34,6 @@ function getHeroDateParts(event: Event): {
       minute: "2-digit",
       timeZone: "Asia/Kuala_Lumpur",
     }).format(date),
-    timezone: "UTC+8",
   };
 }
 
@@ -67,11 +65,6 @@ export default function EventDetailContent({
                   <CalendarDays aria-hidden="true" size={19} />
                   <span>{heroDate.date}</span>
                   {heroDate.time ? <span>{heroDate.time}</span> : null}
-                  {heroDate.timezone ? (
-                    <span className="event-detail-timezone">
-                      {heroDate.timezone}
-                    </span>
-                  ) : null}
                 </span>
                 <span className="event-detail-meta-row">
                   <MapPin aria-hidden="true" size={19} />

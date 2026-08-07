@@ -70,6 +70,29 @@ test("visitor surfaces share VisitorNav and the application keeps its focused he
   );
 });
 
+test("partner application uses the organizer dark surface palette without yellow glow", () => {
+  assert.match(
+    styles,
+    /\.partner-apply-page\s*\{[\s\S]*?background:\s*#0d1117;/,
+  );
+  assert.match(
+    styles,
+    /--partner-apply-surface:\s*#161b22;[\s\S]*?--partner-apply-border:\s*#30363d;/,
+  );
+  assert.match(
+    styles,
+    /\.partner-apply-sidebar,[\s\S]*?\.partner-apply-panel\s*\{[\s\S]*?background:\s*var\(--partner-apply-surface\);/,
+  );
+  assert.match(
+    styles,
+    /\.partner-apply-sidebar-track span\s*\{[\s\S]*?box-shadow:\s*none;/,
+  );
+  assert.match(
+    styles,
+    /\.partner-apply-panel-icon\s*\{[\s\S]*?box-shadow:\s*none;/,
+  );
+});
+
 test("about page uses the Editorial Trust content architecture", () => {
   assert.match(aboutSource, /export const metadata/);
   assert.match(aboutSource, /Tickets people can[\s\S]*?actually trust/);

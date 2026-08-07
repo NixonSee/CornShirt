@@ -180,12 +180,52 @@ project resources and settings are available:
   off **Confirm email** in the Supabase Email provider settings. Registration
   needs the sign-up session to create the customer profile and managed wallet,
   then redirects the customer to the login page.
-- Add `http://localhost:3000/auth/callback` to the allowed Auth redirect URLs.
 - Bootstrap the first admin as a Supabase Auth user with a matching `profiles`
   row whose role is `admin`. This manual bootstrap is acceptable for the local
   demo; it may be prepared before assessment and its login credentials shared
   privately. Later organizers should be created through the partner-approval
   invitation flow.
+
+#### Configure Supabase authentication URLs
+
+Supabase only follows password-reset and invitation destinations that appear
+in the project's redirect allowlist. Complete these steps before testing Auth
+locally:
+
+1. Sign in to the [official Supabase dashboard](https://supabase.com/dashboard)
+   and open the CornShirt project.
+2. Select **Authentication > URL Configuration**.
+3. Set **Site URL** to the main deployed Vercel URL for production, for example:
+
+   ```text
+   https://your-project.vercel.app
+   ```
+
+4. Under **Redirect URLs**, select **Add URL**, enter the following local
+   development pattern, and save it:
+
+   ```text
+   http://localhost:3000/**
+   ```
+
+   This official Supabase local-development pattern includes CornShirt's
+   `http://localhost:3000/auth/callback` route and its recovery query
+   parameters. Do not replace the production Site URL with localhost; keep
+   localhost as an additional allowed redirect.
+5. Go to **Authentication > Email Templates > Reset Password**. If the
+   template is unchanged, keep its `{{ .ConfirmationURL }}` link. If it builds
+   a custom link, use `{{ .RedirectTo }}` instead of `{{ .SiteURL }}` so the
+   destination requested by CornShirt is preserved.
+6. Start CornShirt at `http://localhost:3000`, request a new password-reset
+   email from the local login page, and open the new email link. It should
+   return to `/auth/callback` and then display the set-password page locally.
+
+Password-reset emails generated before changing the URL configuration retain
+their previous Vercel destination. Generate a new email after saving the
+settings. If localhost is absent from **Redirect URLs**, Supabase ignores the
+local `redirectTo` value and falls back to **Site URL**. See Supabase's
+[official Redirect URLs guide](https://supabase.com/docs/guides/auth/redirect-urls)
+for the allowlist and wildcard rules.
 
 The workflow migrations under `scripts/sql` are tracked because application
 tests and database workflows depend on them. The supplied demo project already
@@ -269,28 +309,148 @@ Store the result only in `WALLET_ENCRYPTION_KEY`. Changing this key after
 wallets have been created prevents the server from decrypting their existing
 private keys.
 
-### 5. Prepare the Sepolia contracts
+### 5. Set up the Sepolia testnet blockchain
 
-Set `SEPOLIA_RPC_URL` and `PLATFORM_CONTRACT_PRIVATE_KEY`, then compile and
-deploy both contracts from the repository root:
+CornShirt uses Ethereum Sepolia for contract deployment and application
+transactions. Sepolia is intended for contract and application testing; its
+ETH has no real-world value. The application expects Sepolia chain ID
+`11155111`.
+
+Use these official references during setup:
+
+- [Alchemy's Sepolia deployment guide](https://www.alchemy.com/docs/how-to-deploy-a-smart-contract-to-the-sepolia-testnet)
+- [Alchemy's Ethereum network reference](https://www.alchemy.com/docs/choosing-a-web3-network#sepolia-testnet)
+- [MetaMask's guide to showing test networks](https://support.metamask.io/configure/networks/how-to-view-testnets-in-metamask/)
+- [MetaMask's private-key export guide](https://support.metamask.io/configure/accounts/how-to-export-an-accounts-private-key/)
+- [Ethereum's Sepolia and faucet directory](https://ethereum.org/developers/docs/networks/#sepolia)
+- [Google Cloud Web3's Ethereum Sepolia Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+- [Sepolia Etherscan](https://sepolia.etherscan.io/)
+
+The four blockchain variables in the root `.env.local` are:
+
+```env
+# Sepolia testnet blockchain
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
+PLATFORM_CONTRACT_PRIVATE_KEY=YOUR_DEDICATED_TEST_WALLET_PRIVATE_KEY
+TICKET_NFT_CONTRACT_ADDRESS=
+MARKETPLACE_CONTRACT_ADDRESS=
+```
+
+#### `SEPOLIA_RPC_URL`
+
+This is the HTTPS endpoint through which CornShirt connects to Sepolia. It is
+not a wallet key.
+
+1. Create or sign in to an account at the
+   [official Alchemy dashboard](https://dashboard.alchemy.com/).
+2. Create an app, select **Ethereum** as the chain and **Sepolia** as the
+   network, and enable the Node API if the dashboard asks which product to use.
+3. Open the app's endpoint/API-key page and copy its HTTPS RPC URL. It should
+   follow this format:
+
+   ```text
+   https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY
+   ```
+
+4. Paste the complete URL into `SEPOLIA_RPC_URL` in the root `.env.local`.
+   Do not use the WebSocket URL beginning with `wss://`.
+
+#### `PLATFORM_CONTRACT_PRIVATE_KEY`
+
+This is the private key of the dedicated MetaMask test account that deploys
+the contracts and performs the platform's mint, settlement, burn, and managed
+wallet gas-funding transactions.
+
+1. Install MetaMask only from the
+   [official MetaMask website](https://metamask.io/download/), then create a
+   separate account used only for CornShirt testing. Do not reuse a wallet that
+   holds real assets.
+2. Follow MetaMask's
+   [official testnet instructions](https://support.metamask.io/configure/networks/how-to-view-testnets-in-metamask/)
+   to show test networks, then select **Sepolia**.
+3. In MetaMask, open the dedicated account's details and follow the
+   [official private-key export instructions](https://support.metamask.io/configure/accounts/how-to-export-an-accounts-private-key/).
+4. Paste that account key into `PLATFORM_CONTRACT_PRIVATE_KEY`. The deployment
+   script accepts the 64 hexadecimal characters with or without the leading
+   `0x`.
+
+Use the account's private key, not its public `0x...` wallet address, MetaMask
+password, or Secret Recovery Phrase. Never send the private key to anyone,
+place it in this README, expose it through a `NEXT_PUBLIC_` variable, or commit
+`.env.local`.
+
+#### Fund the platform wallet with Sepolia ETH
+
+The platform wallet needs Sepolia ETH to pay the testnet gas fees for deploying
+the two contracts and sending later application transactions. Obtain at least
+`0.05 Sepolia ETH` for testing with the Google Cloud Web3 faucet:
+
+1. Copy the dedicated account's **public wallet address** from MetaMask. This
+   is the `0x...` account address, not the private key.
+2. Open the
+   [official Google Cloud Web3 Ethereum Sepolia Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia).
+3. Sign in with a Google account if requested, paste the public wallet address
+   into the faucet, complete any verification shown, and submit the request.
+4. Wait for the Sepolia ETH to appear in MetaMask. Make sure MetaMask is showing
+   the Sepolia network, then confirm the public address and balance on
+   [Sepolia Etherscan](https://sepolia.etherscan.io/).
+
+Request `0.05 Sepolia ETH` when that amount is available. Faucet amounts,
+eligibility checks, and waiting periods may change, so follow the current
+instructions displayed on Google Cloud's official page. If the Google Cloud
+faucet is unavailable, use another faucet listed in the
+[official Ethereum Sepolia directory](https://ethereum.org/developers/docs/networks/#sepolia).
+
+Sepolia ETH has no real-world monetary value. Never enter a private key or
+Secret Recovery Phrase into a faucet, and do not pay anyone for testnet ETH.
+
+After setting the RPC URL and private key, validate the connection, Sepolia
+chain ID, key format, platform wallet address, and balance from the repository
+root:
+
+```bash
+npm --prefix blockchain run check:sepolia
+```
+
+The check prints only the platform wallet's public address and balance. If it
+reports a zero balance, fund the address before continuing.
+
+#### `TICKET_NFT_CONTRACT_ADDRESS` and `MARKETPLACE_CONTRACT_ADDRESS`
+
+Do not obtain these values from Alchemy or copy addresses from another
+project. CornShirt generates them when its own contracts are deployed. Leave
+both variables blank initially, then compile and deploy from the repository
+root:
 
 ```bash
 npm run hardhat:compile
 npm run hardhat:deploy
 ```
 
-The deployment verifies Sepolia chain ID `11155111`, deploys the Ticket and
-Marketplace contracts, verifies their required roles, and writes
-`TICKET_NFT_CONTRACT_ADDRESS` and `MARKETPLACE_CONTRACT_ADDRESS` to the root
-`.env.local`. It then exits and does not need to remain running.
+The deployment script:
 
-The deployed Sepolia contracts persist between local application restarts. Do
-not redeploy unless a contract changed or a fresh testnet deployment is
-intended. Existing database tickets must continue using the contract addresses
-under which they were minted.
+1. Confirms that the RPC endpoint returns Sepolia chain ID `11155111`.
+2. Deploys `CornShirtTicket` and verifies the deployer has its admin, minter,
+   and burner roles.
+3. Deploys `CornShirtMarketplace` with the new Ticket contract address and
+   verifies its settlement role.
+4. Writes both deployed addresses into the root `.env.local` automatically:
 
-Never expose `PLATFORM_CONTRACT_PRIVATE_KEY` to client components, commit it,
-or use a wallet containing real funds.
+   ```env
+   TICKET_NFT_CONTRACT_ADDRESS=0x...
+   MARKETPLACE_CONTRACT_ADDRESS=0x...
+   ```
+
+The terminal also prints a Sepolia Etherscan link for each deployment. Open
+those links, confirm that both transactions succeeded, and confirm that each
+address is shown as a contract on
+[Sepolia Etherscan](https://sepolia.etherscan.io/). Restart the Next.js server
+after changing any environment value.
+
+The deployed contracts persist between local application restarts. Do not
+redeploy unless a contract changed or a deliberately fresh testnet deployment
+is required. Existing database tickets must continue using the Ticket and
+Marketplace addresses under which they were created.
 
 ### 6. Configure the Stripe CLI
 

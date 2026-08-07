@@ -315,6 +315,16 @@ export async function POST(request: Request) {
 
   const assetResult = await finalizeTicketRefundAsset(operation.operation_id);
   if (!assetResult.ok) {
+    if (
+      ["nft_burn", "nft_burn_reverted", "database_finalization"].includes(
+        assetResult.category,
+      )
+    ) {
+      return Response.json(
+        { ...confirmation, burned: false, assetPending: true },
+        { status: 202 },
+      );
+    }
     return Response.json(
       { ...confirmation, burned: false, error: assetResult.error },
       { status: 502 },

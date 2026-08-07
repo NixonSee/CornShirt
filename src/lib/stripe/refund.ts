@@ -18,8 +18,9 @@ export type RefundAssetResult =
   | { ok: true; skipped?: boolean }
   | { ok: false; error: string; category: string };
 
-const REFUND_RECONCILIATION_ATTEMPTS = 5;
+const REFUND_RECONCILIATION_ATTEMPTS = 20;
 const REFUND_RECONCILIATION_DELAY_MS = 250;
+const REFUND_RECEIPT_TIMEOUT_MS = 30_000;
 
 async function loadRefundOperationById(
   operationId: string,
@@ -52,7 +53,11 @@ async function clearRefundAssetError(operationId: string): Promise<void> {
  */
 async function reconcileRefundCompletion(
   operationId: string,
+  fallbackHash?: `0x${string}` | null,
 ): Promise<boolean> {
+  const submittedHashes = new Set<`0x${string}`>();
+  if (fallbackHash) submittedHashes.add(fallbackHash);
+
   for (let attempt = 0; attempt < REFUND_RECONCILIATION_ATTEMPTS; attempt += 1) {
     const current = await loadRefundOperationById(operationId);
     if (current?.state === "completed") {
@@ -61,25 +66,44 @@ async function reconcileRefundCompletion(
     }
 
     if (current?.asset_transaction_hash) {
-      try {
-        const receipt = await getPublicClient().getTransactionReceipt({
-          hash: current.asset_transaction_hash,
-        });
-        if (receipt.status === "success") {
-          const finalized = await supabaseAdmin.rpc("finalize_ticket_refund", {
-            p_operation_id: current.operation_id,
-            p_asset_transaction_hash: current.asset_transaction_hash,
-          });
-          if (!finalized.error) {
-            await clearRefundAssetError(operationId);
-            return true;
-          }
-        }
-      } catch {
-        // The competing transaction may still be waiting for its receipt.
-      }
+      submittedHashes.add(current.asset_transaction_hash);
+      break;
     }
 
+    if (attempt < REFUND_RECONCILIATION_ATTEMPTS - 1) {
+      await new Promise((resolve) =>
+        setTimeout(resolve, REFUND_RECONCILIATION_DELAY_MS),
+      );
+    }
+  }
+
+  for (const hash of submittedHashes) {
+    try {
+      const receipt = await getPublicClient().waitForTransactionReceipt({
+        hash,
+        timeout: REFUND_RECEIPT_TIMEOUT_MS,
+      });
+      if (receipt.status !== "success") continue;
+
+      const finalized = await supabaseAdmin.rpc("finalize_ticket_refund", {
+        p_operation_id: operationId,
+        p_asset_transaction_hash: hash,
+      });
+      if (!finalized.error) {
+        await clearRefundAssetError(operationId);
+        return true;
+      }
+    } catch {
+      // A competing burn may have won. Its worker can still complete the row.
+    }
+  }
+
+  for (let attempt = 0; attempt < REFUND_RECONCILIATION_ATTEMPTS; attempt += 1) {
+    const current = await loadRefundOperationById(operationId);
+    if (current?.state === "completed") {
+      await clearRefundAssetError(operationId);
+      return true;
+    }
     if (attempt < REFUND_RECONCILIATION_ATTEMPTS - 1) {
       await new Promise((resolve) =>
         setTimeout(resolve, REFUND_RECONCILIATION_DELAY_MS),
@@ -117,13 +141,16 @@ export async function finalizeTicketRefundAsset(
 
   let burnHash = operation.asset_transaction_hash;
   try {
-    let owner = null;
-    try {
-      owner = await getTicketOwner(BigInt(operation.token_id));
-    } catch (ownerError) {
-      if (!burnHash) throw ownerError;
-    }
-    if (owner) {
+    if (burnHash) {
+      const receipt = await getPublicClient().waitForTransactionReceipt({
+        hash: burnHash,
+        timeout: REFUND_RECEIPT_TIMEOUT_MS,
+      });
+      if (receipt.status !== "success") {
+        throw new Error("Stored burn transaction reverted.");
+      }
+    } else {
+      const owner = await getTicketOwner(BigInt(operation.token_id));
       if (owner.toLowerCase() !== operation.wallet_address.toLowerCase()) {
         throw new Error("Current NFT owner does not match.");
       }
@@ -131,6 +158,7 @@ export async function finalizeTicketRefundAsset(
         BigInt(operation.token_id),
         undefined,
         async (hash) => {
+          burnHash = hash;
           const stored = await supabaseAdmin
             .from("ticket_operations")
             .update({
@@ -138,20 +166,15 @@ export async function finalizeTicketRefundAsset(
               asset_transaction_hash: hash,
               updated_at: new Date().toISOString(),
             })
-            .eq("operation_id", operation.operation_id);
-          if (stored.error) throw new Error("Burn submission was not recorded.");
+            .eq("operation_id", operation.operation_id)
+            .select("operation_id")
+            .maybeSingle();
+          if (stored.error || !stored.data) {
+            throw new Error("Burn submission was not recorded.");
+          }
         },
       );
       burnHash = burned.transactionHash;
-    } else if (burnHash) {
-      const receipt = await getPublicClient().getTransactionReceipt({
-        hash: burnHash,
-      });
-      if (receipt.status !== "success") {
-        throw new Error("Stored burn transaction reverted.");
-      }
-    } else {
-      throw new Error("NFT burn state could not be recovered.");
     }
 
     const finalized = await supabaseAdmin.rpc("finalize_ticket_refund", {
@@ -163,7 +186,7 @@ export async function finalizeTicketRefundAsset(
     return { ok: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown";
-    if (await reconcileRefundCompletion(operation.operation_id)) {
+    if (await reconcileRefundCompletion(operation.operation_id, burnHash)) {
       return { ok: true };
     }
 
