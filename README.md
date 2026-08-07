@@ -195,7 +195,23 @@ the CornShirt database. They do not replace the base database schema.
 
 ### 4. Configure environment variables
 
-Create `.env.local` in the repository root. Do not commit it.
+The repository includes a safe `.env.example` template containing every
+required variable without real secrets. Copy it to `.env.local` in the
+repository root:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+On macOS or Linux, use:
+
+```bash
+cp .env.example .env.local
+```
+
+Open `.env.local` and replace the placeholders with the privately supplied
+demo credentials. Do not commit `.env.local`; only `.env.example` is intended
+to be stored in Git. The provided template contains:
 
 ```env
 # Supabase
