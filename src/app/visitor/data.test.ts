@@ -154,17 +154,19 @@ test("visitor keeps the shared public-navbar dimensions", () => {
   assert.match(navSource, /width=\{190\}[\s\S]*height=\{60\}/);
 });
 
-test("SiteNav preserves the globals.css route-scoping contract", () => {
+test("SiteNav preserves non-admin route scoping while admin uses its unified theme", () => {
   const navSource = readFileSync(
     new URL("../../components/nav/SiteNav.tsx", import.meta.url),
     "utf8",
   );
   const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
 
-  // ~500 rules scope per-page styling via
-  // `.app-shell:has(.side-nav a[href="..."].active)`. If the drawer stops
-  // rendering that markup, admin/organizer/customer styling dies silently.
-  assert.match(navSource, /className="side-nav"/);
+  // Organizer and customer pages retain legacy route-scoped styling, while
+  // admin intentionally avoids the old amber page themes.
+  assert.match(
+    navSource,
+    /role === "admin" \? "admin-side-nav" : "side-nav"/,
+  );
   assert.match(navSource, /isActive\(href\) \? "active" : undefined/);
   // The drawer must stay mounted at every breakpoint, never conditionally rendered.
   assert.doesNotMatch(navSource, /open &&\s*\(?\s*<aside/);

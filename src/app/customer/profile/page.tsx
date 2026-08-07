@@ -24,7 +24,7 @@ export default async function CustomerProfilePage() {
     .single();
 
   const name = profile?.name || user.user_metadata?.name || "Customer";
-  const email = profile?.email || user.email || "Email unavailable";
+  const email = user.email || profile?.email || "Email unavailable";
   const sections: ProfileSection[] = [
     {
       title: "Account information",

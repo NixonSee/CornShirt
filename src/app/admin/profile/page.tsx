@@ -33,7 +33,7 @@ export default async function AdminProfilePage() {
   }
 
   const name = profile.name || user.user_metadata?.name || "Administrator";
-  const email = profile.email || user.email || "Email unavailable";
+  const email = user.email || profile.email || "Email unavailable";
   const sections: ProfileSection[] = [
     {
       title: "Administrator account",
@@ -52,6 +52,7 @@ export default async function AdminProfilePage() {
     <>
       <title>Admin Profile - CornShirt</title>
       <ProfilePage
+        theme="admin"
         roleLabel="Admin"
         name={name}
         email={email}

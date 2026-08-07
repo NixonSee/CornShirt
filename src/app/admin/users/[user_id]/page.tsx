@@ -153,7 +153,7 @@ export default async function AdminViewUserPage({
       (documentRows ?? []).map(async (document) => {
         const { data: signed } = await supabaseAdmin.storage
           .from(DOCUMENT_BUCKET)
-          .createSignedUrl(document.file_path, 600);
+          .createSignedUrl(document.file_path, 3600);
 
         return {
           id: document.document_id,
@@ -199,6 +199,7 @@ export default async function AdminViewUserPage({
         style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
       >
         <ProfilePage
+          theme="admin"
           roleLabel={role}
           name={name}
           email={email}

@@ -107,8 +107,8 @@ export default async function AdminEventDetailPage({
   const chartData = buildEventChartPoints(chartTransactions, totalSupply);
 
   return (
-    <>
-      <div className="top-row">
+    <div className="admin-page admin-event-detail">
+      <div className="top-row admin-event-detail-heading">
         <span
           className={`admin-event-status-badge admin-event-status-badge--${statusClass(event.status)}`.trim()}
         >
@@ -251,6 +251,6 @@ export default async function AdminEventDetailPage({
           </table>
         </Card>
       )}
-    </>
+    </div>
   );
 }

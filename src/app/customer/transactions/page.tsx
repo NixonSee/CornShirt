@@ -35,7 +35,7 @@ export default async function CustomerTransactionsPage() {
       .order("created_at", { ascending: false });
     content = error
       ? <State message="Your transactions could not be loaded right now." />
-      : <main className="shell-main"><TransactionHistory transactions={mapTransactionRows(data ?? [])} /></main>;
+      : <main className="shell-main"><TransactionHistory transactions={mapTransactionRows(data ?? [], user.id)} /></main>;
   }
 
   return <div className="app-shell"><RoleNav role="customer" />{content}<Footer /></div>;
