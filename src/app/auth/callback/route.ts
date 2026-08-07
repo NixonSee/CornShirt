@@ -69,12 +69,16 @@ export async function GET(request: NextRequest) {
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("role")
+    .select("role, status")
     .eq("user_id", user.id)
     .single();
 
   if (!profile || !isAppRole(profile.role)) {
     return NextResponse.redirect(`${origin}/visitor`);
+  }
+
+  if (profile.status === "deactivated") {
+    return NextResponse.redirect(`${origin}/login?error=deactivated`);
   }
 
   return NextResponse.redirect(new URL(roleHome(profile.role), origin));
