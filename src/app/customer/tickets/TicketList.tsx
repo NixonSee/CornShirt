@@ -42,6 +42,7 @@ type RefundConfirmation = {
   amountSen: number;
   currency: string;
   emailSent: boolean;
+  assetPending: boolean;
 };
 
 const TICKET_FILTERS: readonly {
@@ -228,6 +229,7 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
       amountSen: Number(body.amountSen ?? 0),
       currency: body.currency ?? "MYR",
       emailSent: body.emailSent === true,
+      assetPending: body.assetPending === true,
     });
     setRefundTicket(null);
     router.refresh();
@@ -326,6 +328,12 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                   : " · Confirmation email pending retry"
                 : " · Email will be sent after Stripe confirms the refund"}
             </small>
+            {refundConfirmation.assetPending ? (
+              <small>
+                Ticket NFT surrender is finishing automatically. No action is
+                required and no second refund will be created.
+              </small>
+            ) : null}
           </div>
           <button
             type="button"

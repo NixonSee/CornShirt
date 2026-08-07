@@ -259,7 +259,8 @@ test("shared event details place ticket options before the about section", () =>
   assert.doesNotMatch(routeSource, /EventCountdown/);
   assert.doesNotMatch(styles, /event-countdown-/);
   assert.ok(!existsSync(countdownPath));
-  assert.match(routeSource, /timezone:\s*"UTC\+8"/);
+  assert.doesNotMatch(routeSource, /UTC\+8/);
+  assert.doesNotMatch(styles, /event-detail-timezone/);
   assert.match(routeSource, /className="event-detail-hero-layout"/);
   assert.match(routeSource, /className="event-detail-meta-row"/);
   assert.match(ticketingSource, /className=\{`event-ticketing-grid/);

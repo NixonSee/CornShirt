@@ -150,8 +150,12 @@ test("confirmed ticket workflows send idempotent transactional emails", () => {
   assert.match(refundService, /finalizeRefundAssetByStripeRefundId/);
   assert.match(refundService, /reconcileRefundCompletion/);
   assert.match(refundService, /current\?\.state === "completed"/);
+  assert.match(refundService, /waitForTransactionReceipt/);
+  assert.match(refundService, /fallbackHash/);
   assert.match(refundService, /safe_error_category: null/);
+  assert.match(refund, /assetPending: true/);
   assert.match(ui, /Stripe refund successful/);
+  assert.match(ui, /Ticket NFT surrender is finishing automatically/);
   assert.match(ui, /Confirmation email sent/);
   assert.match(sql, /transactional_email_deliveries/);
   assert.match(sql, /notification_key text primary key/);
