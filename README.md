@@ -125,17 +125,18 @@ workflows     and refunds     resale, and burns
 
 ## Local development setup
 
-This guide runs the Next.js application on `http://localhost:3000`. The local
-application connects to a Supabase demo project, Stripe Test Mode, Gmail SMTP,
-and contracts deployed on the Sepolia testnet. Use demo/test credentials only;
-no production or live payment credentials are required for local assessment.
+This guide runs the Next.js application on `http://localhost:3000`. The
+recommended assessment setup also runs Supabase locally; a hosted Supabase demo
+project remains an optional alternative. Stripe, Gmail, and blockchain
+integrations use test credentials only. No production or live payment
+credentials are required for local assessment.
 
 ### 1. Prerequisites
 
 Install or create:
 
 - Node.js **20.9 or newer** and npm
-- A Supabase project containing CornShirt's base schema
+- A hosted Supabase project only if using the hosted-project alternative
 - A Stripe account in **Test Mode** and the Stripe CLI for local webhooks
 - [`cloudflared`](https://developers.cloudflare.com/tunnel/downloads/) for the
   temporary HTTPS URL used by the mobile QR scanner
@@ -163,19 +164,64 @@ cd ..
 Use `npm ci` instead of `npm install` for a clean, lockfile-reproducible CI
 installation.
 
-### 3. Connect Supabase
+### 3. Start Supabase locally (recommended for assessment)
 
-Use the supplied CornShirt demo Supabase project, which already contains the
-required schema, database functions, and reference data. Confirm the following
-project resources and settings are available:
+The repository's [`supabase`](./supabase) directory is a reproducible local setup.
+repository root:
+
+```bash
+npm run supabase:start
+npm run supabase:reset
+npm run supabase:status
+```
+
+`supabase:reset` recreates the local database, applies every migration, and
+then runs `supabase/seed.sql`. It is destructive to data in the local Supabase
+database, so use it for a fresh installation or to restore the known demo
+state.
+
+The seed creates:
+
+- Admin email: `admin1@gmail.com`
+- Admin password: `admin@123456`
+- One matching active `profiles` row with the `admin` role
+- Axiata Arena and Stadium Merdeka
+- All eight `venue_zones` rows required by the event creation form
+
+The local configuration also creates the public `event-banners` bucket and
+private `partner-documents` bucket. No manual Storage setup is required.
+
+Copy `.env.example` to `.env.local`, then use the values printed by
+`npm run supabase:status` for the three Supabase settings:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<Anon key shown by supabase:status>
+SUPABASE_SERVICE_ROLE_KEY=<Service role key shown by supabase:status>
+```
+
+After completing the remaining environment variables in section 4, run
+`npm run dev`, open `http://localhost:3000/login`, and use the seeded admin
+credentials above. Local Supabase Studio is available at
+`http://127.0.0.1:54323` for inspecting the records.
+
+The password in `seed.sql` is a known local-demo credential. Never run
+`supabase db push --include-seed` against production or a project containing
+real data.
+
+#### Optional hosted Supabase project
+
+If the lecturer uses the supplied hosted CornShirt demo project instead, enter
+that project's URL, anon key, and service-role key in `.env.local`. Confirm the
+following hosted resources and settings are available:
 
 - Confirm that a public Storage bucket named `event-banners` exists for
   organizer event images.
 - A private `partner-documents` bucket is created on the first application if
   absent; it may also be created beforehand.
-- The supplied CornShirt demo database already contains the fixed venue and
-  `venue_zones` records used by event creation. No admin seeding step is
-  required.
+- The supplied hosted database already contains the fixed venue and
+  `venue_zones` records used by event creation. The local seed is not run in
+  this option.
 - Enable email/password authentication. For the current local prototype, turn
   off **Confirm email** in the Supabase Email provider settings. Registration
   needs the sign-up session to create the customer profile and managed wallet,
@@ -232,6 +278,12 @@ tests and database workflows depend on them. The supplied demo project already
 has these migrations applied, so do not run them again during normal lecturer
 setup. They are retained for preparing or repairing another compatible copy of
 the CornShirt database. They do not replace the base database schema.
+
+For a complete project-to-project migration, including database records, Auth
+users, Storage objects, and project configuration, use the
+[`scripts/supabase-migration`](./scripts/supabase-migration/README.md) migration
+kit. Its database export creates `roles.sql`, `schema.sql`, and `data.sql`
+without storing credentials in the repository.
 
 ### 4. Configure environment variables
 
@@ -525,11 +577,45 @@ Keep Terminal 2 running and open <http://localhost:3000>.
 
 #### Terminal 3 - Temporary HTTPS URL for the mobile scanner
 
+Install `cloudflared` before starting the tunnel. On Windows PowerShell,
+Windows Package Manager can install the official package:
+
+```powershell
+winget install --id Cloudflare.cloudflared --exact
+```
+
+Close and reopen PowerShell after installation, then confirm that the command
+is available:
+
+```powershell
+cloudflared --version
+```
+
+If WinGet reports that the package is installed but PowerShell does not
+recognize `cloudflared`, run the installed executable directly:
+
+```powershell
+& "C:\Program Files (x86)\cloudflared\cloudflared.exe" --version
+```
+
+Alternatively, add that installation directory to the current terminal's
+`PATH` before using the shorter command:
+
+```powershell
+$env:Path += ";C:\Program Files (x86)\cloudflared"
+```
+
 After Terminal 2 is running, expose the local application through a Cloudflare
 Quick Tunnel:
 
 ```bash
 cloudflared tunnel --url http://localhost:3000
+```
+
+When the command is not available through `PATH`, use:
+
+```powershell
+& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url http://localhost:3000
 ```
 
 No Cloudflare account is required for a Quick Tunnel. Terminal 3 prints a
@@ -544,6 +630,33 @@ The address changes whenever the tunnel is restarted. Quick Tunnels are for
 local testing only: anyone who knows the temporary address can reach the local
 development application, so stop Terminal 3 after testing and do not share the
 URL publicly.
+
+If tunnel creation fails with `context deadline exceeded`, check whether the
+current network permits Cloudflare traffic:
+
+```powershell
+Test-NetConnection api.trycloudflare.com -Port 443
+Test-NetConnection region1.v2.argotunnel.com -Port 7844
+```
+
+Both commands should report `TcpTestSucceeded : True`. If either connection is
+blocked, disconnect VPN or Cloudflare WARP and retry from another network, such
+as a phone hotspot. Managed networks may need to allow outbound TCP 443 to
+`api.trycloudflare.com` and outbound TCP or UDP 7844 to Cloudflare Tunnel
+endpoints. If the API check succeeds and `cloudflared` reports a QUIC/UDP
+failure while the TCP 7844 check succeeds, force the tunnel to use HTTP/2 over
+TCP:
+
+```powershell
+& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --protocol http2 --url http://localhost:3000
+```
+
+See Cloudflare's official
+[Quick Tunnel guide](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/)
+and
+[connectivity checks](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/troubleshoot-tunnels/connectivity-prechecks/)
+for current requirements. A Quick Tunnel does not require `cloudflared login`
+or installation as a Windows service.
 
 #### Services that do not need another terminal
 
