@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "supabase:start": "supabase start",
+    "supabase:reset": "supabase db reset --local",
+    "supabase:status": "supabase status",
     "hardhat:compile": "cd blockchain && npm run compile",
     "hardhat:node": "cd blockchain && npm run node",
     "hardhat:deploy": "cd blockchain && npm run deploy",
@@ -38,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "ethers": "^5.8.0",
+    "supabase": "^2.112.0",
     "tsx": "^4.23.1",
     "typescript": "^5"
   }

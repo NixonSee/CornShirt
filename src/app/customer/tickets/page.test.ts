@@ -108,6 +108,11 @@ test("eligible tickets expose a resale listing modal", () => {
   assert.match(source, /inputMode="decimal"/);
   assert.match(source, /Maximum resale price:/);
   assert.match(source, /original price \+ 15%/);
+  const resaleActions = source.slice(
+    source.indexOf('title="List for resale"'),
+    source.indexOf('data-testid="resale-listing-form"'),
+  );
+  assert.doesNotMatch(resaleActions, />\s*Cancel\s*</);
   assert.match(source, /return "LISTED"/);
   assert.match(source, /return "COLLECTIBLE"/);
   assert.match(source, /Check-in closed when the event ended/);
@@ -171,7 +176,12 @@ test("ticket filters expose lifecycle counts, sorting, and a mobile-safe empty s
   const source = readFileSync(listUrl, "utf8");
   const styles = readFileSync(stylesUrl, "utf8");
 
-  assert.match(source, /"all" \| "valid" \| "listed" \| "used"/);
+  assert.match(
+    source,
+    /"all" \| "valid" \| "listed" \| "used" \| "refunded"/,
+  );
+  assert.match(source, /\{ value: "refunded", label: "Refunded" \}/);
+  assert.match(source, /if \(status === "refunded"\) return "refunded"/);
   assert.match(source, /aria-label="Filter tickets by status"/);
   assert.match(source, /aria-pressed=/);
   assert.match(source, /ticketCounts\[filter\.value\]/);

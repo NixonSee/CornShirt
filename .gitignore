@@ -64,6 +64,13 @@ opencode.json
 !/scripts/sql/2026-08-04-transactional-email-event-cancellations.sql
 !/scripts/sql/2026-08-07-event-notification-emails.sql
 
+# Generated Supabase migration backups and local migration credentials
+/scripts/supabase-migration/backups/
+/scripts/supabase-migration/**/roles.sql
+/scripts/supabase-migration/**/schema.sql
+/scripts/supabase-migration/**/data.sql
+/scripts/supabase-migration/.env*
+
 # Local internal and historical documentation
 /docs/AGENTS.md
 /docs/CLAUDE.md

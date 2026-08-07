@@ -31,7 +31,7 @@ interface TicketListProps {
   errorMessage?: string;
 }
 
-type TicketFilter = "all" | "valid" | "listed" | "used";
+type TicketFilter = "all" | "valid" | "listed" | "used" | "refunded";
 type TicketCategory = Exclude<TicketFilter, "all"> | "other";
 
 type RefundConfirmation = {
@@ -53,13 +53,15 @@ const TICKET_FILTERS: readonly {
   { value: "valid", label: "Valid" },
   { value: "listed", label: "Listed" },
   { value: "used", label: "Used" },
+  { value: "refunded", label: "Refunded" },
 ];
 
 const TICKET_SORT_RANK: Record<TicketCategory, number> = {
   valid: 0,
   listed: 1,
   used: 2,
-  other: 3,
+  refunded: 3,
+  other: 4,
 };
 
 function shortHash(value: string | null): string {
@@ -87,6 +89,7 @@ function ticketCategory(ticket: CustomerTicket): TicketCategory {
   const status = ticket.status.toLowerCase();
 
   if (status === "used") return "used";
+  if (status === "refunded") return "refunded";
   if (
     ticket.hasActiveListing &&
     ["active", "valid"].includes(status)
@@ -139,6 +142,7 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
     valid: 0,
     listed: 0,
     used: 0,
+    refunded: 0,
   };
 
   tickets.forEach((ticket) => {
@@ -646,14 +650,9 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
         className="ticket-resale-modal"
         showCloseButton
         actions={
-          <>
-            <Button variant="outline" onClick={() => setResaleTicket(null)}>
-              Cancel
-            </Button>
-            <Button loading={isListing} onClick={listForResale}>
-              List ticket
-            </Button>
-          </>
+          <Button loading={isListing} onClick={listForResale}>
+            List ticket
+          </Button>
         }
       >
         <div className="resale-listing-form" data-testid="resale-listing-form">
