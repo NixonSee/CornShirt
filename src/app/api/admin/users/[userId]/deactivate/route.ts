@@ -1,5 +1,11 @@
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import nodemailer from "nodemailer";
+
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+const FROM_EMAIL =
+  process.env.REJECT_FROM_EMAIL || "CornShirt <noreply@gmail.com>";
 
 export async function POST(
   request: Request,
@@ -25,7 +31,7 @@ export async function POST(
 
   const { data: profile } = await supabaseAdmin
     .from("profiles")
-    .select("role")
+    .select("role, name, email")
     .eq("user_id", userId)
     .single();
 
@@ -66,6 +72,19 @@ export async function POST(
     return Response.json({ error: updateError.message }, { status: 500 });
   }
 
+  try {
+    const { error: banError } = await supabaseAdmin.auth.admin.updateUserById(
+      userId,
+      { ban_duration: "876000h" },
+    );
+
+    if (banError) {
+      console.error("Failed to ban deactivated user:", banError.message);
+    }
+  } catch (banError) {
+    console.error("Failed to ban deactivated user:", banError instanceof Error ? banError.message : banError);
+  }
+
   const { error: logError } = await supabaseAdmin
     .from("admin_activity_logs")
     .insert({
@@ -80,6 +99,30 @@ export async function POST(
 
   if (logError) {
     console.error("Failed to log admin activity:", logError.message);
+  }
+
+  if (profile.email && GMAIL_USER && GMAIL_APP_PASSWORD) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+      });
+
+      await transporter.sendMail({
+        from: FROM_EMAIL,
+        to: profile.email,
+        subject: "Your CornShirt Account Has Been Deactivated",
+        text: `Dear ${profile.name || "User"},\n\nYour CornShirt account has been deactivated by an administrator.\n\nReason: ${reason || "No reason provided"}\n\nIf you believe this was done in error, please contact our support team.\n\nBest regards,\nThe CornShirt Team`,
+      });
+    } catch (emailError) {
+      console.error("Failed to send deactivation email:", emailError);
+    }
+  } else {
+    console.warn(
+      "Deactivation email not sent — missing user email or Gmail credentials.",
+    );
   }
 
   return Response.json({ success: true });

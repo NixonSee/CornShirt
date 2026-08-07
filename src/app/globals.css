@@ -3334,6 +3334,7 @@ tr:last-child td {
   color: var(--destructive);
   font-size: 13px;
   font-weight: 700;
+  white-space: pre-line;
 }
 
 .form-success {

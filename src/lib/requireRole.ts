@@ -16,7 +16,8 @@ interface VerifiedIdentity {
 type IdentityResult =
   | { status: "authenticated"; identity: VerifiedIdentity }
   | { status: "unauthenticated" }
-  | { status: "missing-profile" };
+  | { status: "missing-profile" }
+  | { status: "deactivated" };
 
 const knownRoles = new Set<AppRole>([
   "admin",
@@ -52,12 +53,16 @@ export async function getVerifiedRole(): Promise<IdentityResult> {
 
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select("role")
+    .select("role, status")
     .eq("user_id", user.id)
     .single();
 
   if (profileError || !profile || !isAppRole(profile.role)) {
     return { status: "missing-profile" };
+  }
+
+  if (profile.status === "deactivated") {
+    return { status: "deactivated" };
   }
 
   return {
@@ -74,6 +79,7 @@ export async function requireRole(allowedRoles: readonly AppRole[]) {
 
   if (result.status === "unauthenticated") redirect("/login");
   if (result.status === "missing-profile") redirect("/visitor");
+  if (result.status === "deactivated") redirect("/login?error=deactivated");
 
   if (!allowedRoles.includes(result.identity.profile.role)) {
     redirect(roleHome(result.identity.profile.role));
@@ -94,11 +100,20 @@ export async function authorizeApiRole(allowedRoles: readonly AppRole[]) {
 
   if (
     result.status === "missing-profile" ||
+    result.status === "deactivated" ||
     !allowedRoles.includes(result.identity.profile.role)
   ) {
     return {
       ok: false as const,
-      response: Response.json({ error: "Forbidden" }, { status: 403 }),
+      response: Response.json(
+        {
+          error:
+            result.status === "deactivated"
+              ? "Account deactivated"
+              : "Forbidden",
+        },
+        { status: 403 },
+      ),
     };
   }
 

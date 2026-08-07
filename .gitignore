@@ -62,6 +62,7 @@ opencode.json
 !/scripts/sql/2026-08-03-three-hour-event-lifecycle.sql
 !/scripts/sql/2026-08-04-transactional-email-deliveries.sql
 !/scripts/sql/2026-08-04-transactional-email-event-cancellations.sql
+!/scripts/sql/2026-08-07-event-notification-emails.sql
 
 # Local internal and historical documentation
 /docs/AGENTS.md

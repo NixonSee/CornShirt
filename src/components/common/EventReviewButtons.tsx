@@ -17,29 +17,59 @@ export function EventReviewButtons({
   eventName,
 }: EventReviewButtonsProps) {
   const router = useRouter();
-  const [actionType, setActionType] = useState<"approve" | "reject" | null>(
-    null
+  const [confirmAction, setConfirmAction] = useState<"approve" | "reject" | null>(
+    null,
   );
+  const [reasonModalOpen, setReasonModalOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleConfirm() {
-    if (!actionType) return;
-
+  async function submit(action: "approve" | "reject", body?: { reason: string }) {
     setIsSubmitting(true);
+    setError("");
 
-    const res = await fetch(`/api/admin/events/${eventId}/${actionType}`, {
+    const res = await fetch(`/api/admin/events/${eventId}/${action}`, {
       method: "PUT",
+      ...(body
+        ? {
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }
+        : {}),
     });
 
     setIsSubmitting(false);
-    setActionType(null);
 
     if (res.ok) {
+      setConfirmAction(null);
+      setReasonModalOpen(false);
+      setReason("");
       router.refresh();
     } else {
-      const err = await res.json();
-      alert(err.error || "Something went wrong");
+      const err = (await res.json().catch(() => ({}))) as { error?: string };
+      setError(err.error || "Something went wrong");
     }
+  }
+
+  function handleConfirm() {
+    if (!confirmAction) return;
+
+    if (confirmAction === "reject") {
+      setConfirmAction(null);
+      setError("");
+      setReasonModalOpen(true);
+      return;
+    }
+
+    void submit("approve");
+  }
+
+  function closeReasonModal() {
+    if (isSubmitting) return;
+    setReasonModalOpen(false);
+    setReason("");
+    setError("");
   }
 
   return (
@@ -47,44 +77,97 @@ export function EventReviewButtons({
       <Button
         variant="success"
         icon={<CheckCircle2 size={16} />}
-        onClick={() => setActionType("approve")}
+        onClick={() => setConfirmAction("approve")}
       >
         Approve
       </Button>
       <Button
         variant="destructive"
         icon={<XCircle size={16} />}
-        onClick={() => setActionType("reject")}
+        onClick={() => setConfirmAction("reject")}
       >
         Reject
       </Button>
 
       <Modal
-        isOpen={!!actionType}
-        onClose={() => !isSubmitting && setActionType(null)}
-        title={actionType === "approve" ? "Approve Event" : "Reject Event"}
+        isOpen={!!confirmAction}
+        onClose={() => !isSubmitting && setConfirmAction(null)}
+        title={confirmAction === "approve" ? "Approve Event" : "Reject Event"}
         actions={
           <>
             <Button
               variant="primary"
-              onClick={() => setActionType(null)}
+              onClick={() => setConfirmAction(null)}
               disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
-              variant={actionType === "approve" ? "success" : "destructive"}
+              variant={confirmAction === "approve" ? "success" : "destructive"}
               onClick={handleConfirm}
               loading={isSubmitting}
             >
-              {actionType === "approve" ? "Approve" : "Reject"}
+              {confirmAction === "approve" ? "Approve" : "Reject"}
             </Button>
           </>
         }
       >
-        {actionType === "approve"
+        {confirmAction === "approve"
           ? `Approve "${eventName}"? This will make the event visible to all users.`
           : `Reject "${eventName}"? The event will be set to rejected status.`}
+        {error && confirmAction === "approve" ? (
+          <p role="alert" className="customer-account-error">
+            {error}
+          </p>
+        ) : null}
+      </Modal>
+
+      <Modal
+        isOpen={reasonModalOpen}
+        onClose={closeReasonModal}
+        title={`Reject "${eventName}"`}
+        className="cancel-event-modal"
+        showCloseButton
+        actions={
+          <>
+            <Button
+              variant="outline"
+              onClick={closeReasonModal}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              loading={isSubmitting}
+              onClick={() => void submit("reject", { reason })}
+            >
+              Reject Event
+            </Button>
+          </>
+        }
+      >
+        <label className="cancel-event-reason">
+          <span className="cancel-event-reason-label">
+            <strong>Reason for rejection</strong>
+            <small>Optional</small>
+          </span>
+          <textarea
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            rows={3}
+            placeholder="For example: Incomplete event details"
+          />
+          <small>
+            If provided, this is saved with the event record and emailed to the
+            organizer.
+          </small>
+        </label>
+        {error ? (
+          <p role="alert" className="customer-account-error">
+            {error}
+          </p>
+        ) : null}
       </Modal>
     </>
   );
