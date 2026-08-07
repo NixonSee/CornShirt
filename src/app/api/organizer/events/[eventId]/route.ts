@@ -1,6 +1,7 @@
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildTicketTypeRows, parseLayout } from "@/lib/eventTicketTypes";
+import { eventDateError, toEventInstant } from "@/lib/eventDate";
 
 // Derive the storage object path from a public banner URL so we can delete the
 // old file when it's replaced. Public URLs look like
@@ -60,8 +61,17 @@ export async function PUT(
   if (!eventName) {
     return Response.json({ error: "Event name is required." }, { status: 400 });
   }
-  if (!eventDate) {
-    return Response.json({ error: "Event date is required." }, { status: 400 });
+  // Re-checked here because the input's `min` is only a picker hint.
+  const dateError = eventDateError(eventDate);
+  if (dateError) {
+    return Response.json({ error: dateError }, { status: 400 });
+  }
+
+  // The form sends a bare wall clock; stamp Malaysia's offset so the
+  // timestamptz column doesn't read it as UTC.
+  const eventInstant = toEventInstant(eventDate);
+  if (!eventInstant) {
+    return Response.json({ error: "Enter a valid event date and time." }, { status: 400 });
   }
   if (!venueId) {
     return Response.json({ error: "A venue is required." }, { status: 400 });
@@ -115,7 +125,7 @@ export async function PUT(
       artist_name: artistName,
       venue,
       venue_id: venueId,
-      event_date: eventDate,
+      event_date: eventInstant,
       category,
       description,
       banner_image: bannerUrl,

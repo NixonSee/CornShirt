@@ -1,6 +1,7 @@
 import { ProfilePage, type ProfileSection } from "@/components/profile";
 import { requireRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ function formatDate(value: string | null | undefined) {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: APP_TIME_ZONE,
   });
 }
 

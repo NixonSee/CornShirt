@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Modal } from "@/components/common/Modal";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 interface DocumentInfo {
   document_id: string;
@@ -61,6 +62,7 @@ function formatDate(dateStr: string): string {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: APP_TIME_ZONE,
   });
 }
 

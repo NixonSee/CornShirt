@@ -2,6 +2,7 @@
 
 import { ArrowUpDown } from "lucide-react";
 import Link from "next/link";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 interface EventDisplay {
   event_id: string;
@@ -42,6 +43,7 @@ function formatDate(dateStr?: string): string {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: APP_TIME_ZONE,
   });
 }
 

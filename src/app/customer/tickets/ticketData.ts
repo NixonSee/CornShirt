@@ -2,6 +2,7 @@ import {
   getMaximumResalePriceSen,
   getOriginalTicketPriceSen,
 } from "@/lib/resalePricing";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 export type DatabaseRecord = Record<string, unknown>;
 
@@ -57,6 +58,7 @@ function formatDate(value: string | null): string {
   return new Intl.DateTimeFormat("en-MY", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: APP_TIME_ZONE,
   }).format(date);
 }
 
