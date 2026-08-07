@@ -1,4 +1,5 @@
 import { formatMyr } from "../../../lib/currency.ts";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 export type TransactionFilter =
   | "all"
@@ -87,6 +88,7 @@ export function mapTransactionRows(
         : new Intl.DateTimeFormat("en-MY", {
             dateStyle: "medium",
             timeStyle: "short",
+            timeZone: APP_TIME_ZONE,
           }).format(date),
       hash,
       hashLabel: hash

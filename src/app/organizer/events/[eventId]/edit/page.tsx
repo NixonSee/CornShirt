@@ -8,13 +8,7 @@ import {
   EventForm,
   type EventFormInitialValues,
 } from "@/components/organizer/EventForm";
-
-// Normalise a stored timestamp to the "YYYY-MM-DDTHH:mm" shape a
-// datetime-local input expects, preserving the wall-clock time as entered.
-function toDatetimeLocal(value: string | null): string {
-  if (!value) return "";
-  return value.replace(" ", "T").slice(0, 16);
-}
+import { toEventFormValue } from "@/lib/eventDate";
 
 interface LayoutPricing {
   price: number;
@@ -89,7 +83,7 @@ export default async function EditEventPage({
     eventName: event.event_name ?? "",
     artistName: event.artist_name ?? "",
     venueId: event.venue_id ?? "",
-    eventDate: toDatetimeLocal(event.event_date),
+    eventDate: toEventFormValue(event.event_date),
     category: event.category ?? "",
     description: event.description ?? "",
     bannerUrl: event.banner_image ?? null,

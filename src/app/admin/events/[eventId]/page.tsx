@@ -13,6 +13,7 @@ import {
   type EventTransactionRow,
 } from "@/lib/eventChartData";
 import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 const NUMBER = new Intl.NumberFormat("en-US");
 
@@ -30,6 +31,7 @@ function formatDate(value: string | null): string {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: APP_TIME_ZONE,
   });
 }
 
