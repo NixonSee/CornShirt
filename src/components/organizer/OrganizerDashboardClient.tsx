@@ -26,6 +26,7 @@ import {
 
 import { Pagination } from "@/components/common/Pagination";
 import { formatMyr } from "@/lib/currency";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 import {
   getRevenueTrend,
   type DailyRevenuePoint,
@@ -90,16 +91,18 @@ function shortHash(hash: string | null): string {
     : hash;
 }
 
-function formatDate(value: string | null): string {
+function formatEventDateTime(value: string | null): string {
   if (!value) return "Date TBC";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Date TBC";
 
-  return date.toLocaleDateString("en-MY", {
+  return date.toLocaleString("en-MY", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-    timeZone: "Asia/Kuala_Lumpur",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: APP_TIME_ZONE,
   });
 }
 
@@ -113,7 +116,7 @@ function formatTransactionTime(value: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
     month: "short",
-    timeZone: "Asia/Kuala_Lumpur",
+    timeZone: APP_TIME_ZONE,
   });
 }
 
@@ -508,7 +511,7 @@ export function OrganizerDashboardClient({
                       </span>
                       <span>
                         <EventDateIcon size={14} aria-hidden="true" />
-                        {formatDate(event.event_date)}
+                        {formatEventDateTime(event.event_date)}
                       </span>
                     </div>
                     <div className="organizer-event-progress">

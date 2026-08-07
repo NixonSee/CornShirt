@@ -108,6 +108,10 @@ export function SeatMap({
               key={zone.id}
               className={groupClass}
               onClick={clickable ? () => onSelectZone?.(zone.id) : undefined}
+              // A focusable <g> takes focus on mousedown, which would pull the
+              // caret out of the price field beside the map. Click selection and
+              // keyboard focus are unaffected.
+              onMouseDown={clickable ? (e) => e.preventDefault() : undefined}
               role={clickable ? "button" : undefined}
               tabIndex={clickable ? 0 : undefined}
               aria-label={

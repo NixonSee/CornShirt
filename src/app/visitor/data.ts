@@ -3,6 +3,7 @@ import type {
   SeatZone,
   ZoneShape,
 } from "@/components/seatmap/types";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 export type EventStatus = "ACTIVE" | "SELLING FAST";
 
@@ -117,6 +118,7 @@ function formatEventDate(value: string | null): string {
   return new Intl.DateTimeFormat("en-MY", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: APP_TIME_ZONE,
   }).format(date);
 }
 

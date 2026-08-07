@@ -14,6 +14,7 @@ import { Button } from "@/components/common/Button";
 import { SeatMap } from "@/components/seatmap/SeatMap";
 import { DEFAULT_STAGE, type SeatZone } from "@/components/seatmap/types";
 import { parsePositiveMyrAmount } from "@/lib/currency";
+import { eventDateError, minEventDate } from "@/lib/eventDate";
 
 const CATEGORIES = ["Concert", "Festival", "Theatre", "Sports", "Comedy", "Other"];
 
@@ -61,6 +62,8 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venueId, setVenueId] = useState(initialValues?.venueId ?? "");
   const [eventDate, setEventDate] = useState(initialValues?.eventDate ?? "");
+  // Computed once — the pinned timezone makes the server and client values match.
+  const [minDate] = useState(() => minEventDate());
   const [category, setCategory] = useState(initialValues?.category ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
 
@@ -71,6 +74,7 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
   // The remote banner URL is not an object URL, so it must not be revoked.
   const [bannerIsLocal, setBannerIsLocal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
 
   // ── Zone pricing state ──
   const [pricing, setPricing] = useState<Record<string, string>>(
@@ -126,6 +130,16 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
   });
 
   const selectedZone = zones.find((z) => z.id === selectedZoneId) ?? null;
+
+  // autoFocus only fires on mount and the price panel stays mounted between zone
+  // selections, so focus has to be driven by the selection itself. Keyed on the
+  // id, not `selectedZone`, which is a fresh object on every render.
+  useEffect(() => {
+    if (!selectedZoneId) return;
+    priceInputRef.current?.focus();
+    priceInputRef.current?.select();
+  }, [selectedZoneId]);
+
   const pricedCount = zones.filter((z) => z.price != null).length;
   const totalCapacity = zones
     .filter((z) => z.price != null)
@@ -168,8 +182,9 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
       setErrorMessage("Event name is required.");
       return;
     }
-    if (!eventDate) {
-      setErrorMessage("Event date is required.");
+    const dateError = eventDateError(eventDate);
+    if (dateError) {
+      setErrorMessage(dateError);
       return;
     }
     if (!venueId) {
@@ -332,6 +347,7 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
                 type="datetime-local"
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
+                min={minDate}
                 required
               />
             </div>
@@ -490,17 +506,19 @@ export function EventForm({ mode, eventId, initialValues }: EventFormProps) {
                   <div className="ce-grid-2">
                     <div className="ce-field">
                       <label htmlFor="zone-price">Price (MYR)</label>
+                      {/* Text + inputMode so the mouse wheel cannot step the
+                          price while the field is focused. */}
                       <input
                         id="zone-price"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
                         placeholder="0.00"
                         value={pricing[selectedZone.id] ?? ""}
                         onChange={(e) =>
                           setZonePrice(selectedZone.id, e.target.value)
                         }
-                        autoFocus
+                        ref={priceInputRef}
                       />
                     </div>
                     <div className="ce-field">

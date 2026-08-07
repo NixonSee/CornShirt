@@ -21,6 +21,7 @@ import {
 } from "@/lib/resalePricing";
 import { loadManagedWalletSigner } from "@/lib/walletAccess";
 import { hasMarketplaceContract } from "@/utils/web3config";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 type Row = Record<string, unknown>;
 export interface MarketplaceResult {
@@ -369,7 +370,7 @@ export async function getMarketplacePageData(userId: string): Promise<{
     return [{
       id: text(listing, "listing_id"), ticketId: text(listing, "ticket_id"),
       eventName: text(event, "event_name", "Concert Ticket"), artist: text(event, "artist_name", "Artist TBC"),
-      venue: text(event, "venue", "Venue TBC"), eventDate: Number.isNaN(date.getTime()) ? "Date TBC" : new Intl.DateTimeFormat("en-MY", { dateStyle: "medium", timeStyle: "short" }).format(date),
+      venue: text(event, "venue", "Venue TBC"), eventDate: Number.isNaN(date.getTime()) ? "Date TBC" : new Intl.DateTimeFormat("en-MY", { dateStyle: "medium", timeStyle: "short", timeZone: APP_TIME_ZONE }).format(date),
       ticketType: text(ticketType, "type_name", text(ticketType, "name", "Admission")), image: text(event, "banner_image", "/Background Image.png"),
       sellerWallet, price: Number(listing.price ?? 0), isMine: Boolean(walletResult.wallet && sellerWallet.toLowerCase() === walletResult.wallet.toLowerCase()),
     }];

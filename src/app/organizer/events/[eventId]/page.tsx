@@ -7,6 +7,7 @@ import { Card } from "@/components/common/Card";
 import { CancelEventButton } from "@/components/common/CancelEventButton";
 import { formatMyr } from "@/lib/currency";
 import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
+import { APP_TIME_ZONE } from "@/lib/eventDate";
 
 const NUMBER = new Intl.NumberFormat("en-US");
 
@@ -25,12 +26,15 @@ function statusVariant(status: string | null): string {
   }
 }
 
-function formatDate(value: string | null): string {
+function formatEventDateTime(value: string | null): string {
   if (!value) return "Date TBC";
-  return new Date(value).toLocaleDateString("en-US", {
+  return new Date(value).toLocaleString("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: APP_TIME_ZONE,
   });
 }
 
@@ -100,7 +104,7 @@ export default async function ManageEventPage({
             )}
             {event.venue ?? "Venue TBC"}
             {" · "}
-            {formatDate(event.event_date)}
+            {formatEventDateTime(event.event_date)}
           </p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
