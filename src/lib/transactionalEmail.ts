@@ -18,7 +18,9 @@ export type TransactionalEmailInput = {
     | "direct_transfer_received"
     | "resale_sold"
     | "resale_purchased"
-    | "event_cancelled";
+    | "event_cancelled"
+    | "event_approved"
+    | "event_rejected";
   operationId: string | null;
   to: string;
   subject: string;

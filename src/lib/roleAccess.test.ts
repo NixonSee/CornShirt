@@ -87,19 +87,23 @@ test("sensitive admin pages guard before service-role reads", () => {
 });
 
 test("admin mutations use the verified caller instead of body-controlled identity", () => {
-  const routes = [
-    "../app/api/admin/events/[eventId]/approve/route.ts",
-    "../app/api/admin/events/[eventId]/reject/route.ts",
-  ];
+  const approveRoute = read("../app/api/admin/events/[eventId]/approve/route.ts");
+  const rejectRoute = read("../app/api/admin/events/[eventId]/reject/route.ts");
 
-  for (const path of routes) {
-    const source = read(path);
+  for (const source of [approveRoute, rejectRoute]) {
     assert.match(source, /authorizeApiRole\(\["admin"\]\)/);
     assert.match(source, /const adminId = auth\.identity\.user\.id/);
-    assert.doesNotMatch(source, /_request\.json\(\)/);
     assert.doesNotMatch(source, /admin_id is required/);
     assert.match(source, /admin_id: adminId/);
   }
+
+  // Approve takes no body at all.
+  assert.doesNotMatch(approveRoute, /request\.json\(\)/);
+
+  // Reject may parse a body, but only for the optional reason — never identity.
+  assert.match(rejectRoute, /reason\?: unknown/);
+  assert.doesNotMatch(rejectRoute, /admin_id:\s*body/);
+  assert.doesNotMatch(rejectRoute, /adminId\s*=\s*body/);
 
   const table = read("../components/admin/PendingEventsTable.tsx");
   assert.doesNotMatch(table, /auth\.getSession\(\)/);

@@ -1,4 +1,5 @@
 import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
+import { notifyOrganizerEventCancelled } from "@/lib/eventNotifications";
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { notifyEventCancellation } from "@/lib/ticketNotifications";
@@ -90,5 +91,14 @@ export async function PUT(
         reason: reason || null,
       });
 
-  return Response.json({ success: true, emailNotifications });
+  const organizerNotification = await notifyOrganizerEventCancelled({
+    eventId,
+    reason: reason || null,
+  });
+
+  return Response.json({
+    success: true,
+    emailNotifications,
+    organizerNotification,
+  });
 }
