@@ -1,5 +1,11 @@
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import nodemailer from "nodemailer";
+
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+const FROM_EMAIL =
+  process.env.REJECT_FROM_EMAIL || "CornShirt <noreply@gmail.com>";
 
 export async function POST(
   _request: Request,
@@ -10,6 +16,16 @@ export async function POST(
 
   const adminId = auth.identity.user.id;
   const { userId } = await params;
+
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("name, email")
+    .eq("user_id", userId)
+    .single();
+
+  if (!profile) {
+    return Response.json({ error: "User not found." }, { status: 404 });
+  }
 
   const { error: updateError } = await supabaseAdmin
     .from("profiles")
@@ -40,6 +56,30 @@ export async function POST(
 
   if (logError) {
     console.error("Failed to log admin activity:", logError.message);
+  }
+
+  if (profile.email && GMAIL_USER && GMAIL_APP_PASSWORD) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+      });
+
+      await transporter.sendMail({
+        from: FROM_EMAIL,
+        to: profile.email,
+        subject: "Your CornShirt Account Has Been Reactivated",
+        text: `Dear ${profile.name || "User"},\n\nGood news! Your CornShirt account has been reactivated and is now active again.\n\nYou can log in and use the platform as usual.\n\nBest regards,\nThe CornShirt Team`,
+      });
+    } catch (emailError) {
+      console.error("Failed to send reactivation email:", emailError);
+    }
+  } else {
+    console.warn(
+      "Reactivation email not sent — missing user email or Gmail credentials.",
+    );
   }
 
   return Response.json({ success: true });
