@@ -31,14 +31,21 @@ test("all authenticated roles reach Profile from the account menu and the drawer
   );
 });
 
-test("profile password form validates and updates only the signed-in user", () => {
+test("profile password form verifies the current password before updating", () => {
   const form = read("./ChangePasswordForm.tsx");
 
   assert.match(form, /passwordPolicyError\(password\)/);
   assert.match(form, /PASSWORD_MIN_LENGTH/);
   assert.match(form, /PasswordStrengthMeter/);
   assert.match(form, /password !== confirmation/);
-  assert.match(form, /supabase\.auth\.updateUser\(\{ password \}\)/);
+  assert.match(form, /Current password/);
+  assert.match(form, /autoComplete="current-password"/);
+  assert.match(form, /supabase\.auth\.signInWithPassword/);
+  assert.match(form, /current_password: currentPassword/);
+  assert.match(form, /supabase\.auth\.updateUser/);
+  assert.match(form, /supabase\.auth\.resetPasswordForEmail/);
+  assert.match(form, /intent", "recovery"/);
+  assert.match(form, /Send reset link/);
   assert.doesNotMatch(form, /supabaseAdmin/);
 });
 
@@ -72,7 +79,7 @@ test("organizer profile loads only linked private documents with signed URLs", (
 
   assert.match(source, /\.eq\("owner_id", user\.id\)/);
   assert.match(source, /\.eq\("application_id", application\.application_id\)/);
-  assert.match(source, /\.createSignedUrl\(document\.file_path, 600\)/);
+  assert.match(source, /\.createSignedUrl\(document\.file_path, 3600\)/);
   assert.match(source, /business_license/);
   assert.match(source, /owner_id_proof/);
   assert.match(source, /tax_certificate/);

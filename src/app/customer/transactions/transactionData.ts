@@ -36,11 +36,39 @@ function normalizeType(value: unknown): DisplayType {
   return "other";
 }
 
-export function mapTransactionRows(rows: readonly Row[]): CustomerTransaction[] {
+function amountFromCustomerPerspective(
+  row: Row,
+  type: DisplayType,
+  customerUserId: string,
+) {
+  const rawAmount = Number(row.amount ?? 0);
+  const amount = Number.isFinite(rawAmount) ? Math.abs(rawAmount) : 0;
+
+  if (type === "purchase") return -amount;
+  if (type === "refund") return amount;
+
+  if (type === "resale") {
+    const buyerId = String(row.buyer_id ?? "");
+    const sellerId = String(row.seller_id ?? "");
+
+    if (sellerId === customerUserId) return amount;
+    if (buyerId === customerUserId) return -amount;
+  }
+
+  return rawAmount;
+}
+
+export function mapTransactionRows(
+  rows: readonly Row[],
+  customerUserId: string,
+): CustomerTransaction[] {
   return rows.map((row, index) => {
     const type = normalizeType(row.transaction_type);
-    const rawAmount = Number(row.amount ?? 0);
-    const signedAmount = type === "purchase" ? -Math.abs(rawAmount) : rawAmount;
+    const signedAmount = amountFromCustomerPerspective(
+      row,
+      type,
+      customerUserId,
+    );
     const hash =
       typeof row.transaction_hash === "string" && row.transaction_hash
         ? row.transaction_hash

@@ -53,14 +53,13 @@ export default async function EventsPage() {
 
   return (
     <div
-      className="main"
+      className="main admin-page"
       style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
     >
-      <div className="top-row">
+      <div className="top-row admin-page-heading">
         <div>
-          <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
-            All Events ({events.length})
-          </h1>
+          <span className="admin-eyebrow">Event management</span>
+          <h1>All Events ({events.length})</h1>
           <p
             style={{
               textAlign: "left",

@@ -183,6 +183,11 @@
   box-shadow: 0 0 0 3px rgba(246, 167, 48, 0.1);
 }
 
+.currentPasswordField {
+  grid-column: 1 / -1;
+  width: calc((100% - 14px) / 2);
+}
+
 .passwordStrength {
   grid-column: 1 / -1;
 }
@@ -194,8 +199,35 @@
   border-radius: 8px;
 }
 
+.passwordReset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #2b2b2b;
+}
+
+.passwordReset strong {
+  color: #ededed;
+  font-size: 13px;
+}
+
+.passwordReset p {
+  margin-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.passwordReset button {
+  flex: 0 0 auto;
+  border-radius: 8px;
+}
+
 .formMessage {
   grid-column: 1 / -1;
+  margin-top: 14px;
   padding: 9px 11px;
   border-radius: 7px;
   font-size: 12px;
@@ -287,6 +319,90 @@
   font-size: 12px;
 }
 
+/* Admin profiles use the same surface hierarchy as the admin dashboard. */
+.adminTheme {
+  width: min(1200px, 100%);
+  color: #f0f3f6;
+}
+
+.adminTheme .pageHeading h1 {
+  color: #f7f8fa;
+  font-size: clamp(32px, 4.2vw, 48px);
+  letter-spacing: -0.045em;
+}
+
+.adminTheme .pageHeading p,
+.adminTheme .cardHeading p,
+.adminTheme .heroCopy p,
+.adminTheme .passwordReset p,
+.adminTheme .document > div span,
+.adminTheme .document small,
+.adminTheme .empty,
+.adminTheme .documentUnavailable {
+  color: #8d98a5;
+}
+
+.adminTheme .accountPanel {
+  border-color: #30363d;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent),
+    #161b22;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.16);
+}
+
+.adminTheme .hero,
+.adminTheme .card {
+  border-color: #30363d;
+}
+
+.adminTheme .hero {
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.adminTheme .detailList,
+.adminTheme .detailList > div,
+.adminTheme .detailList > div:nth-child(even),
+.adminTheme .passwordReset,
+.adminTheme .documentList,
+.adminTheme .document {
+  border-color: #2a3037;
+}
+
+.adminTheme .detailList dt {
+  color: #7b8490;
+}
+
+.adminTheme .detailList dd,
+.adminTheme .passwordForm label,
+.adminTheme .passwordReset strong {
+  color: #e6edf3;
+}
+
+.adminTheme .passwordForm input {
+  border-color: #30363d;
+  background: #0d1117;
+  color: #f0f3f6;
+}
+
+.adminTheme .documentIcon {
+  border: 1px solid rgba(246, 167, 48, 0.18);
+  background: rgba(246, 167, 48, 0.08);
+}
+
+.adminTheme .document a {
+  border-color: #30363d;
+  background: #11161c;
+  color: #e6edf3;
+}
+
+.adminTheme .securityNote {
+  color: #697582;
+}
+
+.adminTheme .securityNote strong {
+  color: #aeb7c2;
+}
+
 @media (max-width: 620px) {
   .profilePage {
     padding: 26px 14px 44px;
@@ -324,8 +440,13 @@
 
   .passwordButton,
   .passwordStrength,
-  .formMessage {
+  .formMessage,
+  .currentPasswordField {
     grid-column: auto;
+  }
+
+  .currentPasswordField {
+    width: 100%;
   }
 }
 
@@ -342,6 +463,15 @@
   }
 
   .passwordButton {
+    width: 100%;
+  }
+
+  .passwordReset {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .passwordReset button {
     width: 100%;
   }
 

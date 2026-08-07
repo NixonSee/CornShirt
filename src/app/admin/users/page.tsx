@@ -30,14 +30,13 @@ export default async function UsersPage() {
 
   return (
     <div
-      className="main"
+      className="main admin-page"
       style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
     >
-      <div className="top-row">
+      <div className="top-row admin-page-heading">
         <div>
-          <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
-            Users ({users.length})
-          </h1>
+          <span className="admin-eyebrow">Access control</span>
+          <h1>Users ({users.length})</h1>
           <p
             style={{
               textAlign: "left",

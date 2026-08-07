@@ -66,14 +66,13 @@ export default async function PartnerApplicationsPage() {
 
   return (
     <div
-      className="main"
+      className="main admin-page"
       style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}
     >
-      <div className="top-row">
+      <div className="top-row admin-page-heading">
         <div>
-          <h1 style={{ fontSize: 28, color: "var(--primary)" }}>
-            Partner Applications ({apps.length})
-          </h1>
+          <span className="admin-eyebrow">Partner onboarding</span>
+          <h1>Partner Applications ({apps.length})</h1>
           <p
             style={{
               textAlign: "left",

@@ -378,12 +378,14 @@ p {
   font-weight: 900;
 }
 
-.side-nav {
+.side-nav,
+.admin-side-nav {
   display: grid;
   gap: 10px;
 }
 
-.side-nav a {
+.side-nav a,
+.admin-side-nav a {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -396,13 +398,15 @@ p {
     box-shadow 180ms ease;
 }
 
-.side-nav a.active {
+.side-nav a.active,
+.admin-side-nav a.active {
   background: linear-gradient(135deg, #f6a730, #ffc869);
   color: #14110a;
   box-shadow: 0 4px 18px rgba(246, 167, 48, 0.35);
 }
 
-.side-nav a:not(.active):hover {
+.side-nav a:not(.active):hover,
+.admin-side-nav a:not(.active):hover {
   background: linear-gradient(135deg, rgba(246, 167, 48, 0.3), rgba(246, 167, 48, 0.06));
   color: #f5f5f5;
   transform: translateX(3px);
@@ -13556,10 +13560,300 @@ tr:last-child td {
   }
 }
 
+/* ===== Admin route surfaces - dashboard-aligned control center ===== */
+.admin-shell {
+  --background: #0d1117;
+  --foreground: #f0f3f6;
+  --card: #161b22;
+  --card-foreground: #f0f3f6;
+  --popover: #161b22;
+  --popover-foreground: #f0f3f6;
+  --primary-foreground: #0d1117;
+  --secondary: #21262d;
+  --secondary-foreground: #e6edf3;
+  --muted: #21262d;
+  --muted-foreground: #8d98a5;
+  --border: #30363d;
+  --input: #30363d;
+  --gradient-glow: none;
+  --shadow-glow: none;
+  --shadow-card: 0 18px 42px rgba(0, 0, 0, 0.16);
+  background: #0d1117;
+  color: #f0f3f6;
+}
+
+.admin-shell .admin-content {
+  min-height: calc(100vh - var(--sitenav-h));
+  padding: 0;
+  background: #0d1117;
+}
+
+.admin-shell::before,
+.admin-shell::after,
+.admin-shell .admin-content::before,
+.admin-shell .admin-content::after,
+.admin-shell .admin-page::before,
+.admin-shell .admin-page::after {
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  content: none !important;
+}
+
+.admin-shell .admin-page {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  padding: clamp(30px, 4vw, 52px) clamp(18px, 3.2vw, 38px)
+    clamp(56px, 7vw, 84px);
+  color: #f0f3f6;
+}
+
+.admin-shell .admin-page-heading {
+  align-items: flex-end;
+  margin-bottom: 28px;
+}
+
+.admin-shell .admin-page-heading h1 {
+  margin: 0;
+  padding: 0;
+  color: #f7f8fa;
+  font-size: clamp(32px, 4.2vw, 48px);
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.admin-shell .admin-page-heading p {
+  max-width: 680px;
+  margin-top: 10px !important;
+  color: #9da7b3 !important;
+  font-size: 14px !important;
+  line-height: 1.65;
+}
+
+.admin-shell :is(.panel, .metric, .table-card, .state-card) {
+  border-color: #30363d;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent),
+    #161b22;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.16);
+}
+
+.admin-shell .table-card {
+  border-radius: 12px;
+}
+
+.admin-shell .table-card th {
+  border-bottom-color: #30363d;
+  background: #21262d;
+  color: #aeb7c2 !important;
+  font-size: 11px !important;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-shell .table-card td {
+  border-bottom-color: #2a3037;
+  color: #c9d1d9;
+}
+
+.admin-shell .table-card tbody tr {
+  transition: background 150ms ease;
+}
+
+.admin-shell .table-card tbody tr:hover {
+  background: rgba(246, 167, 48, 0.035);
+}
+
+.admin-shell :is(.search-box input, .dropdown-trigger, .filter-select) {
+  border-color: #30363d;
+  background: #161b22;
+  color: #e6edf3;
+}
+
+.admin-shell .dropdown-menu {
+  border-color: #30363d;
+  background: #161b22;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+.admin-shell .dropdown-item {
+  color: #c9d1d9;
+}
+
+.admin-shell :is(.dropdown-item:hover, .dropdown-item.selected) {
+  background: rgba(246, 167, 48, 0.14);
+  color: #f6a730;
+}
+
+.admin-shell .button-outline,
+.admin-shell .button-secondary {
+  border-color: #30363d;
+  background: #161b22;
+  color: #e6edf3;
+  box-shadow: none;
+}
+
+.admin-shell :is(.button-outline, .button-secondary):hover {
+  border-color: rgba(246, 167, 48, 0.55);
+  background: #21262d;
+  color: #f6a730;
+}
+
+.admin-shell .pagination-page {
+  border-color: #30363d;
+  background: #161b22;
+  color: #c9d1d9;
+}
+
+.admin-shell .pagination-page.active,
+.admin-shell .pagination-page:hover:not(:disabled) {
+  border-color: #f6a730;
+  background: #f6a730;
+  color: #0d1117;
+}
+
+.admin-shell .pagination-info {
+  color: #7b8490;
+}
+
+.admin-shell .state-page {
+  min-height: min(680px, calc(100vh - var(--sitenav-h)));
+  background: #0d1117;
+}
+
+.admin-shell .modal-overlay {
+  background: rgba(3, 6, 10, 0.8);
+}
+
+.admin-shell .modal-card,
+.admin-shell .cancel-event-modal {
+  border-color: #30363d;
+  background: #161b22;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6);
+}
+
+.admin-shell .modal-card :is(input, textarea, select) {
+  border-color: #30363d;
+  background: #0d1117;
+  color: #f0f3f6;
+}
+
+.admin-shell .application-detail-hero {
+  border-color: #30363d;
+  background: #11161c;
+}
+
+.admin-shell :is(.application-detail-card, .application-detail-documents) {
+  border-color: #30363d;
+  background: #11161c;
+}
+
+.admin-shell .application-detail-card-title {
+  border-bottom-color: #2a3037;
+}
+
+.admin-shell :is(
+    .application-detail-card-title > span,
+    .application-detail-section-heading > span,
+    .application-detail-document-icon
+  ) {
+  background: rgba(246, 167, 48, 0.09);
+}
+
+.admin-shell .application-detail-document {
+  border-color: #30363d;
+  background: #0d1117;
+}
+
+.admin-shell .application-detail-card dd,
+.admin-shell .application-detail-description {
+  color: #d8dee6;
+}
+
+.admin-shell .application-detail-download:hover {
+  background: rgba(246, 167, 48, 0.1);
+}
+
+.admin-shell .admin-event-detail-heading {
+  position: relative;
+  min-height: 148px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  padding: 26px;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent),
+    #161b22;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.16);
+}
+
+.admin-shell .admin-event-detail-heading h1 {
+  max-width: 720px;
+  margin: 0;
+  padding: 0;
+  color: #f7f8fa !important;
+  font-size: clamp(30px, 4vw, 44px) !important;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-shadow: none;
+}
+
+.admin-shell .admin-event-detail-heading h1::before {
+  display: block;
+  margin-bottom: 10px;
+  color: #f6a730;
+  content: "Event overview";
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.admin-shell .admin-event-detail-heading p {
+  margin-top: 10px;
+  color: #9da7b3 !important;
+  font-size: 13px !important;
+  line-height: 1.5;
+}
+
+.admin-shell .event-metric-card {
+  border-color: #30363d;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent),
+    #161b22;
+}
+
+@media (max-width: 760px) {
+  .admin-shell .admin-page {
+    padding-top: 24px;
+  }
+
+  .admin-shell .admin-page-heading,
+  .admin-shell .admin-event-detail-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-shell .admin-event-detail-heading {
+    padding: 22px;
+  }
+
+  .admin-shell .admin-event-status-badge {
+    position: static;
+    width: fit-content;
+    order: -1;
+  }
+}
+
 /* Keep the approved admin surface above legacy route-specific dashboard rules. */
 html:has(body .admin-shell),
 body:has(.admin-shell) {
   background: #0d1117 !important;
+  background-image: none !important;
 }
 
 .app-shell.admin-shell {
@@ -13586,6 +13880,21 @@ body:has(.admin-shell) {
   width: 100%;
   max-width: none;
   background: transparent !important;
+}
+
+.app-shell.admin-shell .admin-summary-card::after {
+  display: none;
+  background: none;
+  content: none;
+}
+
+.app-shell.admin-shell .admin-primary-action,
+.app-shell.admin-shell .admin-primary-action:hover {
+  box-shadow: none;
+}
+
+.app-shell.admin-shell .app-topbar.sitenav .sitenav-pill-link.is-active {
+  box-shadow: none;
 }
 
 .app-shell.admin-shell .admin-review-card .table-card {

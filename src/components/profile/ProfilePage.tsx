@@ -34,6 +34,7 @@ interface ProfilePageProps {
   showSecurity?: boolean;
   subtitle?: string;
   headerAction?: ReactNode;
+  theme?: "default" | "admin";
 }
 
 function initials(name: string) {
@@ -63,6 +64,7 @@ export function ProfilePage({
   showSecurity = true,
   subtitle,
   headerAction,
+  theme = "default",
 }: ProfilePageProps) {
   const normalizedStatus = status.toLowerCase();
   const statusClass =
@@ -73,7 +75,9 @@ export function ProfilePage({
         : "";
 
   return (
-    <main className={styles.profilePage}>
+    <main
+      className={`${styles.profilePage} ${theme === "admin" ? styles.adminTheme : ""}`.trim()}
+    >
       <header className={styles.pageHeading} style={headerAction ? { display: "flex", alignItems: "center", justifyContent: "space-between" } : undefined}>
         <div>
           <h1>Profile</h1>
@@ -165,7 +169,7 @@ export function ProfilePage({
 
           {showSecurity && (
             <>
-              <ChangePasswordForm />
+              <ChangePasswordForm email={email} />
               <section className={styles.securityNote}>
                 <div>
                   <strong>Keep your account secure</strong>

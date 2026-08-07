@@ -250,21 +250,12 @@ export default function SiteNav({
         </div>
 
         {/*
-          LOAD-BEARING LEGACY CONTRACT -- DO NOT CHANGE WITHOUT READING THIS.
-
-          507 rules in src/app/globals.css (lines 7463-11553) use
-              .app-shell:has(.side-nav a[href="..."].active) ...
-          as a route-detection proxy to scope per-page styling for admin,
-          organizer and customer. Renaming `.side-nav`, dropping the `.active`
-          class, unmounting this <aside> when it is closed, or changing any href
-          in navConfig.ts will silently destroy that styling with no test
-          failure to warn you.
-
-          This block must stay mounted at every breakpoint. Hiding it with
-          `display: none` is safe -- `:has()` matches DOM structure, not
-          visibility -- but removing it from the DOM is not.
+          Organizer and customer routes retain the legacy `.side-nav` route
+          marker used by their page-specific responsive CSS. Admin routes use
+          the unified dashboard theme and intentionally opt out of those old
+          amber route themes through the separate `.admin-side-nav` class.
         */}
-        <nav className="side-nav">
+        <nav className={role === "admin" ? "admin-side-nav" : "side-nav"}>
           {items.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
