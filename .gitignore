@@ -39,6 +39,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 .env*.local
+!.env.example
 
 # vercel
 .vercel
@@ -52,3 +53,21 @@ opencode.json
 
 # Local isolated feature worktrees
 .worktrees/
+
+# Supabase workflow migrations required by application tests and demo setup
+/scripts/sql/*
+!/scripts/sql/create-custodial-wallets.sql
+!/scripts/sql/2026-07-23-stripe-ticket-marketplace-workflows.sql
+!/scripts/sql/2026-07-23-repair-resale-finalization.sql
+!/scripts/sql/2026-08-03-three-hour-event-lifecycle.sql
+!/scripts/sql/2026-08-04-transactional-email-deliveries.sql
+!/scripts/sql/2026-08-04-transactional-email-event-cancellations.sql
+!/scripts/sql/2026-08-07-event-notification-emails.sql
+
+# Local internal and historical documentation
+/docs/AGENTS.md
+/docs/CLAUDE.md
+/docs/CODEX.md
+/docs/COMPONENTS.md
+/docs/DESIGN.md
+/docs/UNFINISHED_FEATURES_TODO.md

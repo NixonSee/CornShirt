@@ -1,10 +1,13 @@
 import type { Address } from "viem";
 
+import { isEventLive } from "@/lib/eventLifecycle";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { fundCustomerGas } from "@/lib/nft/fundGas";
 import { getTicketOwner } from "@/lib/nft/getOwner";
 import { transferTicket } from "@/lib/nft/transfer";
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { notifyDirectTransferConfirmed } from "@/lib/ticketNotifications";
 import { loadManagedWalletSigner } from "@/lib/walletAccess";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,6 +18,7 @@ export async function POST(
 ) {
   const auth = await authorizeApiRole(["customer", "user"]);
   if (!auth.ok) return auth.response;
+  await synchronizeFinishedEvents();
 
   const body = (await request.json().catch(() => null)) as {
     recipientEmail?: unknown;
@@ -112,7 +116,7 @@ export async function POST(
   const [eventResult, typeResult, listingResult] = await Promise.all([
     supabaseAdmin
       .from("events")
-      .select("status")
+      .select("status, event_date")
       .eq("event_id", ticket.event_id)
       .single(),
     supabaseAdmin
@@ -129,7 +133,8 @@ export async function POST(
   ]);
 
   if (
-    eventResult.data?.status !== "active" ||
+    !eventResult.data ||
+    !isEventLive(eventResult.data) ||
     typeResult.data?.transfer_allowed !== true ||
     listingResult.data
   ) {
@@ -173,7 +178,18 @@ export async function POST(
 
   let operationId = String(existing.data?.operation_id ?? "");
   if (existing.data?.state === "completed") {
-    return Response.json({ success: true, operationId });
+    const transactionHash = String(existing.data.asset_transaction_hash ?? "");
+    const emailsSent = transactionHash
+      ? await notifyDirectTransferConfirmed({
+          operationId,
+          senderUserId: senderId,
+          recipientUserId: recipient.user_id,
+          eventId: ticket.event_id,
+          ticketTypeId: ticket.ticket_type_id,
+          transactionHash,
+        })
+      : false;
+    return Response.json({ success: true, operationId, emailsSent });
   }
 
   if (
@@ -186,7 +202,15 @@ export async function POST(
       p_asset_transaction_hash: existing.data.asset_transaction_hash,
     });
     if (!finalized.error) {
-      return Response.json({ success: true, operationId });
+      const emailsSent = await notifyDirectTransferConfirmed({
+        operationId,
+        senderUserId: senderId,
+        recipientUserId: recipient.user_id,
+        eventId: ticket.event_id,
+        ticketTypeId: ticket.ticket_type_id,
+        transactionHash: existing.data.asset_transaction_hash,
+      });
+      return Response.json({ success: true, operationId, emailsSent });
     }
   }
 
@@ -260,7 +284,16 @@ export async function POST(
     });
     if (finalized.error) throw new Error("Transfer finalization failed.");
 
-    return Response.json({ success: true, operationId });
+    const emailsSent = await notifyDirectTransferConfirmed({
+      operationId,
+      senderUserId: senderId,
+      recipientUserId: recipient.user_id,
+      eventId: ticket.event_id,
+      ticketTypeId: ticket.ticket_type_id,
+      transactionHash: result.transactionHash,
+    });
+
+    return Response.json({ success: true, operationId, emailsSent });
   } catch (error) {
     console.error("Direct ticket transfer failed", {
       operationId,

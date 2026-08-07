@@ -22,11 +22,14 @@ const styles = readFileSync(
   "utf8",
 );
 
-test("pending admin event details do not expose cancellation or review actions", () => {
-  assert.match(detailPage, /event\.status === "active"/);
-  assert.doesNotMatch(
+test("pending details expose review controls while cancellation stays active-only", () => {
+  assert.match(
     detailPage,
-    /event\.status === "pending".*CancelEventButton/s,
+    /event\.status === "pending"\s*&&\s*\(\s*<EventReviewButtons/,
+  );
+  assert.match(
+    detailPage,
+    /event\.status === "active"\s*&&\s*\(\s*<CancelEventButton/,
   );
   assert.doesNotMatch(detailPage, /\/approve|\/reject/);
 });
@@ -40,6 +43,10 @@ test("admin cancellation is active-only while organizer withdrawal stays unchang
     organizerCancelRoute,
     /CANCELLABLE_STATUSES = new Set\(\["pending", "active"\]\)/,
   );
+  assert.match(adminCancelRoute, /notifyEventCancellation/);
+  assert.match(organizerCancelRoute, /notifyEventCancellation/);
+  assert.match(adminCancelRoute, /emailNotifications/);
+  assert.match(organizerCancelRoute, /emailNotifications/);
 });
 
 test("admin event banners use a dedicated edge-to-edge dark frame", () => {

@@ -4,7 +4,7 @@ This document separates routes that exist now from planned Stripe and Ticket NFT
 
 ## Public Routes
 
-- `/` - Browse active events.
+- `/` - Browse active events that have not reached the end of their three-hour live window.
 - `/login` - Log in.
 - `/register` - Create an account.
 - `/events/[eventId]` - View public event details and ticket types priced in MYR.
@@ -77,6 +77,9 @@ Phase 1 adds the local Hardhat network, `CornShirtTicket`, deployment records, c
 - `GET /api/customer/resales/[operationId]` - Returns safe resale payment, NFT delivery, recovery, and completion status.
 
 Stripe Connect is not used. Seller proceeds are simulated MYR accounting records in Supabase and are not real payouts.
+Configured deployments use `CornShirtMarketplace` approval-based listings.
+The seller retains the NFT while it is listed; the verified Stripe webhook
+authorizes the platform settlement wallet to transfer it before the event ends.
 
 ### Cancellation and Refund
 

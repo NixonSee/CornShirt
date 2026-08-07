@@ -14,6 +14,10 @@ const applySource = readFileSync(
   new URL("../apply/page.tsx", import.meta.url),
   "utf8",
 );
+const partnerApplyNavSource = readFileSync(
+  new URL("../../../components/nav/PartnerApplyNav.tsx", import.meta.url),
+  "utf8",
+);
 // The public navbar is now the shared SiteNav; its links live in navConfig.ts
 // and VisitorNav.tsx is the adapter that supplies the public defaults.
 const navUrl = new URL("../../../components/nav/SiteNav.tsx", import.meta.url);
@@ -42,7 +46,7 @@ test("shared visitor navigation exposes the public actions", () => {
   );
 });
 
-test("visitor surfaces share VisitorNav without changing the application header", () => {
+test("visitor surfaces share VisitorNav and the application keeps its focused header", () => {
   assert.match(
     visitorSource,
     /import VisitorNav from "@\/components\/VisitorNav"/,
@@ -55,7 +59,15 @@ test("visitor surfaces share VisitorNav without changing the application header"
     /const loginHref = withEventReturnTo\("\/login", returnPath\)/,
   );
   assert.doesNotMatch(applySource, /VisitorNav/);
-  assert.match(applySource, /Back to events/);
+  assert.match(applySource, /<PartnerApplyNav\s*\/>/);
+  assert.match(partnerApplyNavSource, /Back to events/);
+  assert.match(partnerApplyNavSource, /useScrollDirection/);
+  assert.match(partnerApplyNavSource, /hidden \? "is-hidden"/);
+  assert.doesNotMatch(partnerApplyNavSource, /navConfig|sitenav-center/);
+  assert.match(
+    styles,
+    /\.app-topbar\.sitenav\.partner-apply-nav\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/,
+  );
 });
 
 test("about page uses the Editorial Trust content architecture", () => {

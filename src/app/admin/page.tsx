@@ -6,11 +6,13 @@ import {
   buildAdminActivitySeries,
   type AdminTransactionRow,
 } from "@/lib/adminDashboard";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { requireRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export default async function AdminDashboardPage() {
   await requireRole(["admin"]);
+  await synchronizeFinishedEvents();
 
   const activityStart = new Date();
   activityStart.setUTCDate(

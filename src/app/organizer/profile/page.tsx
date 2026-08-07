@@ -44,7 +44,7 @@ export default async function OrganizerProfilePage() {
     );
   }
 
-  const email = profile.email || user.email || "";
+  const email = user.email || profile.email || "";
   const { data: application } = email
     ? await supabaseAdmin
         .from("partner_applications")
@@ -74,7 +74,7 @@ export default async function OrganizerProfilePage() {
     (documentRows ?? []).map(async (document) => {
       const { data: signed } = await supabaseAdmin.storage
         .from(DOCUMENT_BUCKET)
-        .createSignedUrl(document.file_path, 600);
+        .createSignedUrl(document.file_path, 3600);
 
       return {
         id: document.document_id,

@@ -485,6 +485,8 @@ Use Customer A's Zone D ticket. Do not mark this ticket as used.
 Expected:
 
 - The cancelled event can no longer sell tickets.
+- Every current NFT ticket holder receives one cancellation email with a link
+  to `/customer/tickets` for requesting the refund.
 - Eligible tickets expose the refund action.
 - The refund is made against the latest paid acquisition.
 - Stripe creates one refund.

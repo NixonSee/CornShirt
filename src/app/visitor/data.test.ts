@@ -102,12 +102,16 @@ test("shared discovery loads active events once and passes them to both views", 
   assert.match(discoverySource, /fetch\("\/api\/public\/events"/);
   assert.match(discoverySource, /<HeroCarousel events=\{events\}/);
   assert.match(discoverySource, /<EventBrowser events=\{events\}/);
+  assert.match(discoverySource, /className="event-discovery-surface"/);
   assert.match(discoverySource, /Loading live events/);
   assert.match(discoverySource, /Unable to load live events/);
   assert.doesNotMatch(carouselSource, /import \{ events \}/);
   assert.doesNotMatch(browserSource, /categories, events/);
   assert.match(carouselSource, /events: readonly Event\[\]/);
   assert.match(browserSource, /events: readonly Event\[\]/);
+  assert.doesNotMatch(carouselSource, /Featured live event/);
+  assert.match(carouselSource, /activeEvent\.date/);
+  assert.match(carouselSource, /activeEvent\.venue/);
 });
 
 test("public API and details query only active Supabase events", () => {
@@ -146,20 +150,23 @@ test("visitor keeps the shared public-navbar dimensions", () => {
   assert.match(navSource, /visitor-nav-brand/);
   assert.match(navSource, /app-topbar-actions sitenav-actions/);
   assert.match(navSource, /visitor-nav-actions/);
-  assert.match(navSource, /width=\{190\}[\s\S]*height=\{50\}/);
+  assert.match(navSource, /CornShirt_Hub-removedbg\.png/);
+  assert.match(navSource, /width=\{190\}[\s\S]*height=\{60\}/);
 });
 
-test("SiteNav preserves the globals.css route-scoping contract", () => {
+test("SiteNav preserves non-admin route scoping while admin uses its unified theme", () => {
   const navSource = readFileSync(
     new URL("../../components/nav/SiteNav.tsx", import.meta.url),
     "utf8",
   );
   const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
 
-  // ~500 rules scope per-page styling via
-  // `.app-shell:has(.side-nav a[href="..."].active)`. If the drawer stops
-  // rendering that markup, admin/organizer/customer styling dies silently.
-  assert.match(navSource, /className="side-nav"/);
+  // Organizer and customer pages retain legacy route-scoped styling, while
+  // admin intentionally avoids the old amber page themes.
+  assert.match(
+    navSource,
+    /role === "admin" \? "admin-side-nav" : "side-nav"/,
+  );
   assert.match(navSource, /isActive\(href\) \? "active" : undefined/);
   // The drawer must stay mounted at every breakpoint, never conditionally rendered.
   assert.doesNotMatch(navSource, /open &&\s*\(?\s*<aside/);
@@ -173,7 +180,7 @@ test("SiteNav preserves the globals.css route-scoping contract", () => {
 test("event section retains its compact dark responsive treatment", () => {
   const styles = readFileSync(new URL("../globals.css", import.meta.url), "utf8");
 
-  assert.match(styles, /\.events-section\s*\{[\s\S]*?background:\s*#000000/);
+  assert.match(styles, /\.events-section\s*\{[\s\S]*?background:\s*#0d1117/);
   assert.match(
     styles,
     /\.event-controls\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:/,

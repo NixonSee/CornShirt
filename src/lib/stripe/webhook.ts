@@ -3,10 +3,17 @@ import "server-only";
 import type Stripe from "stripe";
 import type { Address } from "viem";
 
+import { isEventLive } from "@/lib/eventLifecycle";
 import { mintTicket, recoverMintResult } from "@/lib/nft/mint";
+import { checkoutCustomerEmail } from "@/lib/stripe/customerEmail";
+import { finalizeRefundAssetByStripeRefundId } from "@/lib/stripe/refund";
 import { finalizeResaleCheckout } from "@/lib/stripe/resale";
 import { getStripe } from "@/lib/stripe/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import {
+  notifyPurchaseConfirmed,
+  notifyStripeRefundSucceeded,
+} from "@/lib/ticketNotifications";
 
 export type FinalizeResult =
   | { ok: true; skipped?: boolean; operationId?: string }
@@ -17,6 +24,8 @@ type TicketOperation = {
   operation_kind: "primary_purchase" | "resale_purchase";
   state: string;
   actor_user_id: string;
+  event_id: string;
+  ticket_type_id: string | null;
   amount_sen: number;
   currency: string;
   wallet_address: string;
@@ -50,12 +59,34 @@ async function loadOperation(
   const result = await supabaseAdmin
     .from("ticket_operations")
     .select(
-      "operation_id, operation_kind, state, actor_user_id, amount_sen, currency, wallet_address, stripe_checkout_session_id, asset_transaction_hash, token_id, retry_count",
+      "operation_id, operation_kind, state, actor_user_id, event_id, ticket_type_id, amount_sen, currency, wallet_address, stripe_checkout_session_id, asset_transaction_hash, token_id, retry_count",
     )
     .eq("operation_id", operationId)
     .maybeSingle();
 
   return result.error ? null : (result.data as TicketOperation | null);
+}
+
+async function sendPrimaryPurchaseEmail(
+  operation: TicketOperation,
+  session: Stripe.Checkout.Session,
+  tokenId: number | null,
+): Promise<FinalizeResult> {
+  const delivered = await notifyPurchaseConfirmed({
+    operationId: operation.operation_id,
+    buyerEmail: checkoutCustomerEmail(session),
+    buyerUserId: operation.actor_user_id,
+    eventId: operation.event_id,
+    ticketTypeId: operation.ticket_type_id,
+    amountSen: Number(operation.amount_sen),
+    currency: operation.currency,
+    checkoutSessionId: session.id,
+    tokenId,
+  });
+
+  return delivered
+    ? { ok: true, operationId: operation.operation_id }
+    : failed("Purchase completed but its email is pending retry.", "email");
 }
 
 function validatePaidSession(
@@ -101,7 +132,7 @@ export async function finalizeTicketCheckout(
     return failed("Purchase operation was not found.", "operation_not_found");
   }
   if (operation.state === "completed") {
-    return { ok: true, skipped: true, operationId };
+    return sendPrimaryPurchaseEmail(operation, session, operation.token_id);
   }
 
   const validation = validatePaidSession(session, operation);
@@ -129,6 +160,35 @@ export async function finalizeTicketCheckout(
 
   if (paymentUpdate.error || !paymentUpdate.data) {
     return failed("Payment state could not be recorded.", "storage");
+  }
+
+  const eventResult = await supabaseAdmin
+    .from("events")
+    .select("status, event_date")
+    .eq("event_id", operation.event_id)
+    .maybeSingle();
+  if (eventResult.error || !eventResult.data) {
+    return failed("Purchase event could not be verified.", "storage");
+  }
+  if (!isEventLive(eventResult.data)) {
+    if (!paymentIntent) {
+      return failed("Ended-event payment cannot be refunded.", "refund_failed");
+    }
+    const refund = await getStripe().refunds.create(
+      { payment_intent: paymentIntent },
+      { idempotencyKey: `primary_event_ended_refund_${operationId}` },
+    );
+    if (refund.status === "failed") {
+      return failed("Ended-event payment refund failed.", "refund_failed");
+    }
+    const marked = await supabaseAdmin.rpc("mark_primary_refunded", {
+      p_operation_id: operationId,
+      p_refund_id: refund.id,
+      p_error_category: "event_ended",
+    });
+    return marked.error
+      ? failed("Ended-event refund state could not be recorded.", "storage")
+      : { ok: true, operationId };
   }
 
   let mintResult;
@@ -216,7 +276,11 @@ export async function finalizeTicketCheckout(
     return failed("Ticket finalization is pending retry.", "storage");
   }
 
-  return { ok: true, operationId };
+  return sendPrimaryPurchaseEmail(
+    operation,
+    session,
+    Number(mintResult.tokenId),
+  );
 }
 
 async function claimStripeEvent(event: Stripe.Event): Promise<boolean> {
@@ -241,8 +305,34 @@ async function finishStripeEvent(
 export async function handleStripeWebhookEvent(
   event: Stripe.Event,
 ): Promise<FinalizeResult> {
-  if (event.type !== "checkout.session.completed") {
+  const isRefundEvent =
+    event.type === "refund.created" || event.type === "refund.updated";
+  if (event.type !== "checkout.session.completed" && !isRefundEvent) {
     return { ok: true, skipped: true };
+  }
+
+  if (isRefundEvent) {
+    const refund = event.data.object as Stripe.Refund;
+    if (refund.status !== "succeeded") {
+      return { ok: true, skipped: true };
+    }
+
+    const claimed = await claimStripeEvent(event);
+    if (!claimed) return { ok: true, skipped: true };
+    const assetResult = await finalizeRefundAssetByStripeRefundId(refund.id);
+    const delivered = assetResult.ok
+      ? await notifyStripeRefundSucceeded(refund)
+      : false;
+    const result: FinalizeResult = assetResult.ok && delivered
+      ? { ok: true }
+      : failed(
+          assetResult.ok
+            ? "Refund succeeded but its email is pending retry."
+            : assetResult.error,
+          assetResult.ok ? "email" : assetResult.category,
+        );
+    await finishStripeEvent(event.id, result);
+    return result;
   }
 
   const claimed = await claimStripeEvent(event);

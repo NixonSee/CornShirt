@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import type { Event } from "@/app/visitor/data";
 import { Button } from "@/components/common";
+import { getEventEndTime } from "@/lib/eventLifecycle";
 
 import EventBrowser from "./EventBrowser";
 import HeroCarousel from "./HeroCarousel";
@@ -60,6 +61,24 @@ export default function EventDiscovery({
     return () => controller.abort();
   }, [requestVersion]);
 
+  useEffect(() => {
+    const now = Date.now();
+    const nextEnding = events
+      .map((event) => getEventEndTime(event.dateTime)?.getTime() ?? 0)
+      .filter((ending) => ending > now)
+      .sort((left, right) => left - right)[0];
+
+    if (!nextEnding) return;
+
+    const maximumBrowserTimeout = 2_147_483_647;
+    const timer = window.setTimeout(
+      () => setRequestVersion((version) => version + 1),
+      Math.min(nextEnding - now + 100, maximumBrowserTimeout),
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [events]);
+
   if (isLoading) {
     return (
       <section className="state-page" aria-live="polite">
@@ -85,9 +104,9 @@ export default function EventDiscovery({
   }
 
   return (
-    <>
+    <div className="event-discovery-surface">
       <HeroCarousel events={events} detailBasePath={detailBasePath} />
       <EventBrowser events={events} detailBasePath={detailBasePath} />
-    </>
+    </div>
   );
 }

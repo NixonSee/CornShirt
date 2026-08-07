@@ -52,6 +52,9 @@ test("resale checkout separates NFT failure from database reconciliation", () =>
   assert.match(route, /authorizeApiRole\(\["customer", "user"\]\)/);
   assert.match(resale, /reserve_resale_purchase/);
   assert.match(resale, /currency:\s*"myr"/);
+  assert.match(resale, /customer_email:\s*input\.customerEmail/);
+  assert.match(resale, /link:\s*\{\s*display:\s*"never"\s*\}/);
+  assert.match(route, /auth\.identity\.user\.email/);
   assert.match(resale, /getTicketOwner/);
   assert.match(resale, /transferTicket/);
   assert.match(resale, /finalize_resale_purchase/);
@@ -60,6 +63,25 @@ test("resale checkout separates NFT failure from database reconciliation", () =>
   assert.match(resale, /shouldAutoRefundResale/);
   assert.match(resale, /resale_delivery_refund_/);
   assert.match(resale, /idempotencyKey/);
+  assert.match(resale, /settleContractListing/);
+  assert.match(resale, /contract_listing_reference/);
+});
+
+test("three-hour lifecycle expires admission without burning collectible NFTs", () => {
+  const sql = source(
+    "../../../scripts/sql/2026-08-03-three-hour-event-lifecycle.sql",
+  );
+  const verify = source("../../app/api/organizer/tickets/verify/route.ts");
+  const contract = source(
+    "../../../blockchain/contracts/CornShirtMarketplace.sol",
+  );
+
+  assert.match(sql, /event_date \+ interval '3 hours' <= now\(\)/i);
+  assert.match(sql, /set status = 'completed'/i);
+  assert.match(sql, /set status = 'expired'/i);
+  assert.match(verify, /isEventLive\(event\)/);
+  assert.match(contract, /require\(block\.timestamp < listing\.expiresAt/);
+  assert.doesNotMatch(sql, /burnRefundedTicket/i);
 });
 
 test("resale repair migration supports purchased listings and resale records", () => {
@@ -87,5 +109,56 @@ test("webhook claims events and validates authoritative payment fields", () => {
   assert.match(webhook, /operation\.currency/);
   assert.match(webhook, /recoverMintResult/);
   assert.match(webhook, /primary_delivery_refund_/);
+  assert.match(webhook, /notifyPurchaseConfirmed/);
+  assert.match(webhook, /refund\.created/);
+  assert.match(webhook, /refund\.updated/);
+  assert.match(webhook, /notifyStripeRefundSucceeded/);
   assert.match(webhook, /finish_stripe_webhook/);
+});
+
+test("confirmed ticket workflows send idempotent transactional emails", () => {
+  const email = source("../transactionalEmail.ts");
+  const notifications = source("../ticketNotifications.ts");
+  const transfer = source(
+    "../../app/api/customer/tickets/[ticketId]/transfer/route.ts",
+  );
+  const refund = source("../../app/api/customer/refunds/claim/route.ts");
+  const refundService = source("./refund.ts");
+  const resale = source("./resale.ts");
+  const ui = source("../../app/customer/tickets/TicketList.tsx");
+  const sql = source(
+    "../../../scripts/sql/2026-08-04-transactional-email-deliveries.sql",
+  );
+  const cancellationSql = source(
+    "../../../scripts/sql/2026-08-04-transactional-email-event-cancellations.sql",
+  );
+
+  assert.match(email, /claim_transactional_email/);
+  assert.match(email, /finish_transactional_email/);
+  assert.match(email, /GMAIL_APP_PASSWORD/);
+  assert.match(notifications, /checkoutCustomerEmail|buyerEmail/);
+  assert.match(notifications, /notifyPurchaseConfirmed/);
+  assert.match(notifications, /notifyRefundConfirmed/);
+  assert.match(transfer, /notifyDirectTransferConfirmed/);
+  assert.match(resale, /notifyResaleConfirmed/);
+  assert.match(refund, /resolveStripePaymentEmail/);
+  assert.match(refund, /refundStatus/);
+  assert.match(refund, /recipientEmail/);
+  assert.match(refund, /confirmation\.refundStatus !== "succeeded"/);
+  assert.match(refund, /finalizeTicketRefundAsset/);
+  assert.match(refundService, /finalize_ticket_refund/);
+  assert.match(refundService, /finalizeRefundAssetByStripeRefundId/);
+  assert.match(refundService, /reconcileRefundCompletion/);
+  assert.match(refundService, /current\?\.state === "completed"/);
+  assert.match(refundService, /safe_error_category: null/);
+  assert.match(ui, /Stripe refund successful/);
+  assert.match(ui, /Confirmation email sent/);
+  assert.match(sql, /transactional_email_deliveries/);
+  assert.match(sql, /notification_key text primary key/);
+  assert.match(sql, /enable row level security/);
+  assert.match(sql, /revoke all .* anon, authenticated/is);
+  assert.match(cancellationSql, /event_cancelled/);
+  assert.match(cancellationSql, /alter column operation_id drop not null/);
+  assert.match(notifications, /notifyEventCancellation/);
+  assert.match(notifications, /Open My Tickets & request refund/);
 });

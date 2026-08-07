@@ -25,7 +25,7 @@ dotenv.config({
 });
 
 const rpcUrl = process.env.SEPOLIA_RPC_URL?.trim();
-const rawPrivateKey = process.env.SEPOLIA_PRIVATE_KEY?.trim();
+const rawPrivateKey = process.env.PLATFORM_CONTRACT_PRIVATE_KEY?.trim();
 const checkOnly = process.argv.includes("--check");
 
 if (!rpcUrl) {
@@ -44,18 +44,8 @@ if (!["http:", "https:"].includes(parsedRpcUrl.protocol)) {
   throw new Error("SEPOLIA_RPC_URL must use HTTP or HTTPS.");
 }
 
-if (
-  /YOUR[_-]?(ALCHEMY[_-]?)?API[_-]?KEY|REPLACE[_-]?ME|PLACEHOLDER/i.test(
-    parsedRpcUrl.href,
-  )
-) {
-  throw new Error(
-    "SEPOLIA_RPC_URL still contains a placeholder. Copy the complete Sepolia HTTP endpoint from your Alchemy app's Endpoints page.",
-  );
-}
-
 if (!rawPrivateKey) {
-  throw new Error("SEPOLIA_PRIVATE_KEY is missing from .env.local");
+  throw new Error("PLATFORM_CONTRACT_PRIVATE_KEY is missing from .env.local");
 }
 
 // MetaMask may export the key without 0x.
@@ -65,7 +55,7 @@ const deployerKey = rawPrivateKey.startsWith("0x")
 
 if (!/^0x[a-fA-F0-9]{64}$/.test(deployerKey)) {
   throw new Error(
-    "SEPOLIA_PRIVATE_KEY must contain exactly 64 hexadecimal characters.",
+    "PLATFORM_CONTRACT_PRIVATE_KEY must contain exactly 64 hexadecimal characters.",
   );
 }
 
@@ -91,15 +81,7 @@ async function main() {
     balance = await publicClient.getBalance({
       address: deployerAccount.address,
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "";
-
-    if (/authenticated|unauthorized|forbidden|api key|status: 401/i.test(message)) {
-      throw new Error(
-        "Sepolia RPC authentication failed. Copy the complete Sepolia HTTP endpoint from your Alchemy app's Endpoints page into SEPOLIA_RPC_URL.",
-      );
-    }
-
+  } catch {
     throw new Error(
       "Could not connect to Sepolia through SEPOLIA_RPC_URL. Verify the endpoint and your internet connection.",
     );
@@ -116,16 +98,16 @@ async function main() {
   console.log("Sepolia ETH balance:", formatEther(balance));
 
   if (checkOnly) {
-    console.log("\nOK: RPC authentication, Sepolia network, and private key format are valid.");
+    console.log("\nOK: Sepolia RPC, chain ID, and private key format are valid.");
     if (balance === 0n) {
-      console.log("Warning: this wallet needs Sepolia ETH before deployment.");
+      console.log("Warning: this account needs Sepolia ETH before deployment.");
     }
     return;
   }
 
   if (balance === 0n) {
     throw new Error(
-      "The deployment wallet has no Sepolia ETH for deployment gas.",
+      "The deployment account has no Sepolia ETH for deployment gas.",
     );
   }
 
@@ -224,7 +206,71 @@ async function main() {
     );
   }
 
-  // Update only the deployed contract address in .env.local.
+  const marketplaceArtifactPath = path.resolve(
+    __dirname,
+    "..",
+    "artifacts",
+    "contracts",
+    "CornShirtMarketplace.sol",
+    "CornShirtMarketplace.json",
+  );
+
+  if (!fs.existsSync(marketplaceArtifactPath)) {
+    throw new Error(
+      `Contract artifact was not found at ${marketplaceArtifactPath}. Run "npx hardhat compile" first.`,
+    );
+  }
+
+  const marketplaceArtifact = JSON.parse(
+    fs.readFileSync(marketplaceArtifactPath, "utf8"),
+  );
+
+  console.log("\nDeploying CornShirtMarketplace...");
+  const marketplaceTransactionHash = await walletClient.deployContract({
+    account: deployerAccount,
+    abi: marketplaceArtifact.abi,
+    bytecode: marketplaceArtifact.bytecode,
+    args: [contractAddress],
+  });
+  const marketplaceReceipt = await publicClient.waitForTransactionReceipt({
+    hash: marketplaceTransactionHash,
+    confirmations: 1,
+  });
+
+  if (marketplaceReceipt.status !== "success" || !marketplaceReceipt.contractAddress) {
+    throw new Error("CornShirtMarketplace deployment failed.");
+  }
+
+  const marketplaceAddress = marketplaceReceipt.contractAddress;
+  const marketplace = getContract({
+    address: marketplaceAddress,
+    abi: marketplaceArtifact.abi,
+    client: {
+      public: publicClient,
+      wallet: walletClient,
+    },
+  });
+  const settlerRole = await marketplace.read.SETTLER_ROLE();
+  const [configuredTicketAddress, hasSettlerRole] = await Promise.all([
+    marketplace.read.ticketContract(),
+    marketplace.read.hasRole([settlerRole, deployerAccount.address]),
+  ]);
+
+  if (
+    configuredTicketAddress.toLowerCase() !== contractAddress.toLowerCase() ||
+    !hasSettlerRole
+  ) {
+    throw new Error("CornShirtMarketplace deployment verification failed.");
+  }
+
+  console.log("CornShirtMarketplace deployed to:", marketplaceAddress);
+  console.log(
+    "View contract:",
+    `https://sepolia.etherscan.io/address/${marketplaceAddress}`,
+  );
+  console.log("SETTLER_ROLE:", hasSettlerRole);
+
+  // Update only the deployed contract addresses in .env.local.
   let envContent = "";
 
   if (fs.existsSync(envPath)) {
@@ -236,17 +282,21 @@ async function main() {
     .filter(
       (line) =>
         line.trim() !== "" &&
-        !line.startsWith("TICKET_NFT_CONTRACT_ADDRESS="),
+        !line.startsWith("TICKET_NFT_CONTRACT_ADDRESS=") &&
+        !line.startsWith("MARKETPLACE_CONTRACT_ADDRESS="),
     );
 
   lines.push(`TICKET_NFT_CONTRACT_ADDRESS=${contractAddress}`);
+  lines.push(`MARKETPLACE_CONTRACT_ADDRESS=${marketplaceAddress}`);
 
   fs.writeFileSync(envPath, `${lines.join("\n")}\n`, "utf8");
 
+  console.log("Marketplace contract address was written to .env.local");
+
   console.log(
-    "\n✔ TICKET_NFT_CONTRACT_ADDRESS was written to .env.local",
+    "\nTICKET_NFT_CONTRACT_ADDRESS was written to .env.local",
   );
-  console.log("✔ Sepolia deployment completed successfully");
+  console.log("Sepolia deployment completed successfully");
 }
 
 main().catch((error) => {

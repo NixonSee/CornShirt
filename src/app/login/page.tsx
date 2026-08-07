@@ -54,13 +54,22 @@ function LoginContent() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, status, deactivation_reason")
         .eq("user_id", userId)
         .single();
 
       if (profileError || !profile) {
         setErrorMessage(
           "Your account was found, but your profile could not be loaded."
+        );
+        return;
+      }
+
+      if (profile.status === "deactivated") {
+        setErrorMessage(
+          `Account has been deactivated.\nDeactivation Reason: ${
+            profile.deactivation_reason || "No reason provided"
+          }`
         );
         return;
       }
@@ -100,8 +109,10 @@ function LoginContent() {
     setIsResetting(true);
 
     try {
+      const recoveryCallback = new URL("/auth/callback", window.location.origin);
+      recoveryCallback.searchParams.set("intent", "recovery");
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/set-password`,
+        redirectTo: recoveryCallback.toString(),
       });
 
       if (error) {

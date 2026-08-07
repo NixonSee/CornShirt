@@ -37,6 +37,20 @@ export function getContractAddress(): `0x${string}` {
   return addr as `0x${string}`;
 }
 
+export function getMarketplaceContractAddress(): `0x${string}` {
+  const address = process.env.MARKETPLACE_CONTRACT_ADDRESS?.trim();
+  if (!address) {
+    throw new Error(
+      "MARKETPLACE_CONTRACT_ADDRESS is not set. Deploy the marketplace contract first.",
+    );
+  }
+  return address as `0x${string}`;
+}
+
+export function hasMarketplaceContract(): boolean {
+  return Boolean(process.env.MARKETPLACE_CONTRACT_ADDRESS?.trim());
+}
+
 export function getPlatformPrivateKey(): `0x${string}` {
   const key = process.env.PLATFORM_CONTRACT_PRIVATE_KEY?.trim();
   if (!key) {

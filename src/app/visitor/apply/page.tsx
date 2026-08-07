@@ -8,11 +8,9 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/common";
+import PartnerApplyNav from "@/components/nav/PartnerApplyNav";
 import {
-  ArrowLeft,
   ArrowRight,
   Building2,
   Check,
@@ -153,28 +151,31 @@ export default function ApplyPage() {
 
   if (success) {
     return (
-      <main className="partner-apply-success-page">
-        <section className="partner-apply-success-card">
-          <div className="partner-apply-success-icon" aria-hidden="true">
-            <CircleCheck size={34} strokeWidth={2.2} />
-          </div>
-          <span className="partner-apply-eyebrow">Application received</span>
-          <h1>You&apos;re one step closer to the stage.</h1>
-          <p>
-            Thanks for applying to become a CornShirt partner. Our team will
-            review your details and supporting documents, then contact you by
-            email.
-          </p>
-          <div className="partner-apply-success-timeline">
-            <SuccessStep label="Submitted" detail="Your application is safely with us." />
-            <SuccessStep label="Under review" detail="Our team checks your information." />
-            <SuccessStep label="Decision by email" detail="We will send you the next steps." />
-          </div>
-          <Button onClick={() => router.push("/visitor")} fullWidth>
-            Back to Browse
-          </Button>
-        </section>
-      </main>
+      <>
+        <PartnerApplyNav />
+        <main className="partner-apply-success-page">
+          <section className="partner-apply-success-card">
+            <div className="partner-apply-success-icon" aria-hidden="true">
+              <CircleCheck size={34} strokeWidth={2.2} />
+            </div>
+            <span className="partner-apply-eyebrow">Application received</span>
+            <h1>You&apos;re one step closer to the stage.</h1>
+            <p>
+              Thanks for applying to become a CornShirt partner. Our team will
+              review your details and supporting documents, then contact you by
+              email.
+            </p>
+            <div className="partner-apply-success-timeline">
+              <SuccessStep label="Submitted" detail="Your application is safely with us." />
+              <SuccessStep label="Under review" detail="Our team checks your information." />
+              <SuccessStep label="Decision by email" detail="We will send you the next steps." />
+            </div>
+            <Button onClick={() => router.push("/visitor")} fullWidth>
+              Back to Browse
+            </Button>
+          </section>
+        </main>
+      </>
     );
   }
 
@@ -183,31 +184,7 @@ export default function ApplyPage() {
   return (
     <>
       <title>Become an Organizer — CornShirt</title>
-      {/*
-        The wizard keeps its own header rather than rendering the shared nav:
-        it needs the "Back to events" escape hatch, and an in-flow sticky bar
-        (sitenav-static) so the sticky .partner-apply-sidebar keeps working.
-        The sitenav classes give it the same visual language as everywhere else.
-      */}
-      <header className="app-topbar sitenav sitenav-static" data-audience="apply">
-        <Link className="app-topbar-brand sitenav-brand" href="/visitor">
-          <Image
-            src="/CornShirt Hub.png"
-            alt="CornShirt logo"
-            width={140}
-            height={40}
-            priority
-          />
-        </Link>
-        <nav
-          className="app-topbar-actions sitenav-actions"
-          aria-label="Application actions"
-        >
-          <Button variant="outline" onClick={() => router.push("/visitor")}>
-            <ArrowLeft size={16} /> Back to events
-          </Button>
-        </nav>
-      </header>
+      <PartnerApplyNav />
 
       <main className="partner-apply-page">
         <section className="partner-apply-intro">
@@ -375,14 +352,22 @@ function PersonalStep({
           />
         </Field>
         <Field label="Phone number" hint="Optional">
-          <input
-            id="applicant-phone"
-            type="tel"
-            value={form.phone}
-            onChange={(event) => setField("phone", event.target.value)}
-            autoComplete="tel"
-            placeholder="e.g. +60 12-345 6789"
-          />
+          <div className="partner-apply-phone-field">
+            <span className="partner-apply-phone-prefix">+60</span>
+            <input
+              id="applicant-phone"
+              type="tel"
+              value={form.phone.startsWith("+60") ? form.phone.slice(3) : form.phone}
+              onChange={(event) =>
+                setField(
+                  "phone",
+                  event.target.value ? `+60${event.target.value}` : ""
+                )
+              }
+              autoComplete="tel"
+              placeholder="12-345 6789"
+            />
+          </div>
         </Field>
       </div>
     </div>

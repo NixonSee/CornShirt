@@ -1,5 +1,7 @@
 import type { Address } from "viem";
 
+import { isEventLive } from "@/lib/eventLifecycle";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 import { authorizeApiRole } from "@/lib/requireRole";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getTicketOwner } from "@/lib/nft/getOwner";
@@ -33,6 +35,7 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response;
 
   const organizerId = auth.identity.user.id;
+  await synchronizeFinishedEvents();
 
   let body: unknown;
   try {
@@ -83,7 +86,7 @@ export async function POST(request: Request) {
 
   const { data: event, error: eventError } = await supabaseAdmin
     .from("events")
-    .select("event_id, event_name, organizer_id, status")
+    .select("event_id, event_name, organizer_id, status, event_date")
     .eq("event_id", ticket.event_id)
     .maybeSingle();
 
@@ -107,7 +110,7 @@ export async function POST(request: Request) {
   let result: VerifyResult;
   let onchain: "matched" | "unminted" | "owner_mismatch" | "burned" | null = null;
 
-  if (String(event.status ?? "").toLowerCase() !== "active") {
+  if (!isEventLive(event)) {
     result = "invalid";
   } else if (ticket.status === "used") {
     result = "used";

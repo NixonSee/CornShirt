@@ -2,8 +2,7 @@
 
 import {
   CalendarDays,
-  Check,
-  Copy,
+  CircleCheck,
   Hash,
   Mail,
   MapPin,
@@ -19,6 +18,7 @@ import { useRef, useState, type CSSProperties } from "react";
 import QRCode from "react-qr-code";
 
 import { Button, Modal } from "@/components/common";
+import { formatMyr, myrToSen } from "@/lib/currency";
 import {
   canListTicket,
   parseResaleMyrPrice,
@@ -33,6 +33,16 @@ interface TicketListProps {
 
 type TicketFilter = "all" | "valid" | "listed" | "used";
 type TicketCategory = Exclude<TicketFilter, "all"> | "other";
+
+type RefundConfirmation = {
+  refundStatus: string;
+  refundId: string | null;
+  refundReference?: string | null;
+  recipientEmail: string;
+  amountSen: number;
+  currency: string;
+  emailSent: boolean;
+};
 
 const TICKET_FILTERS: readonly {
   value: TicketFilter;
@@ -88,8 +98,17 @@ function ticketCategory(ticket: CustomerTicket): TicketCategory {
 
 function displayStatus(ticket: CustomerTicket): string {
   if (ticketCategory(ticket) === "listed") return "LISTED";
+  if (ticket.status.toLowerCase() === "expired") return "COLLECTIBLE";
 
   return ticket.status;
+}
+
+function canDisplayQr(ticket: CustomerTicket): boolean {
+  return (
+    ticket.status.toLowerCase() !== "expired" &&
+    ticket.isNftBacked &&
+    Boolean(ticket.qrValue)
+  );
 }
 
 export default function TicketList({ tickets, errorMessage }: TicketListProps) {
@@ -98,14 +117,14 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
   const [selectedTicket, setSelectedTicket] = useState<CustomerTicket | null>(
     null,
   );
-  const [ticketIdCopied, setTicketIdCopied] = useState(false);
-  const [copyError, setCopyError] = useState("");
   const [resaleTicket, setResaleTicket] = useState<CustomerTicket | null>(null);
   const [price, setPrice] = useState("");
   const [resaleError, setResaleError] = useState("");
   const [isListing, setIsListing] = useState(false);
   const [refundTicket, setRefundTicket] = useState<CustomerTicket | null>(null);
   const [refundError, setRefundError] = useState("");
+  const [refundConfirmation, setRefundConfirmation] =
+    useState<RefundConfirmation | null>(null);
   const [isRefunding, setIsRefunding] = useState(false);
   const [transferTarget, setTransferTarget] = useState<CustomerTicket | null>(
     null,
@@ -143,24 +162,27 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
     TICKET_FILTERS.find((filter) => filter.value === activeFilter)?.label ??
     "selected";
 
-  async function copyTicketId(value: string) {
-    setCopyError("");
-
-    try {
-      await navigator.clipboard.writeText(value);
-      setTicketIdCopied(true);
-    } catch {
-      setCopyError(
-        "Copy was blocked by the browser. Press and hold the value to copy it manually.",
-      );
-    }
-  }
-
   async function listForResale() {
     if (!resaleTicket) return;
     const amount = parseResaleMyrPrice(price);
     if (amount === null) {
       setResaleError("Enter a positive MYR price with up to two decimal places.");
+      return;
+    }
+    const amountSen = myrToSen(amount);
+    if (
+      amountSen === null ||
+      resaleTicket.maxResalePriceSen === null
+    ) {
+      setResaleError("The ticket price could not be verified. Please try again later.");
+      return;
+    }
+    if (amountSen > resaleTicket.maxResalePriceSen) {
+      setResaleError(
+        `The maximum resale price is ${formatMyr(
+          resaleTicket.maxResalePriceSen / 100,
+        )}.`,
+      );
       return;
     }
     setIsListing(true);
@@ -190,12 +212,23 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ticketId: refundTicket.id }),
     });
-    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    const body = (await response.json().catch(() => ({}))) as Partial<
+      RefundConfirmation & { error: string }
+    >;
     setIsRefunding(false);
     if (!response.ok) {
       setRefundError(body.error ?? "Refund could not be processed.");
       return;
     }
+    setRefundConfirmation({
+      refundStatus: body.refundStatus ?? "pending",
+      refundId: body.refundId ?? null,
+      refundReference: body.refundReference ?? null,
+      recipientEmail: body.recipientEmail ?? "the original Stripe payer",
+      amountSen: Number(body.amountSen ?? 0),
+      currency: body.currency ?? "MYR",
+      emailSent: body.emailSent === true,
+    });
     setRefundTicket(null);
     router.refresh();
   }
@@ -255,6 +288,55 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
 
   return (
     <>
+      {refundConfirmation ? (
+        <section
+          className={`refund-confirmation${
+            refundConfirmation.refundStatus === "succeeded"
+              ? " is-success"
+              : " is-pending"
+          }`}
+          role="status"
+        >
+          <CircleCheck aria-hidden="true" size={24} />
+          <div>
+            <strong>
+              {refundConfirmation.refundStatus === "succeeded"
+                ? "Stripe refund successful"
+                : "Stripe refund submitted"}
+            </strong>
+            <p>
+              {new Intl.NumberFormat("en-MY", {
+                style: "currency",
+                currency: refundConfirmation.currency,
+              }).format(refundConfirmation.amountSen / 100)}{" "}
+              {refundConfirmation.refundStatus === "succeeded"
+                ? "was returned"
+                : "is being returned"}{" "}
+              to the original payment method for{" "}
+              <b>{refundConfirmation.recipientEmail}</b>.
+            </p>
+            <small>
+              Refund ID: {refundConfirmation.refundId ?? "Pending"}
+              {refundConfirmation.refundReference
+                ? ` · Reference: ${refundConfirmation.refundReference}`
+                : ""}
+              {refundConfirmation.refundStatus === "succeeded"
+                ? refundConfirmation.emailSent
+                  ? " · Confirmation email sent"
+                  : " · Confirmation email pending retry"
+                : " · Email will be sent after Stripe confirms the refund"}
+            </small>
+          </div>
+          <button
+            type="button"
+            aria-label="Dismiss refund confirmation"
+            onClick={() => setRefundConfirmation(null)}
+          >
+            ×
+          </button>
+        </section>
+      ) : null}
+
       <nav className="ticket-filter-bar" aria-label="Filter tickets by status">
         {TICKET_FILTERS.map((filter) => (
           <button
@@ -334,10 +416,12 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
             </div>
 
             <div className="ticket-pass-actions">
-              {ticket.qrValue && ticket.isNftBacked ? (
+              {canDisplayQr(ticket) ? (
                 <div className="ticket-mini-qr" aria-hidden="true">
-                  <QRCode value={ticket.qrValue} size={74} />
+                  <QRCode value={ticket.qrValue!} size={74} />
                 </div>
+              ) : ticket.status.toLowerCase() === "expired" ? (
+                <p className="muted">Event ended — collectible NFT</p>
               ) : (
                 <p className="muted">Legacy ticket — no on-chain QR</p>
               )}
@@ -348,12 +432,13 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                 <Button
                   variant="secondary"
                   icon={<QrCode size={17} />}
-                  disabled={!ticket.isNftBacked || !ticket.qrValue}
-                  onClick={() => {
-                    setSelectedTicket(ticket);
-                    setTicketIdCopied(false);
-                    setCopyError("");
-                  }}
+                  disabled={!canDisplayQr(ticket)}
+                  onClick={() => setSelectedTicket(ticket)}
+                  title={
+                    ticket.status.toLowerCase() === "expired"
+                      ? "Check-in closed when the event ended"
+                      : undefined
+                  }
                 >
                   View QR
                 </Button>
@@ -370,63 +455,73 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
                     Claim refund
                   </Button>
                 ) : null}
-                <Button
-                  variant="outline"
-                  icon={<UserRoundPlus size={17} />}
-                  disabled={
-                    !ticket.isNftBacked ||
-                    !ticket.transferAllowed ||
-                    ticket.hasActiveListing ||
-                    !["active", "valid"].includes(ticket.status.toLowerCase())
-                  }
-                  onClick={() => {
-                    setTransferTarget(ticket);
-                    setRecipientEmail("");
-                    setTransferError("");
-                    transferKey.current = null;
-                  }}
-                  title={
-                    !ticket.isNftBacked
-                      ? "Legacy tickets are not transferable"
-                      : ticket.hasActiveListing
-                        ? "Cancel the Marketplace listing first"
-                        : ticket.transferAllowed
-                          ? "Transfer to another registered customer"
-                          : "This ticket type does not allow transfers"
-                  }
-                >
-                  Transfer
-                </Button>
-                {canListTicket({
-                  status: ticket.status,
-                  transferAllowed: ticket.transferAllowed,
-                  hasActiveListing: ticket.hasActiveListing,
-                }) && ticket.isNftBacked ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setResaleTicket(ticket);
-                      setPrice("");
-                      setResaleError("");
-                    }}
-                  >
-                    List for resale
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    disabled
-                    title={
-                      !ticket.transferAllowed
-                        ? "This ticket type does not allow resale"
-                        : ticket.hasActiveListing
-                          ? "This ticket is already listed"
-                          : "Only active tickets can be resold"
-                    }
-                  >
-                    {ticket.hasActiveListing ? "Already listed" : "Resale unavailable"}
-                  </Button>
-                )}
+                {["active", "valid"].includes(ticket.status.toLowerCase()) &&
+                !ticket.eventCancelled ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      icon={<UserRoundPlus size={17} />}
+                      disabled={
+                        !ticket.isNftBacked ||
+                        !ticket.transferAllowed ||
+                        ticket.hasActiveListing
+                      }
+                      onClick={() => {
+                        setTransferTarget(ticket);
+                        setRecipientEmail("");
+                        setTransferError("");
+                        transferKey.current = null;
+                      }}
+                      title={
+                        !ticket.isNftBacked
+                          ? "Legacy tickets are not transferable"
+                          : ticket.hasActiveListing
+                            ? "Cancel the Marketplace listing first"
+                            : ticket.transferAllowed
+                              ? "Transfer to another registered customer"
+                              : "This ticket type does not allow transfers"
+                      }
+                    >
+                      Transfer
+                    </Button>
+                    {canListTicket({
+                      status: ticket.status,
+                      transferAllowed: ticket.transferAllowed,
+                      hasActiveListing: ticket.hasActiveListing,
+                    }) &&
+                    ticket.isNftBacked &&
+                    ticket.maxResalePriceSen !== null ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setResaleTicket(ticket);
+                          setPrice("");
+                          setResaleError("");
+                        }}
+                      >
+                        List for resale
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        disabled
+                        title={
+                          !ticket.transferAllowed
+                            ? "This ticket type does not allow resale"
+                            : ticket.maxResalePriceSen === null
+                              ? "The original ticket price is unavailable"
+                            : ticket.hasActiveListing
+                              ? "This ticket is already listed"
+                              : "Only active tickets can be resold"
+                        }
+                      >
+                        {ticket.hasActiveListing
+                          ? "Already listed"
+                          : "Resale unavailable"}
+                      </Button>
+                    )}
+                  </>
+                ) : null}
               </div>
             </div>
           </article>
@@ -442,62 +537,23 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
 
       <Modal
         isOpen={selectedTicket !== null}
-        onClose={() => {
-          setSelectedTicket(null);
-          setTicketIdCopied(false);
-          setCopyError("");
-        }}
+        onClose={() => setSelectedTicket(null)}
         title={selectedTicket?.eventName ?? "Ticket QR"}
         className="ticket-view-modal"
-        actions={
-          <Button
-            onClick={() => {
-              setSelectedTicket(null);
-              setTicketIdCopied(false);
-              setCopyError("");
-            }}
-          >
-            Close
-          </Button>
-        }
+        showCloseButton
+        actions={null}
       >
         {selectedTicket ? (
           <div className="ticket-qr-modal">
             {selectedTicket.qrValue ? (
-              <div className="ticket-qr-large">
-                <QRCode value={selectedTicket.qrValue} size={210} />
-              </div>
-            ) : null}
-            <strong>{selectedTicket.ticketType}</strong>
-            <span>{selectedTicket.tokenId}</span>
-            <p>Present this QR code at the venue entrance.</p>
-
-            <div
-              className="ticket-qr-identifiers"
-              aria-label="Manual scanner values"
-            >
-              <div className="ticket-qr-identifier">
-                <span>Ticket ID</span>
-                <code>{selectedTicket.id}</code>
-                <Button
-                  variant="outline"
-                  icon={
-                    ticketIdCopied ? (
-                      <Check size={15} />
-                    ) : (
-                      <Copy size={15} />
-                    )
-                  }
-                  onClick={() => void copyTicketId(selectedTicket.id)}
-                >
-                  {ticketIdCopied ? "Copied" : "Copy"}
-                </Button>
-              </div>
-            </div>
-            {copyError ? (
-              <p className="customer-account-error" role="alert">
-                {copyError}
-              </p>
+              <>
+                <div className="ticket-qr-large">
+                  <QRCode value={selectedTicket.qrValue} size={210} />
+                </div>
+                <p className="ticket-qr-instruction">
+                  Scan this QR code at the entrance.
+                </p>
+              </>
             ) : null}
           </div>
         ) : null}
@@ -619,7 +675,9 @@ export default function TicketList({ tickets, errorMessage }: TicketListProps) {
               />
             </div>
             <small id="resale-price-help">
-              Enter the amount the buyer will pay.
+              Maximum resale price: {resaleTicket?.maxResalePriceSen
+                ? formatMyr(resaleTicket.maxResalePriceSen / 100)
+                : "Unavailable"} (original price + 15%).
             </small>
           </label>
 

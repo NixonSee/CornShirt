@@ -2,7 +2,25 @@ import "server-only";
 
 import type { MarketplaceListing } from "@/app/customer/marketplace/marketplaceData";
 import { canListTicket } from "@/app/customer/marketplace/marketplaceData";
+import {
+  getEventEndTime,
+  getLiveEventCutoff,
+  isEventLive,
+} from "@/lib/eventLifecycle";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
+import { fundCustomerGas } from "@/lib/nft/fundGas";
+import {
+  cancelContractListing,
+  createContractListing,
+} from "@/lib/nft/marketplaceContract";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { formatMyr, myrToSen } from "@/lib/currency";
+import {
+  getMaximumResalePriceSen,
+  getOriginalTicketPriceSen,
+} from "@/lib/resalePricing";
+import { loadManagedWalletSigner } from "@/lib/walletAccess";
+import { hasMarketplaceContract } from "@/utils/web3config";
 
 type Row = Record<string, unknown>;
 export interface MarketplaceResult {
@@ -29,6 +47,8 @@ export async function createResaleListing(
   ticketId: string,
   price: number,
 ): Promise<MarketplaceResult> {
+  await synchronizeFinishedEvents();
+
   const walletResult = await getManagedWallet(userId);
   if (walletResult.error || !walletResult.wallet) {
     return { status: 409, body: { error: "Your managed wallet is unavailable." } };
@@ -64,12 +84,12 @@ export async function createResaleListing(
     await Promise.all([
       supabaseAdmin
         .from("ticket_types")
-        .select("transfer_allowed")
+        .select("transfer_allowed, price, price_sen")
         .eq("ticket_type_id", ticket.ticket_type_id)
         .maybeSingle(),
       supabaseAdmin
         .from("events")
-        .select("status")
+        .select("status, event_date")
         .eq("event_id", ticket.event_id)
         .maybeSingle(),
       supabaseAdmin
@@ -94,11 +114,35 @@ export async function createResaleListing(
         .maybeSingle(),
     ]);
 
-  if (event?.status !== "active") {
+  if (!event || !isEventLive(event)) {
     return { status: 409, body: { error: "This event is not eligible for resale." } };
   }
   if (ticketType?.transfer_allowed !== true) {
     return { status: 409, body: { error: "This ticket type does not allow resale." } };
+  }
+  const originalPriceSen = getOriginalTicketPriceSen({
+    priceSen: ticketType.price_sen,
+    price: ticketType.price,
+  });
+  const maximumResalePriceSen = originalPriceSen === null
+    ? null
+    : getMaximumResalePriceSen(originalPriceSen);
+  const listingPriceSen = myrToSen(price);
+  if (listingPriceSen === null || maximumResalePriceSen === null) {
+    return {
+      status: 409,
+      body: { error: "The original ticket price could not be verified." },
+    };
+  }
+  if (listingPriceSen > maximumResalePriceSen) {
+    return {
+      status: 400,
+      body: {
+        error: `The maximum resale price is ${formatMyr(
+          maximumResalePriceSen / 100,
+        )} (original price + 15%).`,
+      },
+    };
   }
   if (activeOperation) {
     return {
@@ -123,14 +167,17 @@ export async function createResaleListing(
     };
   }
 
+  const listingId = crypto.randomUUID();
+  const usesContract = hasMarketplaceContract();
   const { error } = await supabaseAdmin.from("resale_listings").insert({
+    listing_id: listingId,
     ticket_id: ticketId,
     seller_user_id: userId,
     seller_wallet_address: walletResult.wallet,
     price,
-    price_sen: Math.round(price * 100),
+    price_sen: listingPriceSen,
     currency: "MYR",
-    status: "active",
+    status: usesContract ? "contract_pending" : "active",
   });
   if (error?.code === "23505") {
     return { status: 409, body: { error: "This ticket is already listed." } };
@@ -138,6 +185,63 @@ export async function createResaleListing(
   if (error) {
     return { status: 500, body: { error: "Listing could not be created." } };
   }
+
+  if (usesContract) {
+    const eventEndsAt = getEventEndTime(event.event_date);
+    if (!eventEndsAt) {
+      await supabaseAdmin
+        .from("resale_listings")
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
+        .eq("listing_id", listingId);
+      return { status: 409, body: { error: "This event has no valid ending time." } };
+    }
+
+    try {
+      const signer = await loadManagedWalletSigner(userId);
+      await fundCustomerGas(signer.address);
+      const contractListing = await createContractListing({
+        sellerPrivateKey: signer.privateKey,
+        listingId,
+        tokenId: BigInt(ticket.token_id),
+        priceInSen: BigInt(listingPriceSen),
+        expiresAt: eventEndsAt,
+      });
+      const activated = await supabaseAdmin
+        .from("resale_listings")
+        .update({
+          status: "active",
+          contract_listing_reference: contractListing.listingReference,
+          marketplace_approval_hash: contractListing.approvalHash,
+          marketplace_listing_hash: contractListing.listingHash,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("listing_id", listingId)
+        .eq("status", "contract_pending");
+      if (activated.error) {
+        await cancelContractListing(
+          signer.privateKey,
+          contractListing.listingReference,
+        ).catch(() => undefined);
+        throw new Error("Contract listing could not be recorded.");
+      }
+    } catch (contractError) {
+      console.error("Marketplace contract listing failed", {
+        listingId,
+        message:
+          contractError instanceof Error ? contractError.message : "unknown",
+      });
+      await supabaseAdmin
+        .from("resale_listings")
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
+        .eq("listing_id", listingId)
+        .eq("status", "contract_pending");
+      return {
+        status: 502,
+        body: { error: "The Ticket NFT could not be listed on-chain." },
+      };
+    }
+  }
+
   return { status: 201, body: { message: "Ticket listed for resale." } };
 }
 
@@ -149,6 +253,45 @@ export async function cancelResaleListing(
   if (walletResult.error || !walletResult.wallet) {
     return { status: 409, body: { error: "Your managed wallet is unavailable." } };
   }
+
+  const listing = await supabaseAdmin
+    .from("resale_listings")
+    .select("listing_id, seller_user_id, contract_listing_reference, reserved_operation_id")
+    .eq("listing_id", listingId)
+    .eq("seller_wallet_address", walletResult.wallet)
+    .eq("status", "active")
+    .maybeSingle();
+  if (listing.error || !listing.data || listing.data.reserved_operation_id) {
+    return { status: 409, body: { error: "This listing is no longer available." } };
+  }
+
+  if (listing.data.contract_listing_reference) {
+    if (!hasMarketplaceContract()) {
+      return {
+        status: 503,
+        body: { error: "The Marketplace contract is unavailable." },
+      };
+    }
+    try {
+      const signer = await loadManagedWalletSigner(userId);
+      await fundCustomerGas(signer.address);
+      await cancelContractListing(
+        signer.privateKey,
+        listing.data.contract_listing_reference as `0x${string}`,
+      );
+    } catch (contractError) {
+      console.error("Marketplace contract cancellation failed", {
+        listingId,
+        message:
+          contractError instanceof Error ? contractError.message : "unknown",
+      });
+      return {
+        status: 502,
+        body: { error: "The on-chain listing could not be cancelled." },
+      };
+    }
+  }
+
   const now = new Date().toISOString();
   const { data, error } = await supabaseAdmin
     .from("resale_listings")
@@ -173,6 +316,8 @@ export async function getMarketplacePageData(userId: string): Promise<{
   wallet: string | null;
   error: string;
 }> {
+  await synchronizeFinishedEvents();
+
   const walletResult = await getManagedWallet(userId);
   if (walletResult.error) return { listings: [], wallet: null, error: "Marketplace could not be loaded." };
 
@@ -192,7 +337,12 @@ export async function getMarketplacePageData(userId: string): Promise<{
   const eventIds = [...new Set(tickets.map((row) => text(row, "event_id")).filter(Boolean))];
   const typeIds = [...new Set(tickets.map((row) => text(row, "ticket_type_id")).filter(Boolean))];
   const [{ data: eventData }, { data: typeData }] = await Promise.all([
-    supabaseAdmin.from("events").select("*").in("event_id", eventIds).eq("status", "active"),
+    supabaseAdmin
+      .from("events")
+      .select("*")
+      .in("event_id", eventIds)
+      .eq("status", "active")
+      .gt("event_date", getLiveEventCutoff().toISOString()),
     supabaseAdmin.from("ticket_types").select("*").in("ticket_type_id", typeIds),
   ]);
   const ticketMap = new Map(tickets.map((row) => [text(row, "ticket_id"), row]));

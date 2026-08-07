@@ -1,17 +1,30 @@
 "use client";
 
 import { X } from "lucide-react";
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
-  actions: ReactNode;
+  actions?: ReactNode;
   wide?: boolean;
   className?: string;
   showCloseButton?: boolean;
+}
+
+function subscribe() {
+  return () => {};
+}
+
+function getSnapshot() {
+  return typeof document !== "undefined";
+}
+
+function getServerSnapshot() {
+  return false;
 }
 
 export function Modal({
@@ -24,6 +37,8 @@ export function Modal({
   className = "",
   showCloseButton = false,
 }: ModalProps) {
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -35,9 +50,9 @@ export function Modal({
     return () => document.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div
         className={[
@@ -61,8 +76,9 @@ export function Modal({
           </button>
         ) : null}
         <div className="modal-body">{children}</div>
-        <div className="modal-actions">{actions}</div>
+        {actions ? <div className="modal-actions">{actions}</div> : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

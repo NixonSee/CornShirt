@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ArrowUpDown } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/common/Button";
-import { Modal } from "@/components/common/Modal";
+import { EventReviewButtons } from "@/components/common/EventReviewButtons";
 
 interface PendingEvent {
   event_id: string;
@@ -39,38 +36,7 @@ function daysAgo(dateStr: string): string {
 }
 
 export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: Props) {
-  const router = useRouter();
-  const [actionTarget, setActionTarget] = useState<{
-    eventId: string;
-    eventName: string;
-    type: "approve" | "reject";
-  } | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const displayEvents = limit ? events.slice(0, limit) : events;
-
-  async function handleConfirm() {
-    if (!actionTarget) return;
-
-    setIsSubmitting(true);
-
-    const res = await fetch(
-      `/api/admin/events/${actionTarget.eventId}/${actionTarget.type}`,
-      {
-        method: "PUT",
-      },
-    );
-
-    setIsSubmitting(false);
-    setActionTarget(null);
-
-    if (res.ok) {
-      router.refresh();
-    } else {
-      const err = await res.json();
-      alert(err.error || "Something went wrong");
-    }
-  }
 
   if (displayEvents.length === 0) {
     return (
@@ -81,143 +47,87 @@ export function PendingEventsTable({ events, limit, sortOrder, onSortChange }: P
   }
 
   return (
-    <>
-      <div className="table-card" style={{ marginTop: 0 }}>
-        <table>
-          <thead>
-            <tr>
-              <th style={thStyle}>
-                {onSortChange ? (
-                  <span
-                    onClick={onSortChange}
-                    style={{
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                      color: sortOrder === "newest" ? "var(--primary)" : "#a0a0a0",
-                    }}
-                  >
-                    Event
-                    <ArrowUpDown size={13} />
-                  </span>
-                ) : (
-                  "Event"
-                )}
-              </th>
-              <th style={{ ...thStyle, textAlign: "center" }}>Organizer</th>
-              <th style={{ ...thStyle, textAlign: "center" }}>Status</th>
-              <th style={thStyle}>Decision</th>
-              <th style={{ ...thStyle, textAlign: "center" }}>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayEvents.map((ev) => (
-              <tr key={ev.event_id}>
-                <td>
+    <div className="table-card" style={{ marginTop: 0 }}>
+      <table>
+        <thead>
+          <tr>
+            <th style={thStyle}>
+              {onSortChange ? (
+                <span
+                  onClick={onSortChange}
+                  style={{
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    color: sortOrder === "newest" ? "var(--primary)" : "#a0a0a0",
+                  }}
+                >
+                  Event
+                  <ArrowUpDown size={13} />
+                </span>
+              ) : (
+                "Event"
+              )}
+            </th>
+            <th style={{ ...thStyle, textAlign: "center" }}>Organizer</th>
+            <th style={{ ...thStyle, textAlign: "center" }}>Status</th>
+            <th style={thStyle}>Decision</th>
+            <th style={{ ...thStyle, textAlign: "center" }}>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {displayEvents.map((ev) => (
+            <tr key={ev.event_id}>
+              <td>
+                <strong style={{ color: "var(--primary)" }}>
+                  {ev.event_name}
+                </strong>
+                <br />
+                <span style={{ fontSize: 12, ...mutedStyle }}>
+                  {ev.ticket_type_count} ticket type
+                  {ev.ticket_type_count !== 1 ? "s" : ""} /{" "}
+                  {ev.total_supply.toLocaleString()} supply
+                </span>
+                <br />
+                <span style={{ fontSize: 11, ...mutedStyle }}>
+                  {daysAgo(ev.created_at)}
+                </span>
+              </td>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
+                {ev.organizer_name ? (
                   <strong style={{ color: "var(--primary)" }}>
-                    {ev.event_name}
+                    {ev.organizer_name}
                   </strong>
-                  <br />
-                  <span style={{ fontSize: 12, ...mutedStyle }}>
-                    {ev.ticket_type_count} ticket type
-                    {ev.ticket_type_count !== 1 ? "s" : ""} /{" "}
-                    {ev.total_supply.toLocaleString()} supply
+                ) : (
+                  <span style={{ fontSize: 13, ...mutedStyle }}>
+                    Unassigned
                   </span>
-                  <br />
-                  <span style={{ fontSize: 11, ...mutedStyle }}>
-                    {daysAgo(ev.created_at)}
-                  </span>
-                </td>
-                <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                  {ev.organizer_name ? (
-                    <strong style={{ color: "var(--primary)" }}>
-                      {ev.organizer_name}
-                    </strong>
-                  ) : (
-                    <span style={{ fontSize: 13, ...mutedStyle }}>
-                      Unassigned
-                    </span>
-                  )}
-                </td>
-                <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                  <span className="status warn">PENDING</span>
-                </td>
-                <td>
-                  <div className="button-row" style={{ marginTop: 0 }}>
-                    <Button
-                      variant="success"
-                      onClick={() =>
-                        setActionTarget({
-                          eventId: ev.event_id,
-                          eventName: ev.event_name,
-                          type: "approve",
-                        })
-                      }
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() =>
-                        setActionTarget({
-                          eventId: ev.event_id,
-                          eventName: ev.event_name,
-                          type: "reject",
-                        })
-                      }
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                </td>
-                <td style={{ textAlign: "center", verticalAlign: "middle" }}>
-                  <Link
-                    href={`/admin/events/${ev.event_id}`}
-                    className="view-detail-link"
-                  >
-                    View detail
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <Modal
-        isOpen={!!actionTarget}
-        onClose={() => !isSubmitting && setActionTarget(null)}
-        title={
-          actionTarget?.type === "approve"
-            ? "Approve Event"
-            : "Reject Event"
-        }
-        actions={
-          <>
-            <Button
-              variant="primary"
-              onClick={() => setActionTarget(null)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant={
-                actionTarget?.type === "approve" ? "success" : "destructive"
-              }
-              onClick={handleConfirm}
-              loading={isSubmitting}
-            >
-              {actionTarget?.type === "approve" ? "Approve" : "Reject"}
-            </Button>
-          </>
-        }
-      >
-        {actionTarget?.type === "approve"
-          ? `Approve "${actionTarget?.eventName}"? This will make the event visible to all users.`
-          : `Reject "${actionTarget?.eventName}"? The event will be set to rejected status.`}
-      </Modal>
-    </>
+                )}
+              </td>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
+                <span className="status warn">PENDING</span>
+              </td>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
+                <div
+                  className="button-row"
+                  style={{ marginTop: 0, justifyContent: "center" }}
+                >
+                  <EventReviewButtons eventId={ev.event_id} eventName={ev.event_name} />
+                </div>
+              </td>
+              <td style={{ textAlign: "center", verticalAlign: "middle" }}>
+                <Link
+                  href={`/admin/events/${ev.event_id}`}
+                  className="view-detail-link"
+                >
+                  View detail
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -10,6 +10,7 @@ test("all authenticated roles reach Profile from the account menu and the drawer
   const navigation = read("../navConfig.ts");
   // Point at the implementation, not the RoleNav adapter, or this is vacuous.
   const roleNav = read("../nav/SiteNav.tsx");
+  const globalStyles = read("../../app/globals.css");
 
   assert.match(navigation, /\/customer\/profile/);
   assert.match(navigation, /\/organizer\/profile/);
@@ -22,14 +23,29 @@ test("all authenticated roles reach Profile from the account menu and the drawer
   assert.match(roleNav, /sitenav-menu-signout/);
   assert.doesNotMatch(roleNav, /sitenav-cta-signout/);
   assert.doesNotMatch(roleNav, /app-profile-link/);
+
+  // Admin and organizer share the approved edge-aligned navbar geometry.
+  assert.match(
+    globalStyles,
+    /\.app-topbar\.sitenav:is\([\s\S]*?\[data-audience="organizer"\][\s\S]*?\[data-audience="admin"\][\s\S]*?\)\s*\{[\s\S]*?width:\s*100%;/,
+  );
 });
 
-test("profile password form validates and updates only the signed-in user", () => {
+test("profile password form verifies the current password before updating", () => {
   const form = read("./ChangePasswordForm.tsx");
 
-  assert.match(form, /password\.length < 8/);
+  assert.match(form, /passwordPolicyError\(password\)/);
+  assert.match(form, /PASSWORD_MIN_LENGTH/);
+  assert.match(form, /PasswordStrengthMeter/);
   assert.match(form, /password !== confirmation/);
-  assert.match(form, /supabase\.auth\.updateUser\(\{ password \}\)/);
+  assert.match(form, /Current password/);
+  assert.match(form, /autoComplete="current-password"/);
+  assert.match(form, /supabase\.auth\.signInWithPassword/);
+  assert.match(form, /current_password: currentPassword/);
+  assert.match(form, /supabase\.auth\.updateUser/);
+  assert.match(form, /supabase\.auth\.resetPasswordForEmail/);
+  assert.match(form, /intent", "recovery"/);
+  assert.match(form, /Send reset link/);
   assert.doesNotMatch(form, /supabaseAdmin/);
 });
 
@@ -63,7 +79,7 @@ test("organizer profile loads only linked private documents with signed URLs", (
 
   assert.match(source, /\.eq\("owner_id", user\.id\)/);
   assert.match(source, /\.eq\("application_id", application\.application_id\)/);
-  assert.match(source, /\.createSignedUrl\(document\.file_path, 600\)/);
+  assert.match(source, /\.createSignedUrl\(document\.file_path, 3600\)/);
   assert.match(source, /business_license/);
   assert.match(source, /owner_id_proof/);
   assert.match(source, /tax_certificate/);

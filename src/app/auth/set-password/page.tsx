@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/common";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import {
+  PASSWORD_MIN_LENGTH,
+  passwordPolicyError,
+} from "@/lib/passwordPolicy";
 import {
   ArrowRight,
   Check,
@@ -27,67 +32,29 @@ export default function SetPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const recoveryCode = queryParams.get("code");
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get("access_token");
-    const refreshToken = hashParams.get("refresh_token");
+    async function confirmSession() {
+      const { data, error } = await supabase.auth.getSession();
 
-    async function establishRecoverySession() {
-      if (!recoveryCode && !accessToken && !refreshToken) {
-        router.replace("/login?error=no_token");
-        return;
-      }
-
-      if (!recoveryCode && (!accessToken || !refreshToken)) {
-        router.replace("/login?error=no_tokens");
-        return;
-      }
-
-      if (recoveryCode) {
-        const { data, error } = await supabase.auth.getSession();
-
-        if (error || !data.session) {
-          router.replace("/login?error=auth_failed");
-          return;
-        }
-
-        setStep("form");
-        return;
-      }
-
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken!,
-        refresh_token: refreshToken!,
-      });
-
-      if (error) {
-        router.replace("/login?error=auth_failed");
+      if (error || !data.session) {
+        router.replace("/login?error=no_session");
         return;
       }
 
       setStep("form");
     }
 
-    void establishRecoverySession();
+    void confirmSession();
   }, [router]);
 
-  const passwordChecks = [
-    password.length >= 6,
-    /[A-Z]/.test(password) && /[a-z]/.test(password),
-    /\d/.test(password),
-    /[^A-Za-z0-9]/.test(password),
-  ];
-  const strength = passwordChecks.filter(Boolean).length;
   const passwordsMatch = confirm.length > 0 && password === confirm;
-  const strengthLabel = ["Enter a password", "Basic", "Good", "Strong", "Excellent"][strength];
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setPasswordError("");
 
-    if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters.");
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setPasswordError(policyError);
       return;
     }
 
@@ -120,9 +87,9 @@ export default function SetPasswordPage() {
           <div className="password-setup-loader">
             <Loader2 className="button-spinner" size={26} />
           </div>
-          <span className="password-setup-eyebrow">Secure invitation</span>
+          <span className="password-setup-eyebrow">Secure password change</span>
           <h1>Preparing your account</h1>
-          <p>We&apos;re verifying your invitation and setting up a safe session.</p>
+          <p>We&apos;re verifying your link and setting up a safe session.</p>
           <div className="password-setup-loading-line" aria-hidden="true"><span /></div>
         </section>
       </main>
@@ -136,15 +103,15 @@ export default function SetPasswordPage() {
           <div className="password-setup-success-icon" aria-hidden="true">
             <CheckCircle2 size={36} />
           </div>
-          <span className="password-setup-eyebrow">Account activated</span>
-          <h1>You&apos;re ready to take the stage.</h1>
+          <span className="password-setup-eyebrow">Password updated</span>
+          <h1>Your new password is ready.</h1>
           <p>
-            Your password is set and your organizer account is ready. Sign in
-            to start building your next live experience.
+            Your password has been securely saved. Sign in with your new
+            password to continue.
           </p>
           <div className="password-setup-ready-list">
             <span><Check size={15} /> Password secured</span>
-            <span><Check size={15} /> Organizer access enabled</span>
+            <span><Check size={15} /> Account access ready</span>
           </div>
           <Button onClick={goToLogin} fullWidth>
             Go to Login <ArrowRight size={17} />
@@ -167,15 +134,15 @@ export default function SetPasswordPage() {
               height={44}
               priority
             />
-            <span><ShieldCheck size={14} /> Invitation verified</span>
+            <span><ShieldCheck size={14} /> Secure link verified</span>
           </div>
 
           <header className="password-setup-header">
             <span className="password-setup-eyebrow">
-              <Sparkles size={13} /> Application approved
+              <Sparkles size={13} /> Account security
             </span>
-            <h1>Welcome to the stage.</h1>
-            <p>Create a secure password to activate your organizer account.</p>
+            <h1>Set your password.</h1>
+            <p>Choose a secure password for your CornShirt account.</p>
           </header>
 
           {passwordError && (
@@ -193,10 +160,10 @@ export default function SetPasswordPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder={`At least ${PASSWORD_MIN_LENGTH} characters`}
                   autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={PASSWORD_MIN_LENGTH}
                 />
                 <button
                   type="button"
@@ -208,17 +175,7 @@ export default function SetPasswordPage() {
               </div>
             </label>
 
-            <div className="password-strength" aria-live="polite">
-              <div className="password-strength-bars" aria-hidden="true">
-                {[1, 2, 3, 4].map((level) => (
-                  <span key={level} className={strength >= level ? "is-active" : ""} />
-                ))}
-              </div>
-              <div>
-                <span>{strengthLabel}</span>
-                <small>Use mixed case, a number, and a symbol for extra strength.</small>
-              </div>
-            </div>
+            <PasswordStrengthMeter password={password} />
 
             <label className="password-setup-field">
               <span>Confirm password</span>
@@ -231,7 +188,7 @@ export default function SetPasswordPage() {
                   placeholder="Re-enter your password"
                   autoComplete="new-password"
                   required
-                  minLength={6}
+                  minLength={PASSWORD_MIN_LENGTH}
                   aria-describedby="password-match-status"
                 />
                 {confirm.length > 0 && (
@@ -255,7 +212,7 @@ export default function SetPasswordPage() {
             </label>
 
             <Button type="submit" loading={isSubmitting} fullWidth>
-              Activate my account <ArrowRight size={17} />
+              Save password <ArrowRight size={17} />
             </Button>
           </form>
 

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { FileCheck2 } from "lucide-react";
 
 import { ChangePasswordForm } from "./ChangePasswordForm";
@@ -30,6 +31,10 @@ interface ProfilePageProps {
   status: string;
   sections: ProfileSection[];
   documents?: ProfileDocument[];
+  showSecurity?: boolean;
+  subtitle?: string;
+  headerAction?: ReactNode;
+  theme?: "default" | "admin";
 }
 
 function initials(name: string) {
@@ -56,6 +61,10 @@ export function ProfilePage({
   status,
   sections,
   documents,
+  showSecurity = true,
+  subtitle,
+  headerAction,
+  theme = "default",
 }: ProfilePageProps) {
   const normalizedStatus = status.toLowerCase();
   const statusClass =
@@ -66,10 +75,15 @@ export function ProfilePage({
         : "";
 
   return (
-    <main className={styles.profilePage}>
-      <header className={styles.pageHeading}>
-        <h1>Profile</h1>
-        <p>Your {roleLabel.toLowerCase()} account information and security.</p>
+    <main
+      className={`${styles.profilePage} ${theme === "admin" ? styles.adminTheme : ""}`.trim()}
+    >
+      <header className={styles.pageHeading} style={headerAction ? { display: "flex", alignItems: "center", justifyContent: "space-between" } : undefined}>
+        <div>
+          <h1>Profile</h1>
+          <p>{subtitle ?? `Your ${roleLabel.toLowerCase()} account information and security.`}</p>
+        </div>
+        {headerAction}
       </header>
 
       <section className={styles.accountPanel}>
@@ -153,13 +167,17 @@ export function ProfilePage({
             </section>
           ) : null}
 
-          <ChangePasswordForm />
-          <section className={styles.securityNote}>
-            <div>
-              <strong>Keep your account secure</strong>
-              <p>Never share your password, wallet keys, or verification links.</p>
-            </div>
-          </section>
+          {showSecurity && (
+            <>
+              <ChangePasswordForm email={email} />
+              <section className={styles.securityNote}>
+                <div>
+                  <strong>Keep your account secure</strong>
+                  <p>Never share your password, wallet keys, or verification links.</p>
+                </div>
+              </section>
+            </>
+          )}
         </div>
       </section>
     </main>

@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/requireRole";
 import { Card } from "@/components/common/Card";
 import { BackButton } from "@/components/common/BackButton";
 import { CancelEventButton } from "@/components/common/CancelEventButton";
+import { EventReviewButtons } from "@/components/common/EventReviewButtons";
 import { formatMyr } from "@/lib/currency";
 import { EventBanner } from "@/components/events/EventBanner";
 import { EventMetricCard } from "@/components/events/EventMetricCard";
@@ -11,6 +12,7 @@ import {
   buildEventChartPoints,
   type EventTransactionRow,
 } from "@/lib/eventChartData";
+import { synchronizeFinishedEvents } from "@/lib/eventLifecycle.server";
 
 const NUMBER = new Intl.NumberFormat("en-US");
 
@@ -37,6 +39,7 @@ export default async function AdminEventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   await requireRole(["admin"]);
+  await synchronizeFinishedEvents();
   const { eventId } = await params;
 
   const { data: event, error } = await supabaseAdmin
@@ -104,8 +107,8 @@ export default async function AdminEventDetailPage({
   const chartData = buildEventChartPoints(chartTransactions, totalSupply);
 
   return (
-    <>
-      <div className="top-row">
+    <div className="admin-page admin-event-detail">
+      <div className="top-row admin-event-detail-heading">
         <span
           className={`admin-event-status-badge admin-event-status-badge--${statusClass(event.status)}`.trim()}
         >
@@ -126,6 +129,9 @@ export default async function AdminEventDetailPage({
           </p>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
+          {event.status === "pending" && (
+            <EventReviewButtons eventId={eventId} eventName={event.event_name} />
+          )}
           <BackButton />
           {event.status === "active" && (
             <CancelEventButton
@@ -245,6 +251,6 @@ export default async function AdminEventDetailPage({
           </table>
         </Card>
       )}
-    </>
+    </div>
   );
 }

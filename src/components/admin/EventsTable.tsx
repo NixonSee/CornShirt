@@ -51,6 +51,8 @@ function statusClass(status: string): string {
       return "status good";
     case "pending":
       return "status warn";
+    case "completed":
+      return "status";
     case "rejected":
     case "cancelled":
       return "status bad";

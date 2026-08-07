@@ -33,6 +33,7 @@ test("maps live ticket ownership rows into display tickets", async () => {
         artist_name: "Live Artist",
         venue: "Arena Hall",
         event_date: "2026-08-15T12:00:00.000Z",
+        status: "active",
       },
     ],
     [
@@ -40,6 +41,7 @@ test("maps live ticket ownership rows into display tickets", async () => {
         ticket_type_id: "type-1",
         type_name: "General Admission",
         transfer_allowed: true,
+        price_sen: 10_000,
       },
     ],
   );
@@ -50,9 +52,29 @@ test("maps live ticket ownership rows into display tickets", async () => {
   assert.equal(result[0].status, "VALID");
   assert.equal(result[0].transferAllowed, true);
   assert.equal(result[0].hasActiveListing, false);
+  assert.equal(result[0].eventCancelled, false);
+  assert.equal(result[0].originalPriceSen, 10_000);
+  assert.equal(result[0].maxResalePriceSen, 11_500);
   assert.equal(result[0].accent, "#36b56a");
   assert.equal(result[0].qrValue, "cornshirt:ticket-1");
   assert.equal(result[0].isNftBacked, true);
+});
+
+test("cancelled events are marked so transfer and resale actions can be removed", async () => {
+  const ticketData = await import("./ticketData.ts");
+  const [ticket] = ticketData.mapCustomerTickets(
+    [{ ticket_id: "cancelled-ticket", event_id: "cancelled-event", status: "valid" }],
+    [{ event_id: "cancelled-event", status: "cancelled" }],
+    [],
+  );
+
+  assert.equal(ticket.eventCancelled, true);
+
+  const source = readFileSync(listUrl, "utf8");
+  assert.match(
+    source,
+    /\["active", "valid"\]\.includes\(ticket\.status\.toLowerCase\(\)\) &&[\s\S]*?!ticket\.eventCancelled/,
+  );
 });
 
 test("ticket colors communicate valid, used, and active resale states", async () => {
@@ -84,7 +106,11 @@ test("eligible tickets expose a resale listing modal", () => {
   assert.match(source, /showCloseButton/);
   assert.match(source, /data-testid="resale-listing-form"/);
   assert.match(source, /inputMode="decimal"/);
+  assert.match(source, /Maximum resale price:/);
+  assert.match(source, /original price \+ 15%/);
   assert.match(source, /return "LISTED"/);
+  assert.match(source, /return "COLLECTIBLE"/);
+  assert.match(source, /Check-in closed when the event ended/);
   assert.match(source, /waiting for a buyer/);
 });
 
@@ -126,8 +152,15 @@ test("ticket list renders one ticket-shaped row with QR and safe actions", () =>
   assert.match(source, /<QRCode/);
   assert.match(source, /<Modal/);
   assert.match(source, />\s*View QR\s*</);
-  assert.match(source, /Ticket ID/);
-  assert.match(source, /navigator\.clipboard\.writeText/);
+  assert.doesNotMatch(source, /Ticket ID/);
+  assert.doesNotMatch(source, /navigator\.clipboard\.writeText/);
+  assert.match(source, /className="ticket-view-modal"[\s\S]*?showCloseButton/);
+  assert.match(source, /className="ticket-view-modal"[\s\S]*?actions=\{null\}/);
+  assert.match(source, /Scan this QR code at the entrance\./);
+  assert.match(
+    source,
+    /\["active", "valid"\]\.includes\(ticket\.status\.toLowerCase\(\)\)[\s\S]*?>\s*Transfer\s*</,
+  );
   assert.doesNotMatch(source, /Full QR value/);
   assert.match(source, />\s*Transfer\s*</);
   assert.match(source, /recipientEmail/);
