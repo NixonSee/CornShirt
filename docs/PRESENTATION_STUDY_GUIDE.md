@@ -1,8 +1,27 @@
-# CornShirt Presentation and Code Revision Guide
+# CornShirt Technical and Presentation Guide
 
-## Purpose
+## Purpose and lesson format
 
-This guide prepares every team member to explain the CornShirt system during a presentation or question-and-answer session. Every member should understand the whole application, even when different members lead different presentation sections.
+This guide teaches every team member how CornShirt works and prepares the team for presentation questions. It is divided into four technical subjects: **Frontend**, **Backend**, **Smart Contracts**, and **Database**. Every member should understand all four subjects, even when different people lead different presentation sections.
+
+Use each section like a tuition lesson:
+
+1. Learn the technical terms.
+2. Open the named CornShirt files.
+3. Trace the function's caller, inputs, output, and side effects.
+4. Study why the code uses that construct.
+5. Discuss what would happen if it were replaced or removed.
+6. Explain the lesson without reading the notes.
+7. Answer the checkpoint and final Q&A questions.
+
+## Four-part course map
+
+| Part | Main locations | Guiding question |
+| --- | --- | --- |
+| Frontend | `src/app` pages, `src/components`, `src/app/globals.css` | How does the user navigate and interact with CornShirt? |
+| Backend | `src/app/api`, `src/lib`, `src/proxy.ts` | How does the trusted server validate and coordinate actions? |
+| Smart Contracts | `blockchain/contracts`, `src/lib/nft` | How is NFT ownership created, transferred, settled, and burned? |
+| Database | `supabase/migrations`, `supabase/seed.sql`, `scripts/sql` | How is application state stored and changed atomically? |
 
 CornShirt currently contains:
 
@@ -44,6 +63,8 @@ After reading, each person must be able to describe the four roles:
 | Organizer | Create and manage events, view sales, cancel eligible events, and verify tickets. |
 | Admin | Approve applications and events, manage users, cancel events, and monitor the platform. |
 
+# Foundation: System Architecture
+
 ## 3. High-Level Architecture
 
 ```text
@@ -72,6 +93,10 @@ System authority is divided deliberately:
 - `CornShirtTicket` is authoritative for NFT token ownership.
 - Supabase is authoritative for users, roles, events, ticket status, inventory, QR state, operations, and simulated accounting.
 - Next.js server routes authorize requests and coordinate the systems.
+
+# Part I: Frontend
+
+The frontend is the visible and interactive part of CornShirt: pages, navigation, forms, event cards, ticket controls, seat maps, QR controls, tables, charts, loading states, error messages, and responsive styling. The frontend can hide unavailable actions, but it is not the security authority; the backend repeats all important checks.
 
 ## 4. Next.js Routing
 
@@ -234,6 +259,111 @@ The extension does not decide whether code runs in the browser or on the server.
 
 For every TSX file, identify whether it is a server or client component and explain why.
 
+### 5.4 Frontend technical terms
+
+| Term | Meaning |
+| --- | --- |
+| Component | Reusable function that returns part of the interface. |
+| JSX | HTML-like syntax written inside TypeScript/JavaScript. |
+| Props | Read-only inputs supplied by a parent component. |
+| State | Information that changes while the user interacts. |
+| Render | React calculating what the interface should display. |
+| Hook | React function such as `useState` or `useEffect`. |
+| Event handler | Function responding to a click, change, submit, or scan. |
+| Controlled input | Form input whose value is stored in React state. |
+| Derived value | Value calculated from existing props or state. |
+
+Example:
+
+```tsx
+const [selectedTicketTypeId, setSelectedTicketTypeId] =
+  useState<string | null>(null);
+
+const selectedZoneId =
+  event.zones.find(
+    (zone) => zone.ticketTypeId === selectedTicketTypeId,
+  )?.id ?? null;
+```
+
+`selectedTicketTypeId` is state. `selectedZoneId` is derived from that state. Storing both independently could allow them to disagree.
+
+### 5.5 Choosing `if/else`, loops, and array methods
+
+These constructs are not interchangeable.
+
+Use `if/else` to choose one path:
+
+```ts
+if (role === "admin") {
+  redirect("/admin");
+} else {
+  redirect("/customer");
+}
+```
+
+Use a loop to repeat behavior:
+
+```ts
+for (const ticket of tickets) {
+  verifyTicket(ticket);
+}
+```
+
+Why not use a loop for the role decision? A loop means “repeat for every item,” while role routing needs exactly one destination. Why not use one `if/else` for all tickets? One condition runs once and does not visit the collection.
+
+Array methods describe common collection operations:
+
+| Method | Use | CornShirt-style example |
+| --- | --- | --- |
+| `map` | Transform every item | Convert database ticket rows to UI ticket objects. |
+| `filter` | Keep all matching items | Keep events matching search/category. |
+| `find` | Return first match | Find the zone connected to a ticket type. |
+| `reduce` | Combine into one value | Add sold tickets or revenue. |
+| `slice` | Take part of an array | Select featured/visible events. |
+
+A `for` loop could perform these operations, but `map`, `filter`, `find`, and `reduce` communicate intent more clearly.
+
+Use `switch` when one value has several exact cases, such as `admin`, `organizer`, and `customer`. An `if/else if` chain can work too; `if/else` is often better for ranges or unrelated Boolean conditions.
+
+### 5.6 Frontend state and hook choices
+
+- `useState` stores form values, selections, errors, loading, and modal state.
+- `useEffect` performs a side effect after render, such as fetching events.
+- `useMemo` caches a calculation until dependencies change.
+- `useRef` retains a value without triggering a render.
+
+`PurchaseButton` keeps its idempotency key in a ref so re-renders do not generate a new request identity. A normal local variable may be recreated.
+
+Removing `useMemo` from event filtering normally preserves correctness but recalculates on every render. It is a performance choice, not a security control.
+
+Using `useEffect` for something that can be calculated during render creates unnecessary synchronization and another render.
+
+### 5.7 Frontend “what if” lesson
+
+| Change | Likely result |
+| --- | --- |
+| Remove `"use client"` from `EventTicketing` | Hooks and click handlers become invalid in a server component. |
+| Make every component client-side | More browser JavaScript and less-clear secret boundaries. |
+| Replace `[eventId]` with a literal `eventId` folder | URL becomes `/events/eventId`; it no longer accepts arbitrary event IDs. |
+| Rename `[eventId]` but keep `params.eventId` | Parameter access becomes wrong or fails type checking. |
+| Trust only disabled buttons | APIs remain callable manually; there is no real authorization. |
+| Store selected ticket and zone independently | State can become inconsistent. |
+| Remove loading/error states | Users receive no useful feedback during delay/failure. |
+
+### 5.8 Frontend checkpoint
+
+- Explain JSX, component, props, state, render, and hook.
+- Explain `.ts` versus `.tsx`.
+- Explain server versus client components.
+- Explain static and bracketed dynamic routes.
+- Compare `if/else`, loop, `map`, `filter`, `find`, and `reduce`.
+- Trace a seat-zone click to the selected ticket type.
+- Explain why frontend availability is not backend security.
+
+# Part II: Backend
+
+The backend is trusted server-side code. It authenticates users, authorizes roles and ownership, validates input, protects secrets, reads authoritative prices, calls Stripe and blockchain services, invokes database functions, and returns safe HTTP responses.
+
 ## 6. Authentication and Role Authorization
 
 Study these files in order:
@@ -265,6 +395,142 @@ Questions everyone should answer:
 - What is the difference between authentication and authorization?
 - Why must the service-role key remain on the server?
 - Why does the application read the role from `profiles` rather than trusting browser input?
+
+### 6.1 Backend technical terms
+
+| Term | Meaning |
+| --- | --- |
+| API | Defined way for software to request data or actions. |
+| Route handler | Server function exported as `GET`, `POST`, `PUT`, or `DELETE`. |
+| Authentication | Determining who the user is. |
+| Authorization | Determining what that user may do. |
+| Validation | Checking that input and current state meet rules. |
+| Secret | Credential that must never enter browser code. |
+| Side effect | External change such as payment, database write, NFT transfer, or email. |
+| Idempotency | Retrying does not repeat a completed side effect. |
+| Webhook | Server-to-server notification sent by an external provider. |
+| Transaction receipt | Blockchain confirmation and result of a submitted transaction. |
+| Recovery state | Stored progress that allows safe continuation after partial failure. |
+
+HTTP method intentions:
+
+| Method | Intended use |
+| --- | --- |
+| `GET` | Read a resource or operation status. |
+| `POST` | Create or trigger an action. |
+| `PUT` | Update a known resource or state. |
+| `DELETE` | Cancel/remove a resource where supported. |
+
+Common status codes:
+
+| Code | Meaning |
+| --- | --- |
+| 200 | Completed successfully. |
+| 202 | Accepted, but finalization is still pending. |
+| 400 | Request input is invalid. |
+| 401 | User is not authenticated. |
+| 403 | User is authenticated but forbidden. |
+| 404 | Resource does not exist or is intentionally hidden. |
+| 409 | Current state conflicts with the action. |
+| 500 | Unexpected server/storage problem. |
+| 502 | External dependency failed. |
+
+### 6.2 Validation and early returns
+
+A protected API should normally:
+
+1. Authenticate and authorize.
+2. Parse JSON or `FormData`.
+3. Normalize whitespace/case.
+4. Validate type, format, and length.
+5. Load authoritative records.
+6. Check ownership and current state.
+7. Perform external side effects.
+8. Store results and return a safe response.
+
+Browser validation is repeated because requests can be sent without the form.
+
+Early returns keep the success path readable:
+
+```ts
+if (!auth.ok) return auth.response;
+if (!ticketId) return badRequestResponse;
+if (!eligible) return conflictResponse;
+
+// Authorized successful operation
+```
+
+A deeply nested `if/else` can be logically equivalent, but becomes harder to scan as validation grows.
+
+### 6.3 Parallel and sequential async work
+
+Use `Promise.all` when operations are independent:
+
+```ts
+const [profile, ticket] = await Promise.all([
+  loadProfile(),
+  loadTicket(),
+]);
+```
+
+Use sequential `await` when a later step needs the earlier result:
+
+```ts
+const operation = await reserveTicket();
+const session = await createStripeSession(operation);
+```
+
+Running reservation and Checkout creation in parallel would be incorrect because Checkout needs the operation's authoritative amount and ID.
+
+### 6.4 Supabase client choices
+
+| Client | Where | Why |
+| --- | --- | --- |
+| Browser client | Client components | Public anonymous key and RLS. |
+| Server session client | Server request context | Uses the user's cookie-backed session. |
+| Admin client | Server-only modules | Service role; bypasses RLS for trusted workflows. |
+
+Importing `supabaseAdmin` into client code risks privileged access and secret exposure.
+
+### 6.5 Backend “what if” lesson
+
+| Change | Likely result |
+| --- | --- |
+| Trust `role: "admin"` from request JSON | Any user could claim the admin role. |
+| Protect the page but not the API | A direct HTTP request could bypass the UI. |
+| Accept price from the browser | A customer could tamper with the amount. |
+| Use Stripe success URL as payment proof | Browser navigation could trigger unverified fulfillment. |
+| Parse webhook JSON before signature verification | Exact signed bytes may change and verification can fail. |
+| Remove idempotency keys | Duplicate Checkout, mint, transfer, or refund becomes possible. |
+| Wait for blockchain receipt before storing hash | A server crash can lose proof of a submitted transaction and cause duplicate submission. |
+| Run dependent calls in `Promise.all` | Later operations may run without required earlier data. |
+| Return a wallet private key to the browser | Whoever captures it can control the customer's NFT wallet. |
+
+### 6.6 Why the webhook, not the redirect?
+
+Stripe signs its webhook request. CornShirt reads the raw body, verifies the `stripe-signature`, claims the event ID once, validates customer/amount/currency/operation, and only then mints or settles an NFT.
+
+The browser success URL is useful for displaying progress, but it is not cryptographic evidence of payment.
+
+### 6.7 Why integer sen?
+
+Currency values use integer smallest units:
+
+- RM1.00 = `100`
+- RM49.90 = `4990`
+
+Floating-point decimal calculations can produce rounding errors. Stripe expects integer minor units.
+
+### 6.8 Why wallet encryption?
+
+Only the managed public address is shown to customers. The private key is encrypted using AES-256-GCM.
+
+- The encryption key stays server-only.
+- A random IV is used.
+- An authentication tag detects modification or a wrong key.
+- Provisioning is idempotent, so a ready customer does not receive a second wallet.
+
+Reusing a fixed IV would weaken GCM security. Returning the key to the client would defeat the managed-wallet security model.
 
 ## 7. Main End-to-End Workflows
 
@@ -481,7 +747,36 @@ Study:
 
 Be able to explain why valid, used, refunded, cancelled, burned, and ownership-mismatch tickets produce different results.
 
+# Part III: Smart Contract
+
+A smart contract is blockchain-deployed code whose state changes through verified transactions. CornShirt uses `CornShirtTicket` for the ERC-721 asset and `CornShirtMarketplace` for approval-based resale settlement.
+
 ## 8. Smart Contracts
+
+### 8.0 Solidity technical terms
+
+| Term | Meaning |
+| --- | --- |
+| ERC-721 | Standard for unique non-fungible tokens. |
+| State variable | Value permanently stored by the contract. |
+| Constructor | Code that runs once during deployment. |
+| Modifier | Reusable rule attached to a function. |
+| `require` | Checks a condition and reverts when false. |
+| Revert | Cancels the transaction and all its state changes. |
+| Mapping | Direct key-to-value on-chain storage. |
+| Struct | Custom group of named fields. |
+| Event | Transaction log observed by off-chain systems. |
+| `msg.sender` | Address calling the current function. |
+| `block.timestamp` | Approximate current block time. |
+| `external` | Function intended to be called from outside. |
+| `view` | Function that reads state without changing it. |
+| `immutable` | Assigned during construction and never changed later. |
+
+ERC-721 `Transfer` events represent:
+
+- Mint: zero address to customer.
+- Transfer: current owner to recipient.
+- Burn: owner to zero address.
 
 ### 8.1 `CornShirtTicket`
 
@@ -551,9 +846,102 @@ Every member should explain:
 
 Prototype limitation: `transfer_allowed` is enforced by the Next.js server and Supabase rules, not directly by `CornShirtTicket`. Someone who obtained a customer's private key could bypass that application-level restriction. The managed-wallet design reduces this risk because customers never receive the keys.
 
+### 8.4 Smart-contract “why and what if” lesson
+
+#### Why roles instead of public functions?
+
+Removing `MINTER_ROLE` would let anyone create fake tickets. Making burning public would let tickets be destroyed outside the verified refund workflow. Separate minter, burner, and settler roles implement least privilege.
+
+#### Why one mint instead of a loop?
+
+One verified primary operation represents exactly one ticket. A loop would introduce batch behavior, higher gas cost, more complex limits, and greater duplicate-delivery risk. A loop is correct only if the business requirement explicitly becomes batch minting.
+
+#### Why a mapping instead of an array for listings?
+
+Settlement knows the listing reference and needs direct lookup. An array requires a loop whose gas cost grows with every listing. The trade-off is that mappings are not naturally enumerable, so Supabase provides the browsable marketplace list.
+
+#### Why a struct?
+
+`Listing` keeps seller, token ID, sen price, expiry, and active state together. Separate mappings could work, but are easier to update inconsistently.
+
+#### Why separate `require` statements?
+
+Each contract invariant has a readable failure reason. One large Boolean expression would be shorter but harder to diagnose.
+
+#### Why keep a cancelled listing instead of deleting it?
+
+Keeping the seller/reference marks the reference as previously used and preserves history. Deleting it could make the reference appear unused again.
+
+#### Why can anyone reclaim an expired listing?
+
+Cleanup does not transfer the NFT. Restricting cleanup to the seller could leave stale listings active forever.
+
+#### Why update state before transferring the NFT?
+
+`settlePaidListing` marks the payment processed and listing inactive before the external `safeTransferFrom`. This follows checks-effects-interactions and works with `nonReentrant` to reduce reentrancy risk.
+
+#### Why `safeTransferFrom` instead of `transferFrom`?
+
+The safe version checks that a contract recipient supports ERC-721 receiving. Otherwise it reverts instead of locking the NFT.
+
+#### What if `processedPayments` is removed?
+
+The contract loses an on-chain defense against reusing the same Stripe payment reference.
+
+#### What if `ticketContract` is not immutable?
+
+An administrator could redirect settlement to a different NFT collection after deployment, invalidating listing assumptions.
+
+### 8.5 Contract helper lesson
+
+The TypeScript backend talks to Solidity through Viem:
+
+| File | Role |
+| --- | --- |
+| `src/lib/nft/contract.ts` | Creates public and platform wallet clients. |
+| `src/lib/nft/mint.ts` | Mints and decodes the ERC-721 Transfer event. |
+| `src/lib/nft/getOwner.ts` | Calls `ownerOf`. |
+| `src/lib/nft/transfer.ts` | Signs customer transfer. |
+| `src/lib/nft/burn.ts` | Burns refunded NFT. |
+| `src/lib/nft/fundGas.ts` | Funds a small Sepolia gas balance. |
+| `src/lib/nft/marketplaceContract.ts` | Approves, lists, cancels, and settles. |
+| `src/abi/CornShirtTicket.json` | Describes callable functions and events. |
+
+### 8.6 Smart-contract checkpoint
+
+- Define ERC-721, token ID, approval, owner, transfer, and burn.
+- Explain every function in both contracts.
+- Explain role separation and least privilege.
+- Explain mapping versus array.
+- Explain struct, event, modifier, `require`, and revert.
+- Explain checks-effects-interactions and reentrancy.
+- Explain why resale transfers the same token.
+
+# Part IV: Database
+
+The database stores roles, events, inventory, operational ticket state, Stripe references, QR state, workflow recovery, listings, simulated accounting, and logs. Blockchain ownership does not replace this application data.
+
 ## 9. Database and Supabase Study
 
 Study `supabase/migrations/202608070001_initial_schema.sql` by category instead of reading it as one uninterrupted file.
+
+### 9.0 Database technical terms
+
+| Term | Meaning |
+| --- | --- |
+| Table | Collection of related rows. |
+| Row | One stored record. |
+| Column | One named field in a row. |
+| Primary key | Unique identifier for one row. |
+| Foreign key | Reference to a row in another table. |
+| Constraint | Rule enforced by PostgreSQL. |
+| Index | Additional lookup structure that speeds queries or enforces uniqueness. |
+| Join | Combines related rows from multiple tables. |
+| Transaction | Changes that commit together or all roll back. |
+| RPC | PostgreSQL function callable through Supabase. |
+| RLS | Row Level Security policy controlling row access. |
+| Migration | Version-controlled schema or database-behavior change. |
+| Seed | Known starting data for local development/testing. |
 
 ### 9.1 Core tables
 
@@ -598,7 +986,111 @@ Study `supabase/migrations/202608070001_initial_schema.sql` by category instead 
 
 For each RPC, identify which API or server helper calls it and what must already be verified before the call.
 
-## 10. UI Revision Order
+### 9.5 Main relationships
+
+```text
+profiles -> events through organizer_id
+profiles -> tickets through user_id
+events -> ticket_types through event_id
+events -> tickets through event_id
+venues -> venue_zones through venue_id
+tickets -> resale_listings through ticket_id
+tickets -> transactions through ticket_id
+tickets -> verification_logs through ticket_id
+```
+
+Foreign keys prevent a ticket, event, or listing from referencing a nonexistent parent.
+
+### 9.6 Constraints and concurrency
+
+Database uniqueness protects:
+
+- One blockchain identity for a token.
+- One active listing for a ticket.
+- One relevant transaction type per operation.
+- One active workflow where required.
+
+Why not check only with a TypeScript `if`? Two concurrent requests can both read “no record” before either insert commits. A database unique constraint still prevents the duplicate commit.
+
+Indexes speed frequent lookup, joins, ordering, and uniqueness. Indexing every column would waste storage and slow writes because every index must also be maintained.
+
+### 9.7 RLS and defense in depth
+
+RLS policies restrict rows, for example:
+
+- Users read their own profile.
+- Customers read their own tickets.
+- Organizers read their own events.
+- Applicants read their own application.
+- Public users read venues and zones.
+
+RLS does not replace API authorization. It protects browser Supabase access, while trusted admin-client workflows bypass it and must authorize explicitly.
+
+### 9.8 Why RPC transactions?
+
+Finalizing a purchase may create/update a ticket, inventory, operation, transaction, and accounting record. Separate TypeScript calls can fail halfway. A PostgreSQL function runs them in one transaction: all commit or all roll back.
+
+### 9.9 Workflow state machine
+
+```text
+pending
+  -> checkout_created
+  -> payment_confirmed
+  -> asset_submitted
+  -> completed
+```
+
+Recovery states include `delivery_failed`, `refund_pending`, and `refunded`.
+
+A single `completed: true/false` cannot distinguish “payment confirmed but mint pending” from “Checkout never created.” Explicit states allow safe reconciliation.
+
+### 9.10 Query-choice lesson
+
+- `.eq("event_id", eventId)` matches one value.
+- `.in("state", ["pending", "payment_confirmed"])` matches a set in one query.
+- `.single()` expects exactly one row.
+- `.maybeSingle()` permits zero or one row.
+
+Using a loop to send one database request for every allowed state creates unnecessary network calls. `.in` lets PostgreSQL evaluate the set in one query.
+
+### 9.11 Database versus blockchain ownership
+
+Sensitive actions compare:
+
+```text
+tickets.wallet_address
+        with
+CornShirtTicket.ownerOf(tokenId)
+```
+
+Supabase provides operational application state. The contract provides authoritative NFT ownership. If they disagree, CornShirt blocks the operation for reconciliation.
+
+Using only blockchain would omit roles, descriptions, inventory, QR status, and Stripe workflow state. Using only Supabase would make NFT ownership database-only.
+
+### 9.12 Database “what if” lesson
+
+| Change | Likely result |
+| --- | --- |
+| Remove foreign keys | Orphan tickets/listings can reference missing records. |
+| Remove unique active-listing constraint | One ticket can be listed multiple times concurrently. |
+| Replace RPC finalization with separate writes | Partial database completion becomes possible. |
+| Remove RLS | Browser clients may read/change rows outside their ownership. |
+| Store only a `completed` Boolean | Recovery cannot identify the failed stage. |
+| Query each allowed state in a loop | More network round trips and more complicated logic. |
+| Trust Supabase owner without `ownerOf` | On-chain disagreement may go undetected. |
+
+### 9.13 Database checkpoint
+
+- Define table, row, column, keys, constraint, index, transaction, RPC, RLS, migration, and seed.
+- Explain the main table groups and relationships.
+- Explain why database constraints matter under concurrency.
+- Explain why multi-row finalization uses RPC transactions.
+- Explain workflow states.
+- Compare database and blockchain ownership.
+
+# Cross-Layer Practice and Presentation Preparation
+
+## 10. Frontend UI Revision Order
 
 Study UI code from shared foundations to feature-specific components:
 
@@ -628,321 +1120,192 @@ For every interactive component, record:
 - Accessibility behavior
 - Relevant responsive CSS
 
-## 11. Function-by-Function Revision Worksheet
 
-Use this worksheet for every important function:
+## 11. Q&A: Easy to Hard
 
-```text
-Function name:
-File:
-Runs in: browser / Next.js server / database / blockchain
-Called by:
-Calls:
-Inputs and types:
-Return value:
-Database reads:
-Database writes:
-External side effects:
-Authentication required:
-Authorization rules:
-Validation performed:
-Failure modes:
-Idempotency or retry behavior:
-Related test:
-How to demonstrate it:
-One-sentence explanation:
-```
+Practice by hiding the answer, responding aloud, and then checking the explanation.
 
-Do not describe a function only as "this buys a ticket." Explain its inputs, validation, side effects, failure recovery, and why it appears at that stage of the workflow.
+### Level 1: Easy
 
-## 12. Team Revision Schedule
+#### 1. What is a smart contract?
 
-### Session 1: System foundation
+Blockchain-deployed code that enforces on-chain state changes.
 
-Topics:
+#### 2. What is the difference between `.ts` and `.tsx`?
 
-- Project goal
-- Roles
-- Technology stack
-- High-level architecture
-- `.ts` versus `.tsx`
-- Next.js routing and bracket folders
+Both contain TypeScript; `.tsx` permits React JSX.
 
-Required output:
+#### 3. What does `[eventId]` mean?
 
-- Each member draws the architecture from memory.
-- Each member explains one dynamic page and one dynamic API route.
+It is a dynamic URL segment whose value becomes `params.eventId`.
 
-### Session 2: Authentication and data
+#### 4. What does `page.tsx` do?
 
-Topics:
+It renders the page for its App Router folder.
 
-- Supabase session cookies
-- Browser and server Supabase clients
-- Page and API role guards
-- Database tables
-- RLS policies
-- Managed-wallet provisioning and encryption
+#### 5. What does `route.ts` do?
 
-Required output:
+It implements HTTP handlers such as `GET`, `POST`, `PUT`, or `DELETE`.
 
-- Each member explains login-to-dashboard routing.
-- Each member explains why secrets stay server-only.
+#### 6. Why use `if/else`?
 
-### Session 3: Event and customer interface
+To choose one execution path according to a condition.
 
-Topics:
+#### 7. Why use a loop?
 
-- Event discovery
-- Event data mapping
-- Search and filtering
-- Dynamic event detail pages
-- Seat-map interaction
-- Customer ticket display and transaction history
+To repeat an operation for multiple values.
 
-Required output:
+### Level 2: Intermediate
 
-- Trace an event from a Supabase row to a rendered event card.
-- Explain one stateful client component.
+#### 8. What do `map`, `filter`, `find`, and `reduce` do?
 
-### Session 4: Primary purchase and NFT
+`map` transforms all items, `filter` keeps matches, `find` returns the first match, and `reduce` combines items into one result.
 
-Topics:
+#### 9. Why not use a loop for role routing?
 
-- Inventory reservation
-- MYR-to-sen conversion
-- Stripe Checkout
-- Webhook verification
-- Idempotency
-- NFT minting and receipt confirmation
-- Database finalization
+Routing needs one decision, while a loop repeats behavior across a collection.
 
-Required output:
+#### 10. What is a React component?
 
-- Draw the complete primary-purchase sequence without notes.
-- Explain why the success redirect cannot mint the ticket.
+A reusable function that returns UI.
 
-### Session 5: Ownership workflows
+#### 11. What is the difference between props and state?
 
-Topics:
+Props are parent-supplied read-only inputs; state is changing data managed by the component.
 
-- Direct transfer
-- Marketplace approval and listing
-- Resale checkout and settlement
-- Event cancellation
-- Refund beneficiary
-- NFT burning
-- Failure recovery
+#### 12. Why does a component use `"use client"`?
 
-Required output:
+It needs hooks, event handlers, camera access, `window`, or other browser features.
 
-- Compare primary purchase, free transfer, and paid resale.
-- Explain why resale uses the same token ID.
+#### 13. Why not make every component client-side?
 
-### Session 6: Organizer, admin, and verification
+That sends more JavaScript to the browser and makes server-only boundaries less clear.
 
-Topics:
+#### 14. Why use dynamic routes for events?
 
-- Event creation and editing
-- Admin application/event approval
-- Organizer metrics
-- Admin metrics
-- QR verification
-- Ticket check-in
-- Event lifecycle
+One page can display any database event without creating and deploying one file per event.
 
-Required output:
+#### 15. What is authentication?
 
-- Perform the organizer and admin demo flow.
-- Explain all ticket rejection states.
+Determining who the user is.
 
-### Session 7: Testing and rehearsal
+#### 16. What is authorization?
 
-Topics:
+Determining what the authenticated user is allowed to do.
 
-- Unit tests
-- Contract tests
-- System testing guide
-- Negative authorization tests
-- Cross-system reconciliation
-- Presentation rehearsal
+#### 17. Why protect the API when the button is hidden?
 
-Required output:
+Users can manually call APIs; hidden UI is not security.
 
-- Run or review the relevant test commands.
-- Conduct two full rehearsals with unexpected questions.
+#### 18. Why is `supabaseAdmin` server-only?
 
-## 13. Team Rotation Method
+It uses the service-role key and bypasses RLS.
 
-Everyone studies every section. Rotate these responsibilities during each revision session:
+#### 19. Why validate on the backend when the form validates?
 
-| Responsibility | Task |
-| --- | --- |
-| Lead explainer | Explains the workflow without reading directly from the code. |
-| Code navigator | Opens the caller, implementation, dependencies, and tests. |
-| Challenger | Asks security, failure, and "why" questions. |
-| Recorder | Updates the shared function worksheets and unresolved-question list. |
+Browser validation can be bypassed.
 
-The lead explainer is not the only person responsible for that topic. After the explanation, another member must repeat the flow from memory.
+### Level 3: Advanced
 
-## 14. Recommended Presentation Structure
+#### 20. Why use early returns in route handlers?
 
-### Slide 1: Project goal
+They reject invalid cases immediately and keep the successful path readable.
 
-- Concert ticketing and resale prototype
-- MYR Stripe Test Mode payments
-- NFT-backed ownership
-- Four user roles
+#### 21. When should `Promise.all` be used?
 
-### Slide 2: System architecture
+When asynchronous operations are independent. Dependent work must remain sequential.
 
-- Next.js
-- Supabase
-- Stripe
-- Ethereum contracts
-- Email
+#### 22. Why are prices stored in sen?
 
-### Slide 3: Roles and authorization
+Integer minor units avoid floating-point currency rounding problems.
 
-- Visitor
-- Customer
-- Organizer
-- Admin
-- Server-side role guards
+#### 23. Why is a Stripe success redirect not payment proof?
 
-### Slide 4: Next.js routing
+Browser navigation is not signed. CornShirt trusts the verified Stripe webhook.
 
-- App Router folder structure
-- `page.tsx`, `layout.tsx`, and `route.ts`
-- `[eventId]` and other dynamic parameters
-- Server and client components
+#### 24. What is idempotency?
 
-### Slide 5: Event creation and approval
+The ability to retry without repeating a completed side effect.
 
-- Organizer selects venue and ticket zones
-- Event starts as pending
-- Admin approval changes it to active
-- Only live active events are publicly visible
+#### 25. Why use a managed wallet?
 
-### Slide 6: Primary purchase
+Customers receive NFT capability without handling MetaMask or private keys.
 
-- Server validation
-- Inventory reservation
-- Stripe Checkout
-- Signed webhook
-- NFT mint
-- Database finalization
+#### 26. Why use AES-256-GCM?
 
-### Slide 7: Managed wallets and smart contracts
+It encrypts the private key and supplies an authentication tag that detects modification or an incorrect key.
 
-- Automatic customer wallet
-- Encrypted private key
-- ERC-721 ownership
-- Minter, burner, and settler roles
+#### 27. Why store the blockchain hash before waiting for the receipt?
 
-### Slide 8: Transfer and resale
+A retry can recover an already-submitted transaction instead of submitting a duplicate.
 
-- Free direct transfer
-- Marketplace approval
-- Stripe resale payment
-- Existing token settlement
-- Simulated seller proceeds
+#### 28. Why does a primary purchase mint?
 
-### Slide 9: Cancellation and refund
+It creates a new ticket asset that did not exist.
 
-- Ticket becomes refund eligible
-- Latest payer receives refund
-- Current owner surrenders ticket
-- NFT is burned
+#### 29. Why does a transfer or resale not mint?
 
-### Slide 10: Organizer verification
+The existing ticket changes owner; minting would duplicate the ticket.
 
-- Camera or manual QR input
-- Event authorization
-- Status check
-- On-chain ownership check
-- Atomic check-in
+#### 30. What does `ownerOf` provide?
 
-### Slide 11: UI and responsive design
+The authoritative on-chain owner of an ERC-721 token.
 
-- Shared components
-- Client-side interaction
-- Loading, empty, error, and success states
-- Desktop and mobile layouts
+#### 31. Why compare `ownerOf` with Supabase?
 
-### Slide 12: Security, testing, and limitations
+To detect disagreement between operational application ownership and blockchain ownership.
 
-- Server-only secrets
-- Webhook signature verification
-- Idempotency
-- Contract roles
-- Test coverage
-- Prototype limitations and future reconciliation work
+### Level 4: Very advanced
 
-## 15. Recommended Live Demonstration
+#### 32. Why use an RPC for reservation/finalization?
 
-Use one connected story instead of unrelated screens:
+Related database checks and writes must happen atomically under concurrency.
 
-1. Open the visitor page and browse active events.
-2. Search or filter the event list.
-3. Open `/events/[eventId]` and explain the dynamic route.
-4. Log in as a customer.
-5. Open the customer version of the event and select a ticket zone.
-6. Start or explain Stripe Test Checkout.
-7. Show the ticket, token ID, transaction hash, and QR code.
-8. Demonstrate or explain direct transfer or resale.
-9. Log in as the organizer and verify a ticket.
-10. Log in as the admin and show event/user monitoring.
+#### 33. Why is a unique constraint stronger than a TypeScript `if`?
 
-Prepare backup screenshots and known IDs in case Stripe, email, camera access, Supabase, or the blockchain network is temporarily unavailable during the presentation.
+Two concurrent requests can both pass an application check, but the database still prevents duplicate commits.
 
-## 16. Likely Presentation Questions
+#### 34. Why use an operation state machine instead of one Boolean?
 
-### Why is a Stripe success redirect not payment proof?
+It distinguishes payment, blockchain submission, recovery, refund, and completion stages.
 
-The browser can be closed, manipulated, or redirected without a confirmed payment. CornShirt trusts the signed Stripe webhook and validates the stored operation, payer, amount, currency, and session.
+#### 35. What happens if payment succeeds but minting fails?
 
-### Why are prices stored in sen?
+The stored operation remains recoverable; CornShirt retries the existing work or issues one test refund after repeated delivery failure.
 
-Integer sen avoids floating-point rounding errors. For example, `RM49.90` becomes `4990`.
+#### 36. Who receives a refund after a free transfer?
 
-### Why use a managed wallet?
+The current owner surrenders the NFT, but the latest Stripe payer receives the refund.
 
-Customers can receive and transfer NFTs without installing MetaMask or managing private keys. The server encrypts the private key and signs only authorized operations.
+#### 37. Why separate minter, burner, and settler roles?
 
-### What is the difference between Supabase ownership and `ownerOf`?
+Least privilege limits damage if one account is compromised.
 
-Supabase stores operational ownership for application queries, but the Ticket contract's `ownerOf(tokenId)` is authoritative for blockchain ownership. Sensitive operations compare both.
+#### 38. Why use a mapping instead of an array for marketplace listings?
 
-### Why does resale not mint a new NFT?
+Known-reference lookup is direct. An array requires a growing gas-cost search loop.
 
-The existing ticket asset is transferred to the buyer. Minting a replacement would create duplicate tickets and break the original token's ownership history.
+#### 39. What does `nonReentrant` protect?
 
-### What is idempotency?
+It prevents a protected function from being entered again before the first call finishes.
 
-Idempotency allows a request or webhook to be retried without repeating a successful side effect such as creating another Checkout Session, minting another NFT, transferring twice, or refunding twice.
+#### 40. What is checks-effects-interactions?
 
-### What does `[eventId]` mean?
+Validate first, update internal state second, and call external contracts last.
 
-It is a dynamic App Router folder. The corresponding URL segment becomes `params.eventId`.
+#### 41. Why use `safeTransferFrom`?
 
-### What is the difference between `.ts` and `.tsx`?
+It prevents NFTs from being locked in contracts that cannot receive ERC-721 tokens.
 
-Both contain TypeScript, but `.tsx` permits JSX markup used by React components. `.ts` is used when no JSX is present.
+#### 42. Why can Stripe payment and NFT delivery not be one atomic transaction?
 
-### Why are server and client components separated?
+Stripe and Ethereum are independent systems without one shared transaction manager.
 
-Server components can safely access trusted server data and reduce browser JavaScript. Client components are required for hooks, browser APIs, and interactive event handlers.
+#### 43. What is CornShirt's most important system-wide principle?
 
-### Who receives a refund after a free transfer?
+Do not trust the browser as proof. Verify identity and authoritative external results, store durable progress, and finalize only after required confirmations.
 
-The current owner surrenders the NFT, but Stripe refunds the latest successful payer because a free transfer created no new payment.
-
-### What happens three hours after an event starts?
-
-The event becomes completed, unused tickets and listings expire, and purchases, transfers, resale, verification, and check-in are blocked. Existing NFTs remain as collectibles.
-
-## 17. Documentation Differences to Clarify Before Presenting
+## 13. Documentation Differences to Clarify Before Presenting
 
 The team should describe the current code accurately and distinguish it from older documentation:
 
@@ -960,7 +1323,7 @@ During the presentation, label statements as one of:
 
 Do not claim that Stripe Test Mode payments, organizer revenue, or seller proceeds are real-money production transactions.
 
-## 18. Final Team Readiness Checklist
+## 14. Final Team Readiness Checklist
 
 Every team member should be able to:
 
@@ -982,4 +1345,3 @@ Every team member should be able to:
 - [ ] Explain important security boundaries and prototype limitations.
 - [ ] Navigate to the relevant code when asked an unexpected question.
 - [ ] Complete at least two full presentation rehearsals.
-
