@@ -258,11 +258,32 @@ locally:
    `http://localhost:3000/auth/callback` route and its recovery query
    parameters. Do not replace the production Site URL with localhost; keep
    localhost as an additional allowed redirect.
-5. Go to **Authentication > Email Templates > Reset Password**. If the
-   template is unchanged, keep its `{{ .ConfirmationURL }}` link. If it builds
-   a custom link, use `{{ .RedirectTo }}` instead of `{{ .SiteURL }}` so the
-   destination requested by CornShirt is preserved.
-6. Start CornShirt at `http://localhost:3000`, request a new password-reset
+5. Add the production callback as another **Redirect URL** (replace the
+   example hostname with the Vercel hostname shown in the browser):
+
+   ```text
+   https://your-project.vercel.app/auth/callback
+   ```
+
+   If password resets are tested from Vercel preview deployments, also add the
+   preview pattern recommended by Supabase:
+
+   ```text
+   https://*-your-team-or-account-slug.vercel.app/**
+   ```
+
+6. Go to **Authentication > Email Templates > Reset Password** and make sure
+   the reset button uses Supabase's one-time confirmation URL:
+
+   ```html
+   <a href="{{ .ConfirmationURL }}">Reset password</a>
+   ```
+
+   Do not link the reset button directly to `{{ .SiteURL }}` or
+   `{{ .RedirectTo }}`. Those values alone do not include the one-time
+   verification step; `{{ .ConfirmationURL }}` includes it and then preserves
+   CornShirt's requested redirect destination.
+7. Start CornShirt at `http://localhost:3000`, request a new password-reset
    email from the local login page, and open the new email link. It should
    return to `/auth/callback` and then display the set-password page locally.
 

@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive CornShirt code and presentation study guide.">
+  <title>CornShirt Study Lab</title>
+  <style>
+    :root {
+      --ink: #17231c;
+      --muted: #667068;
+      --paper: #f7f4eb;
+      --card: #fffdf7;
+      --line: #ded9ca;
+      --corn: #f4b62f;
+      --corn-soft: #fff0bd;
+      --leaf: #246b45;
+      --leaf-dark: #17442e;
+      --blue: #315e8a;
+      --red: #a43b32;
+      --shadow: 0 18px 50px rgba(39, 50, 41, .09);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 90% 4%, rgba(244, 182, 47, .18), transparent 25rem),
+        var(--paper);
+      font: 16px/1.65 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input { font: inherit; }
+    button, a, summary, input[type="checkbox"] { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; }
+    code, pre, .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+    code {
+      padding: .12rem .36rem;
+      border-radius: 6px;
+      background: #ece8dc;
+      color: #284635;
+      font-size: .91em;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    pre {
+      overflow: auto;
+      margin: 1rem 0;
+      padding: 1rem 1.15rem;
+      border: 1px solid #2f5943;
+      border-radius: 14px;
+      color: #e9f5ec;
+      background: #173527;
+      font-size: .86rem;
+      line-height: 1.6;
+    }
+    pre code {
+      padding: 0;
+      color: inherit;
+      background: transparent;
+      overflow-wrap: normal;
+      word-break: normal;
+    }
+    h1, h2, h3, h4 { line-height: 1.15; letter-spacing: -.03em; }
+    h1 { margin: .2rem 0 1rem; font-size: clamp(2.6rem, 6vw, 5.7rem); max-width: 11ch; }
+    h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.6rem); }
+    h3 { margin: 0; font-size: 1.26rem; }
+    h4 { margin: 1.15rem 0 .4rem; font-size: 1rem; }
+    p { margin: .55rem 0 1rem; }
+    ul, ol { padding-left: 1.25rem; }
+    li + li { margin-top: .35rem; }
+    table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+    th, td { padding: .75rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--leaf-dark); background: #f0eee5; }
+
+    .layout { min-height: 100vh; }
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 20;
+      width: 290px;
+      padding: 1.25rem;
+      color: #f8f5e9;
+      background: var(--leaf-dark);
+      overflow-y: auto;
+    }
+    .brand { display: flex; align-items: center; gap: .8rem; margin-bottom: 1.35rem; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      color: var(--leaf-dark);
+      background: var(--corn);
+      font-weight: 900;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,.09);
+    }
+    .brand strong { display: block; font-size: 1.05rem; }
+    .brand small { display: block; color: #b8c9bd; }
+    .progress-card {
+      padding: 1rem;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 16px;
+      background: rgba(255,255,255,.07);
+    }
+    .progress-row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+    .progress-row strong { color: var(--corn); font-size: 1.35rem; }
+    .progress-track { height: 8px; margin-top: .7rem; border-radius: 999px; background: rgba(255,255,255,.13); overflow: hidden; }
+    .progress-fill { width: 0; height: 100%; border-radius: inherit; background: var(--corn); transition: width .25s ease; }
+    .search-wrap { margin: 1rem 0; }
+    .search-wrap label { display: block; margin-bottom: .35rem; color: #b8c9bd; font-size: .78rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .search-wrap input {
+      width: 100%;
+      padding: .72rem .8rem;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 11px;
+      outline: none;
+      color: white;
+      background: rgba(0,0,0,.16);
+    }
+    .search-wrap input:focus { border-color: var(--corn); box-shadow: 0 0 0 3px rgba(244,182,47,.16); }
+    .nav-label { margin: 1.15rem 0 .35rem; color: #91a99a; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .side-nav { display: grid; gap: .16rem; }
+    .side-nav a {
+      padding: .52rem .65rem;
+      border-radius: 9px;
+      color: #d8e3db;
+      text-decoration: none;
+      font-size: .9rem;
+    }
+    .side-nav a:hover, .side-nav a.active { color: #17231c; background: var(--corn); }
+    .side-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: 1.1rem; }
+    .side-actions button {
+      padding: .58rem .5rem;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 9px;
+      color: white;
+      background: transparent;
+      cursor: pointer;
+    }
+    .side-actions button:hover { border-color: var(--corn); color: var(--corn); }
+
+    main { width: min(1180px, calc(100% - 290px)); margin-left: 290px; padding: 2.4rem clamp(1.2rem, 4vw, 4.5rem) 6rem; }
+    .hero {
+      position: relative;
+      min-height: 590px;
+      display: grid;
+      align-content: center;
+      padding: clamp(2rem, 6vw, 5rem);
+      border-radius: 30px;
+      overflow: hidden;
+      color: #fffdf6;
+      background:
+        linear-gradient(115deg, rgba(19,55,38,.97), rgba(35,105,69,.88)),
+        #17442e;
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "{ }";
+      position: absolute;
+      right: -2rem;
+      bottom: -5rem;
+      color: rgba(244,182,47,.15);
+      font: 900 clamp(12rem, 28vw, 25rem)/1 monospace;
+      transform: rotate(-8deg);
+    }
+    .eyebrow { color: var(--leaf); font-size: .76rem; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+    .hero .eyebrow { color: var(--corn); }
+    .hero p { max-width: 62ch; color: #d4e1d7; font-size: 1.06rem; }
+    .hero-tags { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+    .tag { padding: .42rem .68rem; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(255,255,255,.07); font-size: .82rem; }
+    .hero-note { position: relative; z-index: 1; margin-top: 2rem; padding-left: 1rem; border-left: 3px solid var(--corn); max-width: 70ch; }
+
+    .section { padding-top: 5rem; scroll-margin-top: 1.5rem; }
+    .section-head { display: flex; justify-content: space-between; gap: 2rem; align-items: end; margin-bottom: 1.35rem; }
+    .section-head p { max-width: 62ch; margin-bottom: 0; color: var(--muted); }
+    .count-badge { white-space: nowrap; padding: .35rem .7rem; border-radius: 999px; color: var(--leaf); background: #e3eee7; font-size: .8rem; font-weight: 800; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .lesson {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: 0 7px 24px rgba(39,50,41,.05);
+      overflow: hidden;
+    }
+    .lesson.wide { grid-column: 1 / -1; }
+    .lesson.focus { border-top: 5px solid var(--corn); }
+    .lesson[hidden], .section[hidden] { display: none !important; }
+    .lesson-top { display: flex; gap: .85rem; align-items: flex-start; padding: 1.2rem 1.25rem .85rem; }
+    .lesson-number {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 11px;
+      color: var(--leaf-dark);
+      background: var(--corn-soft);
+      font-weight: 900;
+    }
+    .lesson-title { flex: 1; }
+    .lesson-title p { margin: .3rem 0 0; color: var(--muted); font-size: .91rem; }
+    .complete-label { display: flex; align-items: center; gap: .35rem; color: var(--muted); font-size: .76rem; cursor: pointer; }
+    .complete-label input { width: 1.1rem; height: 1.1rem; accent-color: var(--leaf); cursor: pointer; }
+    .lesson-body { padding: 0 1.25rem 1.25rem; }
+    .lesson-body > :last-child { margin-bottom: 0; }
+    .callout { margin: 1rem 0; padding: .85rem 1rem; border-left: 4px solid var(--blue); border-radius: 0 10px 10px 0; background: #edf4fa; }
+    .callout.warning { border-color: var(--red); background: #fff0ed; }
+    .callout.answer { border-color: var(--leaf); background: #edf6f0; }
+    .compare { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .75rem; }
+    .compare > div { min-width: 0; padding: .85rem; border: 1px solid var(--line); border-radius: 12px; background: #faf8f1; }
+    .compare h4 { margin-top: 0; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin: .8rem 0; }
+    .flow span { padding: .45rem .65rem; border: 1px solid var(--line); border-radius: 9px; background: white; font-size: .82rem; }
+    .flow b { color: var(--corn); }
+    .term-grid { display: grid; grid-template-columns: 9rem 1fr; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .term-grid dt, .term-grid dd { margin: 0; padding: .72rem .85rem; border-bottom: 1px solid var(--line); }
+    .term-grid dt { color: var(--leaf-dark); background: #f0eee5; font-weight: 850; }
+    .term-grid dd { background: white; }
+    .term-grid dt:last-of-type, .term-grid dd:last-of-type { border-bottom: 0; }
+    details { border-top: 1px solid var(--line); }
+    summary { padding: .9rem 1.25rem; cursor: pointer; font-weight: 780; }
+    summary:hover { background: #faf5e6; }
+    details > div { padding: 0 1.25rem 1.15rem; }
+    .quiz details { margin-top: .7rem; border: 1px solid var(--line); border-radius: 12px; background: white; overflow: hidden; }
+    .quiz details > div { padding-top: .85rem; background: #edf6f0; }
+    .level { display: inline-block; margin-bottom: .55rem; padding: .25rem .55rem; border-radius: 999px; color: white; background: var(--blue); font-size: .72rem; font-weight: 850; text-transform: uppercase; }
+    .level.hard { background: var(--red); }
+    .level.medium { background: #8a6820; }
+    .check-list { list-style: none; padding: 0; }
+    .check-list li { position: relative; padding-left: 1.7rem; }
+    .check-list li::before { content: "□"; position: absolute; left: 0; color: var(--leaf); font-weight: 900; }
+    .term-link {
+      padding: 0;
+      border: 0;
+      color: var(--blue);
+      background: transparent;
+      font: inherit;
+      font-weight: 780;
+      text-decoration: underline;
+      text-decoration-thickness: .09em;
+      text-underline-offset: .18em;
+      cursor: pointer;
+    }
+    .term-link:hover { color: var(--leaf); }
+    .term-link:focus-visible { outline: 3px solid rgba(49, 94, 138, .28); outline-offset: 3px; border-radius: 3px; }
+    .term-modal {
+      width: min(680px, calc(100% - 2rem));
+      max-height: min(82vh, 760px);
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      color: var(--ink);
+      background: var(--card);
+      box-shadow: 0 30px 90px rgba(20, 42, 29, .3);
+      overflow: hidden;
+    }
+    .term-modal::backdrop { background: rgba(14, 31, 21, .66); backdrop-filter: blur(4px); }
+    .term-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.15rem 1.3rem; color: white; background: var(--leaf-dark); }
+    .term-modal-head h2 { font-size: 1.45rem; }
+    .term-modal-close { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; color: white; background: transparent; cursor: pointer; }
+    .term-modal-close:hover { color: var(--leaf-dark); background: var(--corn); }
+    .term-modal-body { max-height: calc(82vh - 74px); padding: 1.3rem; overflow-y: auto; }
+    .term-modal-body h3 { margin-top: 1.3rem; font-size: 1rem; }
+    .term-modal-body h3:first-child { margin-top: 0; }
+    .term-modal-body pre { margin-bottom: 1.2rem; }
+    .modifier-note { display: block; margin-top: .3rem; color: var(--muted); font-size: .78rem; line-height: 1.45; }
+    .empty-search { display: none; margin: 2rem 0; padding: 1rem; border: 1px dashed var(--line); border-radius: 14px; text-align: center; color: var(--muted); }
+    .empty-search.show { display: block; }
+    footer { margin-top: 5rem; padding: 2rem 0; border-top: 1px solid var(--line); color: var(--muted); }
+
+    @media (max-width: 980px) {
+      .sidebar { position: static; width: auto; max-height: none; }
+      .side-nav { grid-template-columns: repeat(3, 1fr); }
+      main { width: 100%; margin-left: 0; }
+      .hero { min-height: 500px; }
+      .grid.three { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    @media (max-width: 680px) {
+      body { font-size: 15px; }
+      .sidebar { padding: 1rem; }
+      .side-nav { grid-template-columns: repeat(2, 1fr); }
+      main { padding: 1rem 1rem 4rem; }
+      .hero { min-height: 520px; padding: 2rem 1.25rem; border-radius: 20px; }
+      .grid, .grid.three, .compare { grid-template-columns: 1fr; }
+      .section { padding-top: 3.5rem; }
+      .section-head { display: block; }
+      .count-badge { display: inline-block; margin-top: .7rem; }
+      .lesson-top { flex-wrap: wrap; }
+      .complete-label { width: 100%; padding-left: 3.1rem; }
+      .term-grid { grid-template-columns: 1fr; }
+      .term-grid dt { border-bottom: 0; }
+      table { display: block; overflow-x: auto; }
+    }
+    @media print {
+      body { background: white; font-size: 11pt; }
+      .sidebar, .complete-label, .side-actions, .search-wrap { display: none !important; }
+      main { width: 100%; margin: 0; padding: 0; }
+      .hero { min-height: 0; color: black; background: white; box-shadow: none; border: 2px solid #222; }
+      .hero p { color: #333; }
+      .hero::after { display: none; }
+      .section { padding-top: 2rem; break-before: page; }
+      .lesson { break-inside: avoid; box-shadow: none; }
+      details > div { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Study navigation">
+      <div class="brand">
+        <div class="brand-mark">CS</div>
+        <div><strong>CornShirt Study Lab</strong><small>Presentation revision</small></div>
+      </div>
+
+      <div class="progress-card" aria-live="polite">
+        <div class="progress-row"><span>Lesson progress</span><strong id="progressText">0%</strong></div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <small id="progressCount">0 of 0 lessons complete</small>
+      </div>
+
+      <div class="search-wrap">
+        <label for="studySearch">Search the guide</label>
+        <input id="studySearch" type="search" placeholder="Try DTO, routing, require…" autocomplete="off">
+      </div>
+
+      <div class="nav-label">Course map</div>
+      <nav class="side-nav">
+        <a href="#focus">Focus topics</a>
+        <a href="#syntax">Code symbols</a>
+        <a href="#frontend">Frontend</a>
+        <a href="#backend">Backend</a>
+        <a href="#contracts">Smart contracts</a>
+        <a href="#database">Database</a>
+        <a href="#workflows">Workflows</a>
+        <a href="#questions">Q&amp;A</a>
+        <a href="#readiness">Readiness</a>
+      </nav>
+      <div class="side-actions">
+        <button id="expandAll" type="button">Expand all</button>
+        <button id="printGuide" type="button">Print notes</button>
+      </div>
+    </aside>
+
+    <main>
+      <header class="hero">
+        <span class="eyebrow">CornShirt technical presentation</span>
+        <h1>Know the code. Defend the decisions.</h1>
+        <p>This learning page turns the project into focused lessons. Do not memorize only definitions: trace the caller, input, checks, side effects, return value, failure behavior, and the reason each design was chosen.</p>
+        <div class="hero-tags">
+          <span class="tag">Next.js 16</span><span class="tag">TypeScript + TSX</span><span class="tag">Supabase</span><span class="tag">Stripe</span><span class="tag">Solidity</span><span class="tag">ERC-721</span>
+        </div>
+        <div class="hero-note"><strong>One-minute explanation:</strong> CornShirt is a role-based ticketing platform. Next.js provides pages and protected APIs, Supabase stores application state, Stripe proves test payments and refunds, and Ethereum contracts provide NFT ownership and resale settlement.</div>
+      </header>
+
+      <div class="empty-search" id="emptySearch">No lesson matches that search. Try a filename, function, route, table, or concept.</div>
+
+      <section class="section searchable-section" id="focus">
+        <div class="section-head">
+          <div><span class="eyebrow">Priority 01</span><h2>Your presentation focus topics</h2><p>These are the questions most likely to require a precise code-level answer.</p></div>
+          <span class="count-badge">Study these first</span>
+        </div>
+        <div class="grid">
+          <article class="lesson focus" data-lesson="focus-routing">
+            <div class="lesson-top"><span class="lesson-number">01</span><div class="lesson-title"><h3>Next.js App Router</h3><p>How folders and special files become pages and APIs.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body">
+              <p>CornShirt uses file-system routing under <code>src/app</code>. Folder names create URL segments; special filenames decide what the route does.</p>
+              <table><thead><tr><th>File</th><th>Job</th></tr></thead><tbody>
+                <tr><td><code>page.tsx</code></td><td>Default React component that renders UI at the folder URL.</td></tr>
+                <tr><td><code>layout.tsx</code></td><td>Wraps a route subtree; CornShirt uses role layouts for page protection and shared UI.</td></tr>
+                <tr><td><code>route.ts</code></td><td>Exports HTTP handlers such as <code>GET</code>, <code>POST</code>, <code>PUT</code>, or <code>DELETE</code>.</td></tr>
+                <tr><td><code>not-found.tsx</code></td><td>Renders a route-specific missing-resource state.</td></tr>
+              </tbody></table>
+              <div class="callout answer"><strong>Key defence:</strong> Routing selects code. It does not prove identity, role, ownership, or valid state. Protected handlers repeat those checks.</div>
+            </div>
+          </article>
+
+          <article class="lesson focus" data-lesson="focus-route-page">
+            <div class="lesson-top"><span class="lesson-number">02</span><div class="lesson-title"><h3><code>route.ts</code> vs <code>page.tsx</code></h3><p>They claim routes for different purposes.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body">
+              <div class="compare">
+                <div><h4><code>page.tsx</code></h4><p>Called by navigation or <code>&lt;Link&gt;</code>. Usually returns JSX/React UI. Example: <code>src/app/events/[eventId]/page.tsx</code>.</p></div>
+                <div><h4><code>route.ts</code></h4><p>Called through HTTP, usually by <code>fetch</code> or a webhook. Returns <code>Response</code>/<code>NextResponse</code>. Example: checkout <code>POST</code>.</p></div>
+              </div>
+              <div class="callout answer">
+                <strong>File extension reminder:</strong><br>
+                <code>.tsx</code> = TypeScript file that can contain JSX/React UI.<br>
+                <code>.ts</code> = TypeScript file without JSX.<br>
+                <strong>JSX</strong> is HTML-like syntax used inside React components to describe what UI should appear.
+              </div>
+              <p>Replacing the checkout handler with <code>page.tsx</code> removes the expected <code>POST</code> API. Replacing the event page with <code>route.ts</code> produces an endpoint instead of rendered UI. A page guard improves navigation, but an API route remains the security boundary for mutations.</p>
+            </div>
+          </article>
+
+          <article class="lesson focus" data-lesson="focus-dynamic">
+            <div class="lesson-top"><span class="lesson-number">03</span><div class="lesson-title"><h3>Why folders contain <code>[id]</code></h3><p>One route handles many real resources.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body">
+              <div class="callout answer"><strong>The folder name <code>[id]</code> is used for dynamic routing, and it loads the specific data identified by that URL value.</strong> In CornShirt, that data could be a particular event, ticket, listing, user, or operation.</div>
+              <p>Square brackets create one dynamic URL segment. CornShirt uses descriptive names such as <code>[eventId]</code>, <code>[ticketId]</code>, <code>[listingId]</code>, and <code>[operationId]</code>.</p>
+              <pre><code>src/app/events/[eventId]/page.tsx
+URL: /events/abc-123
+params: Promise&lt;{ eventId: string }&gt;
+const { eventId } = await params;</code></pre>
+              <p>Changing <code>[eventId]</code> to <code>[id]</code> still matches the same URL shape, but code must read <code>params.id</code>. Removing brackets makes <code>eventId</code> literal. Knowing an ID never grants permission; the backend still checks ownership.</p>
+            </div>
+          </article>
+
+          <article class="lesson focus" data-lesson="focus-dto">
+            <div class="lesson-top"><span class="lesson-number">04</span><div class="lesson-title"><h3>Data Transfer Objects</h3><p>The safe shape crossing a system boundary.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body">
+              <p><strong>DTO</strong> = selected and structured data sent between the frontend and backend.</p>
+              <p>CornShirt uses <button class="term-link dto-term-link" type="button" data-dto-term="type">type</button>, <button class="term-link dto-term-link" type="button" data-dto-term="interface">interface</button>, <button class="term-link dto-term-link" type="button" data-dto-term="validated-object">validated object literals</button>, and <button class="term-link dto-term-link" type="button" data-dto-term="mapper">mapper functions</button>—not DTO classes. Select any term to see its meaning and example.</p>
+              <p><strong>A DTO defines:</strong></p>
+              <ul>
+                <li>What data should be sent.</li>
+                <li>What fields are required.</li>
+                <li>What type each field should be.</li>
+              </ul>
+              <p><strong>Example:</strong></p>
+              <pre><code>type CreateEventDTO = {
+  title: string;
+  venueId: string;
+  startDate: string;
+  description: string;
+};</code></pre>
+              <div class="callout warning"><strong>Why not cast?</strong> Casting only tells TypeScript that we assume the data type is correct, but it does not validate the real incoming data. A DTO defines the expected data structure, and validation checks that the frontend data actually matches it before the backend uses it.</div>
+            </div>
+          </article>
+
+          <article class="lesson focus" data-lesson="focus-access">
+            <div class="lesson-top"><span class="lesson-number">05</span><div class="lesson-title"><h3>Solidity Contract access and modifiers</h3><p>Visibility is different from authorization.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body">
+              <table><thead><tr><th>Kind</th><th>Meaning in CornShirt</th></tr></thead><tbody>
+                <tr><td><code>external</code></td><td>Transaction entry point; does not automatically authorize every caller.<small class="modifier-note">external = can be called from outside</small></td></tr>
+                <tr><td><code>public</code></td><td>Callable/readable internally and externally; public state creates a getter.<small class="modifier-note">public = can be called/read inside and outside</small></td></tr>
+                <tr><td><code>internal</code></td><td>Contract and derived contracts; inherited <code>_safeMint</code>, <code>_burn</code>, <code>_grantRole</code>.<small class="modifier-note">internal = only this contract and inherited contracts</small></td></tr>
+                <tr><td><code>private</code></td><td>Declaring contract only, as with <code>_nextTokenId</code>. It is not blockchain secrecy.<small class="modifier-note">private = only this contract, but not secret on blockchain</small></td></tr>
+                <tr><td><code>onlyRole(...)</code></td><td>Authorization modifier that reverts unauthorized callers.<small class="modifier-note">onlyRole(...) = permission check</small></td></tr>
+                <tr><td><code>nonReentrant</code></td><td>Blocks nested protected Marketplace execution.<small class="modifier-note">nonReentrant = protects against repeated nested calls</small></td></tr>
+                <tr><td><code>view</code></td><td>State mutability: reads without changing state; not access control.<small class="modifier-note">view = read-only function</small></td></tr>
+              </tbody></table>
+            </div>
+          </article>
+
+          <article class="lesson focus" data-lesson="focus-require">
+            <div class="lesson-top"><span class="lesson-number">06</span><div class="lesson-title"><h3>Solidity error: <code>require</code> or <code>if/else</code>?</h3><p>Invalid transaction versus valid alternative branches.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body">
+              <p><code>require(condition, "message")</code> stops execution and reverts all transaction state when the condition is false. A plain <code>if/else</code> only chooses a branch and does not automatically fail.</p>
+              <pre><code>require(priceInSen &gt; 0, "Invalid price");
+
+// Equivalent guard style with a custom error:
+if (priceInSen == 0) revert InvalidPrice();</code></pre>
+              <p>Use <code>if/else</code> when both branches are valid behaviors. Use <code>require</code> or explicit <code>revert</code> when failure must cancel the transaction. A Next.js handler can use <code>if (!valid) return NextResponse.json(...)</code> because it returns an HTTP error; Solidity has no HTTP response.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section searchable-section" id="syntax">
+        <div class="section-head"><div><span class="eyebrow">Priority 02</span><h2>Symbols and function syntax</h2><p>Small symbols change meaning. Explain them from the surrounding context instead of guessing from appearance.</p></div><span class="count-badge">High-frequency syntax</span></div>
+        <div class="grid">
+          <article class="lesson wide" data-lesson="syntax-symbols">
+            <div class="lesson-top"><span class="lesson-number">07</span><div class="lesson-title"><h3><code>_functionName</code>, <code>?function</code>, <code>!function</code> and related forms</h3><p>What these forms really mean in TypeScript and Solidity.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body">
+              <dl class="term-grid">
+                <dt><code>_name</code></dt><dd>The underscore is part of the identifier, not an operator. In Solidity it conventionally marks internal/private implementation details. CornShirt calls inherited <code>_grantRole</code>, <code>_safeMint</code>, and <code>_burn</code>, and stores <code>_nextTokenId</code>. The actual declaration—not the underscore—enforces visibility.</dd>
+                <dt><code>name?: T</code></dt><dd>An optional TypeScript property or parameter. Example: <code>onSelectZone?: (id: string | null) =&gt; void</code>. The value may be <code>undefined</code>.</dd>
+                <dt><code>fn?.()</code></dt><dd>Optional call. <code>onSelectZone?.(zone.id)</code> calls only when the function exists. A standalone <code>?function</code> is not normal JavaScript syntax.</dd>
+                <dt><code>obj?.value</code></dt><dd>Optional chaining. Read deeper only when the left side is not <code>null</code>/<code>undefined</code>, as in <code>venueData?.layout?.stage</code>.</dd>
+                <dt><code>a ?? b</code></dt><dd>Nullish fallback. Use <code>b</code> only when <code>a</code> is <code>null</code> or <code>undefined</code>. It preserves valid <code>0</code>, <code>false</code>, and empty strings.</dd>
+                <dt><code>!value</code></dt><dd>Logical NOT. <code>if (!auth.ok)</code> means “if authorization is not successful.” It converts truthy/falsy and reverses the Boolean.</dd>
+                <dt><code>value!</code></dt><dd>TypeScript non-null assertion: tells the compiler the value exists. It performs no runtime check and can hide a bug. Prefer real validation where possible.</dd>
+                <dt><code>!= / !==</code></dt><dd>Inequality. Prefer strict <code>!==</code> in TypeScript because it does not coerce types. Solidity comparisons are statically typed.</dd>
+                <dt><code>test ? a : b</code></dt><dd>Ternary expression for one compact two-result choice. CornShirt uses it for labels and JSX. Avoid deeply nested ternaries.</dd>
+                <dt><code>() =&gt; {}</code></dt><dd>Arrow function, often used for callbacks and React state updates. A declared <code>function name()</code> is often clearer for major named operations.</dd>
+                <dt><code>...value</code></dt><dd>Spread copies array/object members; rest collects remaining values. React state updates use spread to create a new object instead of mutating the old one.</dd>
+                <dt><code>as Type</code></dt><dd>Compile-time assertion. It does not validate runtime input. <code>as const</code> preserves literal values and readonly intent.</dd>
+                <dt><code>A | B</code></dt><dd>Union type: a value may be one of several known types/states. Workflow action unions make impossible combinations harder to express.</dd>
+                <dt><code>unknown</code></dt><dd>Safer than <code>any</code> for external data because code must narrow or validate before use.</dd>
+                <dt><code>@/...</code></dt><dd>Project import alias for the <code>src</code> directory, such as <code>@/lib/requireRole</code>.</dd>
+              </dl>
+              <div class="callout answer"><strong>Presentation rule:</strong> say the complete form. “Question mark” could mean optional property, optional chaining, optional call, ternary, or part of <code>??</code>. “Exclamation mark” could mean logical NOT, non-null assertion, or inequality.</div>
+            </div>
+          </article>
+
+          <article class="lesson" data-lesson="syntax-control">
+            <div class="lesson-top"><span class="lesson-number">08</span><div class="lesson-title"><h3>Decision or repetition?</h3><p>Choose the construct that matches the job.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ul>
+              <li><code>if/else</code>: one condition selects behavior.</li><li><code>switch</code>: one value has several exact cases, such as role → home route.</li><li><code>for</code>/<code>for...of</code>: repeat work, especially with early <code>break</code> or sequential <code>await</code>.</li><li><code>map</code>: transform every item.</li><li><code>filter</code>: keep every matching item.</li><li><code>find</code>: return the first match.</li><li><code>reduce</code>: combine into one value.</li><li><code>slice</code>: take a non-mutating subsection.</li>
+            </ul><p>A loop cannot replace a one-time decision. One <code>if</code> cannot filter an entire event collection unless it is itself inside repetition.</p></div>
+          </article>
+
+          <article class="lesson" data-lesson="syntax-async">
+            <div class="lesson-top"><span class="lesson-number">09</span><div class="lesson-title"><h3><code>async</code>, <code>await</code>, and <code>Promise.all</code></h3><p>Order independent work safely.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><p>An <code>async</code> function returns a Promise. <code>await</code> pauses that function until the Promise settles.</p><ul>
+              <li>Use <code>Promise.all</code> for independent reads such as loading profile and wallet rows.</li>
+              <li>Use sequential <code>await</code> when step two needs step one: reserve inventory → create Stripe Session.</li>
+              <li>Use sequential blockchain steps: approve NFT → confirm approval → create listing.</li>
+            </ul><div class="callout warning">Parallelizing dependent work can charge before reservation, list before approval, or process data that does not yet exist.</div></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section searchable-section" id="frontend">
+        <div class="section-head"><div><span class="eyebrow">Part I</span><h2>Frontend</h2><p>Visible pages and components guide the user, but trusted business enforcement remains on the server.</p></div><span class="count-badge">UI + routing</span></div>
+        <div class="grid">
+          <article class="lesson" data-lesson="frontend-tsx">
+            <div class="lesson-top"><span class="lesson-number">10</span><div class="lesson-title"><h3><code>.ts</code> vs <code>.tsx</code></h3><p>The difference is JSX syntax, not frontend versus backend.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><p><code>.ts</code> contains TypeScript without JSX: business rules, validators, database helpers, Stripe logic, and route handlers. <code>.tsx</code> is TypeScript that may contain React markup such as <code>&lt;Button&gt;</code>.</p><p><strong>Examples:</strong> <code>src/lib/currency.ts</code> has logic; <code>EventTicketing.tsx</code> renders interactive ticket UI. A <code>route.ts</code> is usually <code>.ts</code> because it returns HTTP responses, not JSX.</p></div>
+          </article>
+
+          <article class="lesson" data-lesson="frontend-react">
+            <div class="lesson-top"><span class="lesson-number">11</span><div class="lesson-title"><h3>Components, props, state, and hooks</h3><p>Know what comes in, what changes, and what is derived.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ul>
+              <li><strong>Component:</strong> function returning UI.</li><li><strong>Props:</strong> parent-provided input, such as <code>event</code> and <code>isCustomer</code>.</li><li><strong>State:</strong> changing local UI memory, such as <code>selectedTicketTypeId</code>.</li><li><strong>Derived state:</strong> calculated from existing props/state; do not duplicate it unnecessarily.</li><li><code>useEffect</code>: synchronize with fetch, timers, camera, or other external systems.</li><li><code>useMemo</code>: cache a derived calculation; not security.</li><li><code>useRef</code>: preserve mutable values without re-render, such as an idempotency key.</li>
+            </ul><p><code>"use client"</code> is required for browser state, effects, click handlers, camera, and browser APIs. Server Components can securely load data and keep secrets off the client.</p></div>
+          </article>
+
+          <article class="lesson wide" data-lesson="frontend-functions">
+            <div class="lesson-top"><span class="lesson-number">12</span><div class="lesson-title"><h3>Presentation-critical UI functions</h3><p>State what calls each function and which side effect it causes.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><table><thead><tr><th>Function</th><th>Purpose</th><th>Why it is designed this way</th></tr></thead><tbody>
+              <tr><td><code>handleLogin</code></td><td>Signs in, loads trusted profile role/status, redirects by role.</td><td>Never trusts a role selected in the browser.</td></tr>
+              <tr><td><code>handleRegister</code> / <code>provisionWallet</code></td><td>Creates Auth user/profile, then provisions managed wallet.</td><td>Wallet-only failure can retry without duplicate account creation.</td></tr>
+              <tr><td><code>mapEventRow</code></td><td>Maps joined database rows to clean UI <code>Event</code> objects.</td><td>Centralizes null handling, pricing, zones, status, and naming.</td></tr>
+              <tr><td><code>filterEvents</code></td><td>Filters all events by search/category.</td><td><code>filter</code> matches a collection operation better than one <code>if</code>.</td></tr>
+              <tr><td><code>handleSelectZone</code></td><td>Uses <code>find</code> to connect a zone to one ticket type.</td><td>Only one matching zone is expected.</td></tr>
+              <tr><td><code>PurchaseButton.startCheckout</code></td><td>Posts IDs/idempotency key and navigates to Stripe.</td><td>A stable retry key avoids duplicate checkout operations.</td></tr>
+              <tr><td><code>TicketScanner.verify</code> / <code>markUsed</code></td><td>Checks ticket, then explicitly performs admission.</td><td>Separates read-only validation from atomic state change.</td></tr>
+              <tr><td><code>EventForm.handleSubmit</code></td><td>POSTs create or PUTs edit using <code>FormData</code>.</td><td>Create and update are different operations and rules.</td></tr>
+            </tbody></table></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section searchable-section" id="backend">
+        <div class="section-head"><div><span class="eyebrow">Part II</span><h2>Backend</h2><p>The trusted coordinator for Auth, Supabase, Stripe, wallets, blockchain, email, and safe HTTP responses.</p></div><span class="count-badge">Security + services</span></div>
+        <div class="grid">
+          <article class="lesson" data-lesson="backend-auth">
+            <div class="lesson-top"><span class="lesson-number">13</span><div class="lesson-title"><h3>Authentication and authorization</h3><p>Who are you, and what may you do?</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ul>
+              <li><code>proxy</code>/<code>updateSession</code>: maintain cookie-backed Supabase session.</li><li><code>getVerifiedRole</code>: verifies Auth user and loads trusted <code>profiles.role/status</code>.</li><li><code>requireRole</code>: protects pages with redirects.</li><li><code>authorizeApiRole</code>: protects APIs with 401/403 responses.</li>
+            </ul><p>Layouts make navigation safe and friendly; API guards secure data and mutations against direct HTTP calls.</p></div>
+          </article>
+
+          <article class="lesson" data-lesson="backend-validation">
+            <div class="lesson-top"><span class="lesson-number">14</span><div class="lesson-title"><h3>Validation and early returns</h3><p>Reject bad requests before side effects.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><div class="flow"><span>authorize</span><b>→</b><span>parse</span><b>→</b><span>normalize</span><b>→</b><span>validate</span><b>→</b><span>load truth</span><b>→</b><span>check owner/state</span><b>→</b><span>side effect</span></div><pre><code>if (!auth.ok) return auth.response;
+if (!body) return NextResponse.json({ error }, { status: 400 });</code></pre><p>Early returns keep the success path flat. Browser checks are repeated because clients can be bypassed.</p></div>
+          </article>
+
+          <article class="lesson" data-lesson="backend-clients">
+            <div class="lesson-top"><span class="lesson-number">15</span><div class="lesson-title"><h3>Supabase clients and trust</h3><p>Use the correct credential for the correct boundary.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ul><li><strong>Browser client:</strong> anonymous key; follows RLS.</li><li><strong>Server session client:</strong> request cookies; user-scoped server work.</li><li><strong>Admin client:</strong> service role; bypasses RLS and must remain server-only.</li></ul><div class="callout warning">Importing <code>supabaseAdmin</code> or a wallet private key into client code exposes privileged authority.</div></div>
+          </article>
+
+          <article class="lesson" data-lesson="backend-idempotency">
+            <div class="lesson-top"><span class="lesson-number">16</span><div class="lesson-title"><h3>Idempotency and recovery</h3><p>Retries resume instead of repeating money or asset movement.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><p>CornShirt stores idempotency keys, Stripe IDs, webhook claims, blockchain hashes, and workflow states. It records a transaction hash immediately after submission and before waiting for the receipt, so a crash can recover the original result.</p><p><code>claimStripeEvent</code> prevents duplicate webhook work; <code>recoverMintResult</code> decodes the prior mint; processed Marketplace payment hashes prevent replay.</p></div>
+          </article>
+
+          <article class="lesson wide" data-lesson="backend-functions">
+            <div class="lesson-top"><span class="lesson-number">17</span><div class="lesson-title"><h3>Critical server function map</h3><p>Learn the responsibility and the “what if removed?” answer.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><table><thead><tr><th>Area</th><th>Functions</th><th>Presentation point</th></tr></thead><tbody>
+              <tr><td>Events</td><td><code>isEventLive</code>, <code>synchronizeFinishedEvents</code>, <code>getActiveEvents</code>, <code>getActiveEventById</code></td><td>One three-hour lifecycle rule prevents different layers disagreeing.</td></tr>
+              <tr><td>Money</td><td><code>parsePositiveMyrAmount</code>, <code>myrToSen</code>, <code>getMaximumResalePriceSen</code></td><td>Use integer sen and server-authoritative price rules.</td></tr>
+              <tr><td>Wallet</td><td><code>readWalletEncryptionKey</code>, <code>encryptPrivateKey</code>, <code>loadManagedWalletSigner</code></td><td>AES-GCM key/IV/tag validation; decrypted key remains server-only.</td></tr>
+              <tr><td>Primary sale</td><td><code>parseTicketCheckoutBody</code>, <code>createTicketCheckoutSession</code>, <code>validatePaidSession</code>, <code>finalizeTicketCheckout</code></td><td>Reserve first, verify exact payment, mint/recover, then atomically finalize.</td></tr>
+              <tr><td>NFT</td><td><code>mintTicket</code>, <code>getTicketOwner</code>, <code>transferTicket</code>, <code>burnRefundedTicket</code></td><td>Receipts and ERC-721 events provide confirmed asset results.</td></tr>
+              <tr><td>Resale</td><td><code>createResaleListing</code>, <code>createResaleCheckoutSession</code>, <code>decideResaleAssetAction</code>, <code>finalizeResaleCheckout</code></td><td>Move the existing NFT; reconcile chain ownership before refunds.</td></tr>
+              <tr><td>Refund/email</td><td><code>finalizeTicketRefundAsset</code>, <code>reconcileRefundCompletion</code>, <code>sendTransactionalEmail</code></td><td>Refund/burn races recover; email failure never undoes ownership/payment.</td></tr>
+            </tbody></table></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section searchable-section" id="contracts">
+        <div class="section-head"><div><span class="eyebrow">Part III</span><h2>Smart contracts</h2><p>Read the exact current line ranges and be ready to explain why each invariant exists.</p></div><span class="count-badge">Solidity + ERC-721</span></div>
+        <div class="grid">
+          <article class="lesson wide" data-lesson="contract-ticket-lines">
+            <div class="lesson-top"><span class="lesson-number">18</span><div class="lesson-title"><h3><code>CornShirtTicket.sol</code> line guide</h3><p>38 lines: collection, roles, mint, burn, interface support.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><table><thead><tr><th>Lines</th><th>What happens</th><th>Why this way?</th></tr></thead><tbody>
+              <tr><td>1–5</td><td>License, pragma <code>^0.8.24</code>, ERC721 and AccessControl imports.</td><td>Use reviewed OpenZeppelin standards instead of custom NFT/security code.</td></tr>
+              <tr><td>7–11</td><td>Inheritance, hashed minter/burner roles, private token counter.</td><td>Role hashes work with AccessControl; only this contract mutates its counter.</td></tr>
+              <tr><td>13–17</td><td>Name/symbol and initial admin/minter/burner grants to deployer.</td><td>The first operator must be able to administer and run platform workflows.</td></tr>
+              <tr><td>19–24</td><td><code>mintTicket</code>: authorize, take ID, increment, safe-mint, return ID.</td><td>State updates before receiver interaction; a failed mint reverts the increment.</td></tr>
+              <tr><td>26–28</td><td><code>burnRefundedTicket</code>: authorized inherited burn.</td><td>Destruction stays coupled to verified refund completion.</td></tr>
+              <tr><td>30–37</td><td><code>supportsInterface</code> multiple-inheritance override.</td><td>Both ERC721 and AccessControl supply interface detection, so Solidity requires resolution.</td></tr>
+            </tbody></table></div>
+          </article>
+
+          <article class="lesson wide" data-lesson="contract-market-lines">
+            <div class="lesson-top"><span class="lesson-number">19</span><div class="lesson-title"><h3><code>CornShirtMarketplace.sol</code> line guide</h3><p>148 lines: listing state, replay protection, lifecycle, settlement.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><table><thead><tr><th>Lines</th><th>What happens</th><th>Why this way?</th></tr></thead><tbody>
+              <tr><td>1–8</td><td>Imports AccessControl, IERC721, ReentrancyGuard; inherits behavior.</td><td>The Marketplace calls the NFT standard; it is not another NFT collection.</td></tr>
+              <tr><td>9–22</td><td>Settler role, <code>Listing</code> struct, immutable ticket reference, mappings.</td><td>Struct groups state; mappings give direct lookup; payment mapping blocks replay.</td></tr>
+              <tr><td>24–48</td><td>Created, cancelled, expired, and settled events.</td><td>Logs support monitoring, recovery, history, and indexed search.</td></tr>
+              <tr><td>50–56</td><td>Reject zero NFT address, store immutable reference, grant roles.</td><td>Prevents unusable deployment and later collection switching.</td></tr>
+              <tr><td>58–91</td><td><code>createListing</code> validates reference, price, expiry, owner, approval; writes/emits.</td><td>Each <code>require</code> protects one invariant before state changes.</td></tr>
+              <tr><td>93–104</td><td><code>cancelListing</code> requires active seller listing, deactivates.</td><td><code>storage</code> reference persists the update; only seller controls cancellation.</td></tr>
+              <tr><td>106–119</td><td><code>reclaimExpiredListing</code> permits time-guarded cleanup.</td><td>Anyone can safely clean stale state because no NFT transfer occurs.</td></tr>
+              <tr><td>121–146</td><td><code>settlePaidListing</code> authorizes settler, blocks replay, updates effects, transfers NFT.</td><td>Checks-effects-interactions plus <code>nonReentrant</code>; transfer failure reverts everything.</td></tr>
+            </tbody></table></div>
+          </article>
+
+          <article class="lesson" data-lesson="contract-security">
+            <div class="lesson-top"><span class="lesson-number">20</span><div class="lesson-title"><h3>Security concepts</h3><p>Every check protects a named risk.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ul><li>Least privilege: separate minter, burner, and settler roles.</li><li>Approval: Marketplace cannot move the seller’s NFT without permission.</li><li>Checks-effects-interactions: update state before external NFT call.</li><li><code>nonReentrant</code>: blocks nested protected execution.</li><li><code>processedPayments</code>: one payment reference settles once.</li><li><code>safeTransferFrom</code>: rejects incompatible contract recipients instead of trapping NFT.</li></ul></div>
+          </article>
+
+          <article class="lesson" data-lesson="contract-storage">
+            <div class="lesson-top"><span class="lesson-number">21</span><div class="lesson-title"><h3>Mapping, array, struct, and events</h3><p>Storage choices match how data is accessed.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><p>A mapping gives direct lookup when the listing hash is known; an array would require a loop whose gas grows. A <code>Listing</code> struct keeps seller, token, price, expiry, and active state together. Mappings are not naturally enumerable, so Supabase supplies the browsable marketplace catalogue. Contract events record history; mappings store current state.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section searchable-section" id="database">
+        <div class="section-head"><div><span class="eyebrow">Part IV</span><h2>Database and Supabase</h2><p>Operational truth, atomic workflows, row security, inventory, QR state, and recovery.</p></div><span class="count-badge">PostgreSQL + RLS</span></div>
+        <div class="grid">
+          <article class="lesson" data-lesson="database-tables">
+            <div class="lesson-top"><span class="lesson-number">22</span><div class="lesson-title"><h3>Table groups</h3><p>Know why each group exists.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><p><strong>Core:</strong> <code>profiles</code>, <code>events</code>, <code>venues</code>, <code>venue_zones</code>, <code>ticket_types</code>, <code>tickets</code>, <code>transactions</code>, <code>verification_logs</code>.</p><p><strong>Workflow/integration:</strong> <code>custodial_wallets</code>, <code>ticket_operations</code>, <code>stripe_webhook_events</code>, <code>resale_listings</code>, <code>seller_proceeds</code>, <code>transactional_email_deliveries</code>.</p><p><strong>Admin:</strong> <code>partner_applications</code>, <code>documents</code>, <code>admin_activity_logs</code>.</p></div>
+          </article>
+
+          <article class="lesson" data-lesson="database-concepts">
+            <div class="lesson-top"><span class="lesson-number">23</span><div class="lesson-title"><h3>Keys, constraints, indexes, RLS</h3><p>Database rules remain correct under concurrency.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ul><li>Primary key uniquely identifies a row.</li><li>Foreign key blocks orphan references.</li><li>Unique constraint prevents duplicate active listing/token/workflow states even when requests race.</li><li>Index speeds intentional lookups but adds write/storage cost.</li><li>RLS limits browser-visible rows; trusted admin code bypasses RLS and must authorize explicitly.</li></ul><p>Two TypeScript requests can both read “none found.” PostgreSQL uniqueness still prevents both conflicting inserts from committing.</p></div>
+          </article>
+
+          <article class="lesson wide" data-lesson="database-rpcs">
+            <div class="lesson-top"><span class="lesson-number">24</span><div class="lesson-title"><h3>Important atomic RPC functions</h3><p>Several related writes commit together or all roll back.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><table><thead><tr><th>RPC</th><th>Atomic responsibility</th></tr></thead><tbody>
+              <tr><td><code>provision_customer_wallet</code></td><td>Stores encrypted wallet and updates profile wallet state together.</td></tr>
+              <tr><td><code>reserve_primary_ticket</code></td><td>Checks live event, wallet, inventory, purchase limit, idempotency; reserves authoritative sen price.</td></tr>
+              <tr><td><code>finalize_primary_purchase</code></td><td>Finalizes ticket/token/QR, transaction, inventory, and operation after confirmed mint.</td></tr>
+              <tr><td><code>finalize_direct_transfer</code></td><td>Moves database owner and records transfer history after chain receipt.</td></tr>
+              <tr><td><code>reserve_resale_purchase</code></td><td>Locks one listing for one eligible buyer.</td></tr>
+              <tr><td><code>finalize_resale_purchase</code></td><td>Updates ticket owner, listing, transaction, proceeds, and operation together.</td></tr>
+              <tr><td><code>finalize_ticket_refund</code></td><td>Marks surrender/refund and reverses related simulated accounting.</td></tr>
+              <tr><td><code>claim_stripe_webhook</code> / <code>finish_stripe_webhook</code></td><td>Deduplicates provider events and records durable processing outcome.</td></tr>
+              <tr><td><code>complete_finished_events</code></td><td>Completes ended events and expires related eligible tickets/listings consistently.</td></tr>
+            </tbody></table></div>
+          </article>
+
+          <article class="lesson" data-lesson="database-state">
+            <div class="lesson-top"><span class="lesson-number">25</span><div class="lesson-title"><h3>Workflow state machine</h3><p>A Boolean cannot explain partial progress.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><div class="flow"><span>pending</span><b>→</b><span>checkout_created</span><b>→</b><span>payment_confirmed</span><b>→</b><span>asset_submitted</span><b>→</b><span>completed</span></div><p>Recovery states include <code>delivery_failed</code>, <code>refund_pending</code>, and <code>refunded</code>. They tell retry logic exactly what has already happened.</p></div>
+          </article>
+
+          <article class="lesson" data-lesson="database-ownership">
+            <div class="lesson-top"><span class="lesson-number">26</span><div class="lesson-title"><h3>Database vs blockchain ownership</h3><p>Both are needed for different truths.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><pre><code>tickets.wallet_address
+        compared with
+CornShirtTicket.ownerOf(tokenId)</code></pre><p>Supabase provides searchable operational state: role, event, status, QR, payment, listing, history. ERC-721 provides authoritative token ownership. Sensitive operations block and reconcile when these disagree.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section searchable-section" id="workflows">
+        <div class="section-head"><div><span class="eyebrow">Cross-layer</span><h2>End-to-end workflows</h2><p>Trace the real order across browser, API, database, Stripe, blockchain, and email.</p></div><span class="count-badge">Explain aloud</span></div>
+        <div class="grid three">
+          <article class="lesson" data-lesson="flow-purchase">
+            <div class="lesson-top"><span class="lesson-number">27</span><div class="lesson-title"><h3>Primary purchase</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ol><li>UI sends event/type/stable key.</li><li>API authorizes and validates DTO.</li><li>RPC reserves inventory and price.</li><li>Stripe Checkout is created/reused.</li><li>Signed webhook verifies exact payment.</li><li>NFT mint is submitted/confirmed.</li><li>RPC finalizes ticket, QR, transaction.</li><li>Email is attempted idempotently.</li></ol></div>
+          </article>
+          <article class="lesson" data-lesson="flow-transfer">
+            <div class="lesson-top"><span class="lesson-number">28</span><div class="lesson-title"><h3>Direct transfer</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ol><li>Authorize sender and validate recipient.</li><li>Check ticket state, transfer policy, wallet readiness.</li><li>Compare database owner with <code>ownerOf</code>.</li><li>Fund gas if below threshold.</li><li>Sign <code>safeTransferFrom</code>.</li><li>Confirm receipt and atomically update ownership/history.</li></ol></div>
+          </article>
+          <article class="lesson" data-lesson="flow-resale">
+            <div class="lesson-top"><span class="lesson-number">29</span><div class="lesson-title"><h3>Marketplace resale</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ol><li>Seller ownership and 15% cap checked.</li><li>NFT approval confirmed before listing.</li><li>Buyer reservation prevents double sale.</li><li>Stripe webhook proves payment.</li><li>Settler moves existing NFT—no mint.</li><li>RPC finalizes owner/listing/proceeds.</li></ol></div>
+          </article>
+          <article class="lesson" data-lesson="flow-refund">
+            <div class="lesson-top"><span class="lesson-number">30</span><div class="lesson-title"><h3>Cancellation and refund</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ol><li>Event cancellation changes eligibility.</li><li>Latest payer may differ from current owner after free transfer.</li><li>Stripe refund is created exactly once.</li><li>Authorized burner destroys surrendered NFT.</li><li>RPC reconciles ticket/accounting/operation.</li><li>Claim and webhook workers safely race.</li></ol></div>
+          </article>
+          <article class="lesson" data-lesson="flow-qr">
+            <div class="lesson-top"><span class="lesson-number">31</span><div class="lesson-title"><h3>QR verification</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><ol><li>Scanner pauses repeated frames.</li><li>Verify endpoint checks organizer/event/ticket/status/QR.</li><li>On-chain ownership is compared when applicable.</li><li>Organizer explicitly confirms entry.</li><li>Use endpoint atomically marks used and logs attempt.</li></ol><p>Hiding a QR in UI is convenience, not security.</p></div>
+          </article>
+          <article class="lesson" data-lesson="flow-event">
+            <div class="lesson-top"><span class="lesson-number">32</span><div class="lesson-title"><h3>Event lifecycle</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Learned</label></div>
+            <div class="lesson-body"><p>Organizer creates pending event with authoritative venue zones. Admin approves/rejects. Active events are sellable until three hours after start. <code>complete_finished_events</code> completes events and expires related actions consistently. The NFT can remain as a collectible after operational expiry.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section searchable-section quiz" id="questions">
+        <div class="section-head"><div><span class="eyebrow">Practice</span><h2>Project-code Q&amp;A</h2><p>Answer before opening the panel. Strong answers mention the named file/function and the failure prevented.</p></div><span class="count-badge">Easy → difficult</span></div>
+        <div class="grid">
+          <article class="lesson" data-lesson="quiz-easy">
+            <div class="lesson-top"><span class="lesson-number">33</span><div class="lesson-title"><span class="level">Easy</span><h3>Routing and syntax</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Practiced</label></div>
+            <div class="lesson-body">
+              <details><summary>Why is <code>EventTicketing.tsx</code> not <code>.ts</code>?</summary><div>It renders JSX and manages React interaction. Plain <code>.ts</code> is sufficient when no JSX syntax exists.</div></details>
+              <details><summary>What URL does <code>events/[eventId]/page.tsx</code> match?</summary><div>One dynamic segment such as <code>/events/abc-123</code>; Next.js supplies <code>params.eventId</code>.</div></details>
+              <details><summary>What does <code>onSelectZone?.(zone.id)</code> mean?</summary><div>Optional call: invoke the callback only if it is defined. The <code>?.</code> prevents an error when the optional prop is absent.</div></details>
+              <details><summary>Does the underscore in <code>_safeMint</code> make it private?</summary><div>No. It is a naming convention. The inherited function declaration controls visibility; OpenZeppelin declares this implementation helper for internal use.</div></details>
+            </div>
+          </article>
+
+          <article class="lesson" data-lesson="quiz-medium">
+            <div class="lesson-top"><span class="lesson-number">34</span><div class="lesson-title"><span class="level medium">Medium</span><h3>Application decisions</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Practiced</label></div>
+            <div class="lesson-body">
+              <details><summary>Why does <code>parseTicketCheckoutBody</code> accept <code>unknown</code>?</summary><div>HTTP JSON is untrusted runtime data. <code>unknown</code> forces checks before field use; a TypeScript cast alone cannot prove the real shape.</div></details>
+              <details><summary>Why does <code>filterEvents</code> use <code>filter</code> instead of one <code>if/else</code>?</summary><div>It must test every event and return all matches. <code>filter</code> expresses a collection operation; one <code>if</code> expresses one decision.</div></details>
+              <details><summary>Why are both <code>requireRole</code> and <code>authorizeApiRole</code> needed?</summary><div>Pages need redirects for navigation; APIs need 401/403 responses and must resist direct requests. Page protection alone cannot secure a mutation.</div></details>
+              <details><summary>Why use integer sen?</summary><div>Stripe uses minor units and integer arithmetic avoids floating-point currency errors. The server derives the amount rather than trusting display price.</div></details>
+            </div>
+          </article>
+
+          <article class="lesson" data-lesson="quiz-hard">
+            <div class="lesson-top"><span class="lesson-number">35</span><div class="lesson-title"><span class="level hard">Hard</span><h3>Contracts and recovery</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Practiced</label></div>
+            <div class="lesson-body">
+              <details><summary>Line 19 of <code>CornShirtTicket.sol</code>: <code>external</code> versus <code>onlyRole(MINTER_ROLE)</code>?</summary><div><code>external</code> exposes an entry point; <code>onlyRole</code> authorizes the caller. External visibility does not mean unrestricted completion.</div></details>
+              <details><summary>Why use <code>require</code> at Marketplace lines 64–74?</summary><div>Each condition is a mandatory invariant. False must revert all state. Plain <code>if/else</code> does not fail unless its invalid branch explicitly reverts.</div></details>
+              <details><summary>What if <code>safeTransferFrom</code> fails after lines 134–135 update state?</summary><div>The whole transaction reverts, including <code>processedPayments = true</code> and <code>active = false</code>. Solidity transaction state is atomic.</div></details>
+              <details><summary>Why not automatically refund when database finalization fails after NFT movement?</summary><div>The buyer may already own the NFT. Immediate refund could give the buyer both asset and money. Recovery first reconciles <code>ownerOf</code>, stored hashes, and operation state.</div></details>
+            </div>
+          </article>
+
+          <article class="lesson" data-lesson="quiz-defence">
+            <div class="lesson-top"><span class="lesson-number">36</span><div class="lesson-title"><span class="level hard">Defence</span><h3>Architecture questions</h3></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Practiced</label></div>
+            <div class="lesson-body">
+              <details><summary>Why are Supabase ownership and <code>ownerOf</code> both needed?</summary><div>Supabase is operational/searchable truth; ERC-721 is token-ownership truth. Sensitive operations compare them and block mismatches for reconciliation.</div></details>
+              <details><summary>Why does finalization belong in a PostgreSQL RPC?</summary><div>Ticket, inventory, operation, transaction, QR, listing, or proceeds changes must commit together. Separate server writes could leave partial state.</div></details>
+              <details><summary>What principle connects the entire project?</summary><div>The browser is never proof. Trusted routes verify identity, database rules, exact provider results, and blockchain receipts; durable state makes retries safe.</div></details>
+              <details><summary>What is the managed-wallet prototype limitation?</summary><div>The server controls encrypted customer signing keys. This enables coordinated flows but makes server secret protection and platform trust critical; some transfer policy is application-level rather than enforced in the NFT contract.</div></details>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section searchable-section" id="readiness">
+        <div class="section-head"><div><span class="eyebrow">Final check</span><h2>Presentation readiness</h2><p>You are ready when you can explain the path without reading and open the correct file when challenged.</p></div><span class="count-badge">Team rehearsal</span></div>
+        <article class="lesson wide" data-lesson="readiness">
+          <div class="lesson-top"><span class="lesson-number">37</span><div class="lesson-title"><h3>Before presenting</h3><p>Use this as the final team checklist.</p></div><label class="complete-label"><input class="lesson-check" type="checkbox"> Ready</label></div>
+          <div class="lesson-body"><div class="grid"><ul class="check-list">
+            <li>Explain App Router, <code>page.tsx</code>, <code>route.ts</code>, layouts, and dynamic IDs.</li><li>Explain <code>.ts</code> vs <code>.tsx</code> and Client vs Server Components.</li><li>Define DTO and prove runtime validation with a project example.</li><li>Explain <code>_</code>, <code>?</code>, <code>?.</code>, <code>??</code>, <code>!</code>, ternary, and arrow functions.</li><li>Defend <code>if</code>, loops, <code>map</code>, <code>filter</code>, <code>find</code>, and <code>reduce</code> choices.</li><li>Trace authentication and authorization through both page and API guards.</li>
+          </ul><ul class="check-list">
+            <li>Explain every function and line range in both Solidity files.</li><li>Separate visibility, access modifiers, mutability, and naming conventions.</li><li>Explain <code>require</code>/<code>revert</code> versus ordinary <code>if/else</code>.</li><li>Name important tables, RPCs, constraints, RLS, and workflow states.</li><li>Trace purchase, transfer, resale, refund, QR, and event lifecycle end to end.</li><li>Explain failure recovery, idempotency, stored hashes, and authority boundaries.</li>
+          </ul></div>
+          <div class="callout answer"><strong>Best answer structure:</strong> “This function is called by ___. It receives ___. First it verifies ___. Then it calls/updates ___. It returns ___. If this check were removed, ___ could happen. We chose this design because ___.”</div>
+          </div>
+        </article>
+      </section>
+
+      <footer>
+        <strong>CornShirt Study Lab</strong><br>
+        Based on the current repository and the full <a href="PRESENTATION_STUDY_GUIDE.md">Markdown presentation study guide</a>. Solidity line numbers should be rechecked whenever contract source changes.
+      </footer>
+    </main>
+  </div>
+
+  <dialog class="term-modal" id="dtoTermModal" aria-labelledby="dtoTermTitle">
+    <div class="term-modal-head">
+      <h2 id="dtoTermTitle">DTO term</h2>
+      <button class="term-modal-close" id="dtoTermClose" type="button" aria-label="Close explanation">×</button>
+    </div>
+    <div class="term-modal-body">
+      <h3>Meaning</h3>
+      <p id="dtoTermMeaning"></p>
+      <h3>Example</h3>
+      <pre><code id="dtoTermCode"></code></pre>
+      <h3>Simple meaning</h3>
+      <p id="dtoTermSimple"></p>
+      <div id="dtoTermExtra"></div>
+    </div>
+  </dialog>
+
+  <script>
+    (() => {
+      const storageKey = "cornshirt-study-progress-v1";
+      const checks = [...document.querySelectorAll(".lesson-check")];
+      const lessons = [...document.querySelectorAll(".lesson")];
+      const sections = [...document.querySelectorAll(".searchable-section")];
+      const search = document.getElementById("studySearch");
+      const progressText = document.getElementById("progressText");
+      const progressFill = document.getElementById("progressFill");
+      const progressCount = document.getElementById("progressCount");
+      const emptySearch = document.getElementById("emptySearch");
+
+      const dtoTerms = {
+        type: {
+          title: "type",
+          meaning: "Defines the expected shape/type of data.",
+          code: `type CreateEventDTO = {
+  title: string;
+  price: number;
+};`,
+          simple: "CreateEventDTO must have title as string and price as number.",
+          extra: [
+            { kind: "text", value: "type is more flexible because it can define object shapes, unions, and combined types." },
+            { kind: "heading", value: "Union type" },
+            { kind: "text", value: "Union means one of these choices." },
+            { kind: "code", value: `type TicketStatus = "valid" | "used" | "cancelled";` },
+            { kind: "text", value: "Another example:" },
+            { kind: "code", value: `type ID = string | number;` },
+            { kind: "heading", value: "Combined type" },
+            { kind: "text", value: "Combined type usually means combining object shapes together." },
+            { kind: "code", value: `type User = {
+  id: string;
+  email: string;
+};
+
+type Customer = User & {
+  loyaltyPoints: number;
+};` },
+            { kind: "text", value: "This means Customer must have everything:" },
+            { kind: "code", value: `{
+  id: string;
+  email: string;
+  loyaltyPoints: number;
+}` }
+          ]
+        },
+        interface: {
+          title: "interface",
+          meaning: "Also defines the shape of an object, usually for structured data.",
+          code: `interface Customer {
+  id: string;
+  email: string;
+}`,
+          simple: "Customer object must have id and email.",
+          extra: [
+            { kind: "heading", value: "It can be extended:" },
+            { kind: "code", value: `interface Customer extends User {
+  loyaltyPoints: number;
+}` },
+            { kind: "text", value: "Now Customer means:" },
+            { kind: "code", value: `{
+  id: string;
+  email: string;
+  loyaltyPoints: number;
+}` }
+          ]
+        },
+        "validated-object": {
+          title: "Validated object literal",
+          meaning: "A normal object that has been checked before using it.",
+          code: `function parseBody(body: any) {
+  if (!body.eventId || !body.quantity) {
+    throw new Error("Invalid data");
+  }
+
+  return {
+    eventId: String(body.eventId),
+    quantity: Number(body.quantity),
+  };
+}`,
+          simple: "Check the incoming data, then return a safe object."
+        },
+        mapper: {
+          title: "Mapper function",
+          meaning: "Converts data from one shape to another shape.",
+          code: `function mapEventRow(row: any) {
+  return {
+    id: row.id,
+    title: row.event_title,
+    startDate: row.start_date,
+  };
+}`,
+          simple: "Convert database format into frontend-friendly format."
+        }
+      };
+      const dtoTermModal = document.getElementById("dtoTermModal");
+      const dtoTermTitle = document.getElementById("dtoTermTitle");
+      const dtoTermMeaning = document.getElementById("dtoTermMeaning");
+      const dtoTermCode = document.getElementById("dtoTermCode");
+      const dtoTermSimple = document.getElementById("dtoTermSimple");
+      const dtoTermExtra = document.getElementById("dtoTermExtra");
+
+      function renderDtoTermExtra(items = []) {
+        dtoTermExtra.replaceChildren();
+        items.forEach((item) => {
+          if (item.kind === "heading") {
+            const heading = document.createElement("h3");
+            heading.textContent = item.value;
+            dtoTermExtra.appendChild(heading);
+            return;
+          }
+          if (item.kind === "code") {
+            const pre = document.createElement("pre");
+            const code = document.createElement("code");
+            code.textContent = item.value;
+            pre.appendChild(code);
+            dtoTermExtra.appendChild(pre);
+            return;
+          }
+          const paragraph = document.createElement("p");
+          paragraph.textContent = item.value;
+          dtoTermExtra.appendChild(paragraph);
+        });
+      }
+
+      document.querySelectorAll(".dto-term-link").forEach((link) => {
+        link.addEventListener("click", () => {
+          const term = dtoTerms[link.dataset.dtoTerm];
+          if (!term) return;
+          dtoTermTitle.textContent = term.title;
+          dtoTermMeaning.textContent = term.meaning;
+          dtoTermCode.textContent = term.code;
+          dtoTermSimple.textContent = term.simple;
+          renderDtoTermExtra(term.extra);
+          dtoTermModal.showModal();
+        });
+      });
+      document.getElementById("dtoTermClose").addEventListener("click", () => dtoTermModal.close());
+      dtoTermModal.addEventListener("click", (event) => {
+        const bounds = dtoTermModal.getBoundingClientRect();
+        const outside = event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom;
+        if (outside) dtoTermModal.close();
+      });
+
+      let completed = new Set();
+      try { completed = new Set(JSON.parse(localStorage.getItem(storageKey) || "[]")); } catch (_) {}
+
+      checks.forEach((check) => {
+        const id = check.closest(".lesson")?.dataset.lesson;
+        check.checked = Boolean(id && completed.has(id));
+        check.addEventListener("change", () => {
+          if (!id) return;
+          check.checked ? completed.add(id) : completed.delete(id);
+          localStorage.setItem(storageKey, JSON.stringify([...completed]));
+          updateProgress();
+        });
+      });
+
+      function updateProgress() {
+        const count = checks.filter((check) => check.checked).length;
+        const percent = checks.length ? Math.round((count / checks.length) * 100) : 0;
+        progressText.textContent = `${percent}%`;
+        progressFill.style.width = `${percent}%`;
+        progressCount.textContent = `${count} of ${checks.length} lessons complete`;
+      }
+
+      search.addEventListener("input", () => {
+        const query = search.value.trim().toLowerCase();
+        let visibleCount = 0;
+        lessons.forEach((lesson) => {
+          const matches = !query || lesson.textContent.toLowerCase().includes(query);
+          lesson.hidden = !matches;
+          if (matches) visibleCount += 1;
+        });
+        sections.forEach((section) => {
+          section.hidden = ![...section.querySelectorAll(".lesson")].some((lesson) => !lesson.hidden);
+        });
+        emptySearch.classList.toggle("show", visibleCount === 0);
+      });
+
+      document.getElementById("expandAll").addEventListener("click", (event) => {
+        const details = [...document.querySelectorAll("details")];
+        const shouldOpen = details.some((item) => !item.open);
+        details.forEach((item) => { item.open = shouldOpen; });
+        event.currentTarget.textContent = shouldOpen ? "Collapse all" : "Expand all";
+      });
+      document.getElementById("printGuide").addEventListener("click", () => window.print());
+
+      const navLinks = [...document.querySelectorAll(".side-nav a")];
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+        navLinks.forEach((link) => link.classList.toggle("active", link.getAttribute("href") === `#${visible.target.id}`));
+      }, { rootMargin: "-20% 0px -65%", threshold: [0, .2, .5] });
+      sections.forEach((section) => observer.observe(section));
+
+      updateProgress();
+    })();
+  </script>
+</body>
+</html>

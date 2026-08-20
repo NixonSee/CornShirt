@@ -48,12 +48,15 @@ export async function GET(request: NextRequest) {
   if (
     intent === "invite" ||
     intent === "recovery" ||
+    intent === "setup" ||
     type === "invite" ||
     type === "recovery"
   ) {
-    const flow = intent === "recovery" || type === "recovery"
-      ? "recovery"
-      : "invite";
+    const flow = intent === "setup"
+      ? "setup"
+      : intent === "recovery" || type === "recovery"
+        ? "recovery"
+        : "invite";
     return NextResponse.redirect(
       `${origin}/auth/set-password?flow=${flow}`,
     );

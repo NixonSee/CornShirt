@@ -100,6 +100,22 @@ The frontend is the visible and interactive part of CornShirt: pages, navigation
 
 ## 4. Next.js Routing
 
+CornShirt uses the Next.js **App Router**. Routing is file-system based: folders below `src/app` form URL segments, while special filenames tell Next.js whether that URL renders a page, wraps other pages, or handles an HTTP request. There is no separate central route table.
+
+For example:
+
+```text
+src/app/events/[eventId]/page.tsx
+              |         |
+              |         +-- page UI for this route
+              +------------ dynamic URL value
+
+URL: /events/550e8400-e29b-41d4-a716-446655440000
+params.eventId: "550e8400-e29b-41d4-a716-446655440000"
+```
+
+Routing answers **which code receives a URL**. It does not by itself prove that a user owns an event or ticket. The receiving page or API must still authenticate, authorize, validate the parameter, and query the correct record.
+
 ### 4.1 Special App Router filenames
 
 | Filename | Meaning |
@@ -110,6 +126,24 @@ The frontend is the visible and interactive part of CornShirt: pages, navigation
 | `not-found.tsx` | Renders the not-found state for a route. |
 | `globals.css` | Contains project-wide styling and responsive rules. |
 
+#### `route.ts` compared with a normal `page.tsx`
+
+| Question | `page.tsx` | `route.ts` |
+| --- | --- | --- |
+| Main purpose | Render a React user interface at a URL. | Implement an HTTP endpoint for code to call. |
+| Export style | Usually a default React component. | Named HTTP functions such as `GET`, `POST`, `PUT`, or `DELETE`. |
+| Typical return | JSX/React output that Next.js turns into HTML. | `Response` or `NextResponse`, commonly JSON. |
+| Typical caller | Browser navigation or a Next.js `<Link>`. | `fetch`, Stripe webhook delivery, or another HTTP client. |
+| Typical extension here | `.tsx`, because the component contains JSX. | `.ts`, because the handler contains TypeScript but no JSX. |
+| Security responsibility | May redirect or hide UI, but that alone is not enough. | Must enforce authentication, role, ownership, input, and current-state rules for protected actions. |
+
+Project comparison:
+
+- `src/app/events/[eventId]/page.tsx` receives an event ID, loads an event, and returns the event-detail UI.
+- `src/app/api/customer/tickets/checkout/route.ts` exports `POST(request)`, validates a checkout request, creates a server-side Stripe workflow, and returns JSON.
+- A page can call an API route, but they are not interchangeable. Replacing the checkout `route.ts` with `page.tsx` would remove the `POST` handler expected by `fetch`. Replacing an event `page.tsx` with `route.ts` would make the URL an HTTP endpoint instead of a rendered React page.
+- A `route.ts` and `page.tsx` should not be placed at the same route segment to represent the same URL; they conflict because both claim that route. CornShirt keeps API handlers under `src/app/api` and UI pages elsewhere.
+
 ### 4.2 Dynamic bracket folders
 
 A folder name in square brackets represents a dynamic URL segment. The value inside the URL becomes a property in `params`.
@@ -117,11 +151,27 @@ A folder name in square brackets represents a dynamic URL segment. The value ins
 | Source folder | Example URL | Parameter value |
 | --- | --- | --- |
 | `events/[eventId]` | `/events/abc123` | `eventId = "abc123"` |
-| `customer/tickets/[ticketId]/transfer` | `/api/customer/tickets/ticket-7/transfer` | `ticketId = "ticket-7"` |
-| `customer/purchases/[operationId]` | `/api/customer/purchases/op-4` | `operationId = "op-4"` |
+| `api/customer/tickets/[ticketId]/transfer` | `/api/customer/tickets/ticket-7/transfer` | `ticketId = "ticket-7"` |
+| `api/customer/purchases/[operationId]` | `/api/customer/purchases/op-4` | `operationId = "op-4"` |
 | `admin/users/[user_id]` | `/admin/users/user-9` | `user_id = "user-9"` |
 
 The bracketed name is not part of the visible URL. It names the variable used by the page or route handler.
+
+#### Why is there `[id]` or a name such as `[eventId]` in a folder?
+
+The brackets mean “accept one variable URL segment here.” Without a dynamic segment, the team would need a separate folder and page for every database record. One `[eventId]` page can display every event; one `[ticketId]` API route can act on every ticket.
+
+CornShirt prefers descriptive names such as `[eventId]`, `[ticketId]`, `[listingId]`, and `[operationId]` rather than only `[id]`. The name tells the reader which resource the value identifies and becomes the exact property name in `params`.
+
+Example request flow:
+
+1. The customer chooses Transfer in the ticket UI, which sends a request to `/api/customer/tickets/ticket-7/transfer`.
+2. Next.js matches `src/app/api/customer/tickets/[ticketId]/transfer/route.ts`.
+3. Next.js supplies `{ ticketId: "ticket-7" }` through `params`.
+4. The route awaits `params`, validates the ID, authenticates the customer, and checks actual ticket ownership.
+5. Only after those checks may the route begin the transfer workflow.
+
+Changing `[eventId]` to `[id]` would not change which URLs match, but every `params.eventId` use would have to become `params.id`. Changing it to a plain `eventId` folder removes dynamic matching: only the literal `/events/eventId` URL would match. The dynamic ID is routing input, not authorization; knowing another ticket's ID must never grant access to it.
 
 Next.js 16 supplies `params` as a Promise:
 
@@ -512,6 +562,71 @@ Common status codes:
 | 409 | Current state conflicts with the action. |
 | 500 | Unexpected server/storage problem. |
 | 502 | External dependency failed. |
+
+### 6.1A Data Transfer Objects (DTOs) in CornShirt
+
+**DTO** means **Data Transfer Object**. A DTO is a deliberately defined data shape used to move information across a boundary: browser to API, API to browser, database to server code, or one layer to another. “DTO” is an architectural role, not a TypeScript keyword. CornShirt uses TypeScript `type` and `interface` declarations and validated object literals instead of DTO classes.
+
+A good DTO normally contains data fields, not business operations. Its purposes are to:
+
+- make the expected fields and their types visible;
+- prevent every layer from depending directly on an entire database row;
+- rename or normalize fields at a boundary;
+- represent nullable or optional values honestly;
+- send only safe fields and avoid leaking secrets or internal columns;
+- give the frontend and backend a stable agreement about request and response shapes.
+
+#### Actual DTO-style shapes in this project
+
+| File and shape | Boundary | What it does |
+| --- | --- | --- |
+| `src/app/visitor/data.ts` — `EventRow` | Supabase query to application mapper | Describes database-shaped event data with snake_case, nullable fields, joined ticket types, venue data, and layout. |
+| `src/app/visitor/data.ts` — `Event` | Application/API data to event UI | Gives components a clean camelCase event model with formatted and derived values. |
+| `src/components/visitor&customer/EventDiscovery.tsx` — `PublicEventsResponse` | `GET /api/public/events` to browser component | Describes optional `events` and `error` response fields. |
+| `src/components/organizer/TicketScanner.tsx` — `VerifyResponse` | Ticket verification API to scanner UI | Describes verification result, on-chain result, and safe ticket summary. |
+| `src/app/customer/tickets/ticketData.ts` — `CustomerTicket` | Raw ticket records to customer UI | Describes the fields the ticket list needs, including ownership actions and refund/listing flags. |
+| `src/lib/stripe/checkout.ts` — parsed checkout object | Browser JSON to checkout service | `parseTicketCheckoutBody(body: unknown)` validates and returns only `eventId`, `ticketTypeId`, and `idempotencyKey`, or returns `null`. |
+
+#### How CornShirt creates and uses a DTO
+
+The primary checkout is the clearest example:
+
+1. `PurchaseButton` sends JSON containing `eventId`, `ticketTypeId`, and `idempotencyKey`.
+2. `src/app/api/customer/tickets/checkout/route.ts` reads JSON, but treats network input as untrusted.
+3. `parseTicketCheckoutBody(body: unknown)` first requires a non-null object.
+4. It normalizes the three expected values with the `text(...)` helper.
+5. It checks that the idempotency key matches the required 16-to-120-character pattern.
+6. On success it returns the small validated object. That object is the safe request DTO used by `createTicketCheckoutSession`.
+7. On failure it returns `null`, and the route returns HTTP 400 before payment or inventory side effects.
+8. The route returns a separate response DTO containing only `url` and `operationId`.
+
+This boundary matters because a TypeScript cast such as `body as CheckoutBody` changes only the compiler's belief. It does not validate JSON sent by an attacker or a broken client.
+
+The event mapper shows the database-to-UI direction. `mapEventRow(row: EventRow): Event` converts snake_case fields such as `event_id` and `event_name` to camelCase fields such as `id` and `title`; handles `null`; converts numeric values; sorts ticket types; and computes price, availability, status, accent, stage, and zones. The UI therefore does not need to know every database naming and null-handling rule.
+
+#### A repeatable DTO method for this project
+
+When adding a request or response, the team should be able to explain these steps:
+
+1. Identify the boundary and define only the fields that must cross it.
+2. Use a `type` or `interface` for compile-time documentation.
+3. Receive external JSON as `unknown`, not as already trusted data.
+4. Validate type, allowed values, length, format, nullability, and relationships at runtime.
+5. Map database snake_case or provider-specific values to the app's intended shape.
+6. Pass the validated DTO to business logic rather than the original request body.
+7. Build a separate safe response DTO; never serialize service credentials, wallet private keys, or unrestricted internal rows.
+
+#### What if the DTO approach were changed?
+
+| Change | Result |
+| --- | --- |
+| Pass the whole request body directly to Stripe logic | Unexpected or malicious fields reach trusted code, and required values are not proven. |
+| Use only `as SomeType` | TypeScript may compile, but invalid runtime JSON still passes through. |
+| Return entire Supabase rows to the browser | Internal or sensitive fields can leak and the UI becomes tightly coupled to the schema. |
+| Use one giant DTO for every endpoint | Most fields become optional, endpoint contracts become unclear, and accidental data exposure becomes easier. |
+| Remove `mapEventRow` and use `EventRow` directly in UI | Components must handle snake_case, nullable numbers, joins, formatting, and derived business display rules repeatedly. |
+
+**Presentation answer:** “A DTO is the controlled shape crossing a layer boundary. CornShirt implements DTOs with TypeScript types/interfaces plus runtime validators and mappers. The type documents the shape; validation proves runtime data; mapping keeps database, API, and UI representations separate.”
 
 ### 6.2 Validation and early returns
 
@@ -946,6 +1061,40 @@ ERC-721 `Transfer` events represent:
 - Transfer: current owner to recipient.
 - Burn: owner to zero address.
 
+### 8.0A Contract access modifiers, visibility, and state mutability
+
+During a presentation, do not call every word after a Solidity function an “access modifier.” Solidity separates three related ideas:
+
+1. **Visibility** says where a function or state variable can be accessed: `external`, `public`, `internal`, or `private`.
+2. **A modifier** adds reusable checks or execution behavior: CornShirt uses `onlyRole(...)` and `nonReentrant`.
+3. **State mutability** describes whether a function changes or reads blockchain state: `view` means read-only; neither `view` nor `returns` is access control.
+
+#### Visibility keywords
+
+| Keyword | Meaning | CornShirt example | Why it is used |
+| --- | --- | --- | --- |
+| `external` | Called through the contract's external interface. | `mintTicket`, `burnRefundedTicket`, `createListing`, `cancelListing`, `reclaimExpiredListing`, `settlePaidListing` | These are transaction entry points called by wallets or backend helpers. It does **not** mean everyone is authorized; modifiers and checks still decide that. |
+| `public` | Callable internally and externally; on a state variable it generates a getter. | `supportsInterface`; role constants; `ticketContract`; `listings`; `processedPayments` | Interface support and selected contract state need external readability. |
+| `internal` | Accessible only inside this contract and derived contracts. | Inherited `_safeMint`, `_burn`, and `_grantRole` | OpenZeppelin exposes implementation building blocks to derived contracts without making them direct public transaction endpoints. |
+| `private` | Accessible only in the declaring contract. | `_nextTokenId` | Only `CornShirtTicket` should directly manage its counter. `private` is code-level visibility, **not secrecy**; blockchain storage can still be inspected. |
+
+#### Modifiers used by CornShirt
+
+| Modifier | Where used | What happens |
+| --- | --- | --- |
+| `onlyRole(MINTER_ROLE)` | `mintTicket` | AccessControl reverts unless the caller holds the minting role. |
+| `onlyRole(BURNER_ROLE)` | `burnRefundedTicket` | Prevents arbitrary callers from destroying tickets. |
+| `onlyRole(SETTLER_ROLE)` | `settlePaidListing` | Only the trusted platform settlement account can deliver a paid resale. |
+| `nonReentrant` | All Marketplace state-changing functions | Rejects a nested call into another protected Marketplace function during the first execution. |
+
+The order on `settlePaidListing`—`external onlyRole(SETTLER_ROLE) nonReentrant`—means it is an external transaction entry point, must pass role authorization, and receives reentrancy protection. Changing it to `public` would not remove the need for `onlyRole`. Removing `onlyRole` would be the dangerous change because any caller could attempt settlement. Removing `nonReentrant` would remove one defense around state-changing external NFT calls.
+
+`public constant` and `public immutable` also describe different storage guarantees:
+
+- `constant` is fixed at compile time, as with the hashes for role names.
+- `immutable` is assigned once in the constructor, as with `ticketContract`.
+- `public` makes a getter available; it does not make a value editable.
+
 ### 8.1 `CornShirtTicket`
 
 File: `blockchain/contracts/CornShirtTicket.sol`
@@ -1078,6 +1227,82 @@ Contract events provide public transaction evidence:
 - **Event:** Marketplace `ListingSettled` plus ERC-721 `Transfer`.
 - **Protection:** `onlyRole`, `nonReentrant`, processed-payment mapping, checks-effects-interactions.
 - **Return:** None; backend records transaction receipt hash.
+
+### 8.2B Why Solidity errors use `require`/`revert`, not ordinary `if/else`
+
+`require(condition, "message")` is a guard. If the condition is false, Solidity **reverts**: the call fails, later lines do not run, and all state changes made by that transaction are rolled back. CornShirt uses it for conditions that must be true before a contract operation is allowed.
+
+An ordinary `if/else` only chooses a branch. It does not automatically mark a transaction as failed. This would be unsafe:
+
+```solidity
+if (priceInSen == 0) {
+    // Doing nothing here does not stop the function.
+}
+
+listings[listingReference] = Listing(/* ... */);
+```
+
+The invalid listing could still be written because execution continues. Returning `false` from an `if` branch is also weaker for these transaction entry points: the transaction can appear successful and callers may ignore the Boolean.
+
+CornShirt therefore uses direct guards such as:
+
+```solidity
+require(priceInSen > 0, "Invalid price");
+require(expiresAt > block.timestamp, "Event has ended");
+```
+
+The modern equivalent can use `if` **together with an explicit revert**:
+
+```solidity
+if (priceInSen == 0) {
+    revert InvalidPrice();
+}
+```
+
+That version is semantically a guard because `revert` stops and rolls back the transaction. A custom error such as `InvalidPrice()` can be more gas-efficient and easier for typed clients to identify than a revert string. The current contracts use `require(..., "message")` because each rule is compact and immediately readable in this prototype.
+
+Use ordinary `if/else` when two or more branches are valid and the function should continue with the selected behavior. Use `require` or `if (...) revert ...` when a failed condition must make the entire transaction invalid. A loop is unrelated: it repeats work over a range or collection and should not replace a one-time eligibility check.
+
+Compare this with a Next.js route: an API handler often uses `if (!valid) return NextResponse.json(..., { status: 400 })` because it is returning an HTTP error response. In Solidity, `return` is not an HTTP response and does not communicate a reverted transaction; contract invariants need `require` or `revert`.
+
+### 8.2C Solidity files by exact line range: what and why
+
+These line numbers match the current repository snapshot. If the contracts are edited later, re-check the numbers before presenting.
+
+#### `blockchain/contracts/CornShirtTicket.sol`
+
+| Lines | What the code does | “Why this way?” question and answer |
+| --- | --- | --- |
+| 1–5 | Declares the MIT license, Solidity `^0.8.24`, and imports OpenZeppelin ERC-721 and AccessControl. | **Why import standards instead of writing NFT and role logic manually?** OpenZeppelin supplies reviewed standard behavior and reduces custom security code. The pragma states the compatible compiler family. |
+| 7–11 | Inherits `ERC721` and `AccessControl`, defines role hashes, and stores the private next-token counter. | **Why hashed `bytes32` roles and a private counter?** AccessControl identifies roles efficiently by hash; only the contract should mutate the counter directly. |
+| 13–17 | Runs the constructor, names the token `CornShirtTicket`/`CST`, and grants admin, minter, and burner roles to the deployer. | **Why grant roles at deployment?** Without an initial administrator/operator, no account could configure roles or perform platform mint/refund operations. It also makes the deployer wallet a trust boundary the team must protect. |
+| 19–24 | Restricts minting, copies the current token ID, increments the counter, safely mints, and returns the new ID. | **Why increment before `_safeMint`, and why is that safe?** It follows a state-before-external-callback pattern. If `_safeMint` fails, the transaction reverts the increment too. Returning the ID helps callers, while the backend also confirms it from the receipt's `Transfer` event. |
+| 26–28 | Restricts refund burning and calls inherited `_burn(tokenId)`. | **Why not let the token owner burn freely?** CornShirt couples destruction to its verified refund workflow, so `BURNER_ROLE` prevents a user from creating off-platform status inconsistencies. |
+| 30–37 | Overrides `supportsInterface` and delegates to the parent implementation. | **Why list both `ERC721` and `AccessControl` in `override`?** Both inheritance branches implement interface detection, so Solidity requires CornShirt to resolve the multiple-inheritance override explicitly. |
+| 38 | Closes the contract. | **Why mention a closing line?** It helps the presenter show that all functions above belong to `CornShirtTicket`, not a separate module. |
+
+#### `blockchain/contracts/CornShirtMarketplace.sol`
+
+| Lines | What the code does | “Why this way?” question and answer |
+| --- | --- | --- |
+| 1–8 | Declares compiler/license, imports AccessControl, the ERC-721 interface, and ReentrancyGuard, then inherits the needed behavior. | **Why use `IERC721` instead of inheriting another ticket contract?** The Marketplace only needs to call the standard NFT interface; it should not become the NFT collection itself. |
+| 9–22 | Defines settler role, `Listing`, immutable ticket reference, listing lookup, and processed-payment lookup. | **Why a struct plus mappings?** The struct keeps related listing state consistent; mappings provide direct lookup by known hashes without a growing on-chain loop. The payment mapping supplies replay protection. |
+| 24–48 | Declares created, cancelled, expired, and settled events with indexed lookup fields. | **Why emit events if mappings already store state?** Events form transaction logs for backend recovery, monitoring, and history; indexed fields make relevant logs easier to search. They complement rather than replace current state. |
+| 50–56 | Rejects a zero ticket address, stores the immutable ERC-721 reference, and grants initial admin/settler roles. | **Why validate before assignment and make the reference immutable?** A zero/wrong reference would break NFT calls. Immutability prevents switching the Marketplace to another collection after deployment. |
+| 58–91 | `createListing` checks reference uniqueness, price, future expiry, ownership, and approval; then stores and emits the listing. | **Why many early `require` guards?** Every check is a separate invariant with a clear failure reason. Only after all pass does state change. A loop would not model these different one-time decisions. |
+| 93–104 | `cancelListing` loads storage, requires active status and the original seller, then deactivates and emits. | **Why use `Listing storage listing`?** It references the on-chain mapping entry, so assigning `listing.active = false` persists. A `memory` copy would not update stored state. |
+| 106–119 | `reclaimExpiredListing` permits cleanup only when active and expired, then deactivates and emits. | **Why can any address call it?** Expiry cleanup transfers no asset and should not depend on the seller returning. The time guard makes the permissionless action safe. |
+| 121–146 | `settlePaidListing` restricts the caller, validates listing/payment/buyer, records effects, transfers the NFT, and emits settlement. | **Why update `processedPayments` and `active` before `safeTransferFrom`?** The NFT call is external. Updating effects first, plus `nonReentrant`, reduces reentrant or duplicate execution risk. A later revert rolls all those changes back. |
+| 148 | Closes the contract. | **Why is there no Ether payout function?** CornShirt's resale money is handled through verified Stripe/database workflows; this contract records listing rules and transfers the existing NFT rather than holding payment funds. |
+
+#### High-probability line-based presentation questions
+
+- **Ticket lines 19–24:** Why does the function return a token ID if the backend reads the `Transfer` event? The return makes the contract API useful, while the confirmed log gives the backend receipt-level evidence and exact minted ID.
+- **Ticket lines 26–28:** What happens when `_burn` receives a nonexistent token? OpenZeppelin reverts, so no successful burn receipt is produced.
+- **Marketplace lines 64–74:** What if the approval check is removed? Listing creation could succeed even though later settlement cannot transfer the seller's NFT.
+- **Marketplace lines 65–66:** Why check both active status and whether `seller` is zero? The first blocks a currently active duplicate; the second permanently prevents reuse of an old cancelled/expired/settled reference.
+- **Marketplace lines 127–132:** Why check payment reuse and buyer identity separately? Each protects a different invariant: replay prevention, nonzero recipient, and no self-purchase.
+- **Marketplace lines 134–136:** What happens if `safeTransferFrom` fails after the two assignments? The complete transaction reverts, so `processedPayments` and `active` return to their previous values.
 
 ### 8.3 Contract security concepts
 
@@ -1716,6 +1941,48 @@ It keeps durable recovery state, retries safely, and can issue exactly one Strip
 
 The browser is never proof of a protected operation. The server verifies identity and authoritative Stripe/blockchain results, persists progress, and finalizes database state only after required confirmations.
 
+### Level 5: Required presentation focus
+
+#### 76. In CornShirt, what does Next.js routing do, and what does it not do?
+
+Folders and special files under `src/app` map URLs to pages or HTTP handlers. Routing selects code and supplies dynamic parameters; it does not authenticate a user, prove resource ownership, or validate the database record.
+
+#### 77. Why is `src/app/events/[eventId]/page.tsx` a page while `src/app/api/customer/tickets/checkout/route.ts` is a route handler?
+
+The event file returns React UI for browser navigation. The checkout file exports `POST`, receives an HTTP `Request`, performs trusted server work, and returns JSON. Changing one filename to the other changes the kind of Next.js route, not merely its extension.
+
+#### 78. Why does CornShirt use descriptive folders such as `[ticketId]` instead of making a static `ticketId` folder?
+
+The brackets allow one route to handle any ticket ID, and the descriptive name becomes `params.ticketId`. A static folder would match only the literal text `ticketId`. The route must still check that the authenticated customer owns the requested ticket.
+
+#### 79. What is a DTO, and where can you point to one in CornShirt?
+
+A DTO is a controlled data shape transferred between layers. `PublicEventsResponse` and `VerifyResponse` describe API responses; `EventRow` describes database-shaped input; `Event`/`CustomerTicket` describe UI-facing data; and the object returned by `parseTicketCheckoutBody` is a validated request DTO. CornShirt uses types/interfaces and object mapping, not special DTO classes.
+
+#### 80. Why is `parseTicketCheckoutBody(body: unknown)` more than a TypeScript type definition?
+
+It performs runtime validation on untrusted JSON: it verifies an object exists, extracts normalized text, validates required values and the idempotency-key pattern, and returns `null` when invalid. A type annotation alone disappears at runtime.
+
+#### 81. In `CornShirtTicket.sol` line 19, what is the difference between `external` and `onlyRole(MINTER_ROLE)`?
+
+`external` is visibility: it exposes `mintTicket` as a contract entry point. `onlyRole(MINTER_ROLE)` is authorization: it reverts unless `msg.sender` holds the role. Making a function external does not mean every external caller is allowed to complete it.
+
+#### 82. Why does `CornShirtMarketplace.sol` use `require` at lines 64–74 instead of a normal `if/else`?
+
+Those conditions are mandatory preconditions, not multiple valid behavior choices. When one is false, `require` reverts the transaction and all state changes. A plain `if/else` does not automatically fail or roll back; it is valid only if every branch is an allowed behavior, or if the invalid branch explicitly calls `revert`.
+
+#### 83. At `CornShirtTicket.sol` lines 19–24, why is `_nextTokenId` incremented before `_safeMint`?
+
+It updates internal state before a call that may invoke a recipient contract, following the state-before-interaction idea. If `_safeMint` fails, transaction atomicity rolls the increment back, so no ID is lost from a successful-state perspective.
+
+#### 84. At `CornShirtMarketplace.sol` lines 65–66, why are there two listing-reference checks?
+
+`!listings[reference].active` rejects a currently active duplicate. `seller == address(0)` rejects permanent reuse after a listing was cancelled, expired, or settled. Removing the second check would allow historical references to be recycled.
+
+#### 85. At `CornShirtMarketplace.sol` lines 134–136, why are state updates made before NFT transfer, and what if transfer fails?
+
+Marking the payment used and listing inactive before the external NFT call follows checks-effects-interactions and supports `nonReentrant`. If `safeTransferFrom` reverts, Solidity reverts the whole transaction, including those two earlier assignments.
+
 ## 12. Documentation Differences to Clarify Before Presenting
 
 The team should describe the current code accurately and distinguish it from older documentation:
@@ -1741,6 +2008,10 @@ Every team member should be able to:
 - [ ] Explain the complete architecture in one minute.
 - [ ] Name the responsibility of every user role.
 - [ ] Explain `page.tsx`, `layout.tsx`, `route.ts`, and `[eventId]`.
+- [ ] Define DTO, identify CornShirt DTO-style types, and explain runtime validation versus a TypeScript cast.
+- [ ] Distinguish Solidity visibility, role modifiers, `nonReentrant`, and state mutability.
+- [ ] Explain when Solidity needs `require`/`revert` instead of ordinary `if/else`.
+- [ ] Defend the design choices in both Solidity files using exact current line ranges.
 - [ ] Explain `.ts`, `.tsx`, server components, and client components.
 - [ ] Trace login and role authorization.
 - [ ] Trace event discovery from Supabase to the UI.
@@ -1775,10 +2046,11 @@ The guide must be based on the actual project files, function names, routes, API
 
 Frontend requirements:
 
-- Explain the framework's routing system in detail.
+- Explain Next.js App Router routing in detail and show how folders and special filenames become URLs.
 - Explain special files such as page, layout, route, and not-found files.
+- Compare route.ts with a normal page.tsx: purpose, exports, caller, return type, security responsibility, and what breaks if one is changed to the other.
 - Focus on folders with dynamic bracket names such as [eventId], [ticketId], [listingId], [operationId], or the equivalents found in this project.
-- Explain how dynamic params are received, including async params if the installed framework version requires them.
+- Explain why bracket folders exist, why descriptive names are used instead of only [id], how dynamic params are received, and why an ID is routing input rather than authorization. Include async params if the installed framework version requires them.
 - Explain the difference between .ts and .tsx using actual files from the project.
 - Explain server components, client components, "use client", JSX, props, state, derived state, event handlers, and hooks.
 - Explain major UI components and their actual functions/handlers.
@@ -1788,6 +2060,8 @@ Backend requirements:
 
 - Explain authentication versus authorization using the project's actual functions.
 - Explain page guards versus API guards.
+- Define Data Transfer Object (DTO), explain that it is an architectural role rather than a TypeScript keyword, and identify the project's actual request, response, database-row, and UI DTO-style types.
+- Explain exactly how this project creates a DTO using type/interface definitions, unknown input, runtime validation, normalization, mapping, safe response selection, and separation of database snake_case from UI camelCase. Compare this with unsafe type casting and passing whole rows/bodies.
 - Explain every important API route: method, dynamic parameters, input, validation, called helpers, side effects, response, and failure states.
 - Explain the different database clients and why privileged clients must stay server-only.
 - Explain the project's payment, webhook, managed-wallet, encryption, email, lifecycle, transfer, resale, refund, and recovery functions.
@@ -1796,8 +2070,11 @@ Backend requirements:
 Smart-contract requirements:
 
 - Explain every state variable, role, struct, mapping, event, modifier, constructor, public/external function, inherited function used by the project, and the TypeScript helper that calls it.
+- Clearly distinguish Solidity visibility keywords (public, external, internal, private), access-control modifiers such as onlyRole, reentrancy modifiers, and state mutability such as view. Explain private does not make blockchain data secret.
 - For every contract function, state its caller, inputs, checks, state changes, events, return value, failure behavior, and why the design was chosen.
 - Explain minting, ownerOf, approvals, safeTransferFrom, marketplace creation/cancellation/expiry/settlement, burning, reentrancy, and checks-effects-interactions as applicable to the project.
+- Explain why invalid Solidity transaction conditions use require or explicit revert instead of ordinary if/else. Compare require(condition, message), if (...) revert CustomError(), an if/else that continues, and backend HTTP early returns.
+- Add a line-range walkthrough for every Solidity file using the current exact line numbers. For each range, explain what the code does and include a project-specific “Why was it done this way?” question with its answer. Warn that line numbers must be rechecked if source code changes.
 
 Database requirements:
 
@@ -1829,10 +2106,11 @@ Include lessons comparing programming choices using actual project examples:
 - UI checks versus backend security
 - separate database writes versus an atomic transaction/RPC
 - arrays versus mappings for smart-contract storage when relevant
+- Solidity require/revert versus ordinary if/else
 
 Explain that these alternatives are not automatically interchangeable. State when each is appropriate and what behavior or risk changes if the wrong construct is used.
 
-At the end, include a project-code Q&A section progressing from easy to very advanced. Questions must mostly mention actual project filenames, routes, functions, tables, RPCs, contract methods, state transitions, or workflows. Include some foundation questions about .ts versus .tsx, dynamic routing, React state, if/else, loops, and array methods, but avoid generic opening questions such as "What is the project?", "What is frontend?", "What is backend?", or "What is a database?" Provide the answer immediately below each question.
+At the end, include a project-code Q&A section progressing from easy to very advanced. Questions must mostly mention actual project filenames, routes, functions, tables, RPCs, contract methods, state transitions, or workflows. Include questions about .ts versus .tsx, route.ts versus page.tsx, dynamic [id]-style routing, DTO creation and validation, Solidity visibility/access modifiers, require/revert versus if/else, exact Solidity line ranges, React state, loops, and array methods. Avoid generic opening questions such as "What is the project?", "What is frontend?", "What is backend?", or "What is a database?" Provide the answer immediately below each question.
 
 Also include a final readiness checklist.
 
