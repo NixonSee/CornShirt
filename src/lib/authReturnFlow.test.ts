@@ -22,6 +22,10 @@ const layoutSource = readFileSync(
   new URL("../app/layout.tsx", import.meta.url),
   "utf8",
 );
+const homeSource = readFileSync(
+  new URL("../app/page.tsx", import.meta.url),
+  "utf8",
+);
 const interceptorSource = readFileSync(
   new URL("../components/auth/AuthTokenInterceptor.tsx", import.meta.url),
   "utf8",
@@ -82,6 +86,14 @@ test("auth callback exchanges the PKCE code before set-password", () => {
   assert.equal(callbackSource.includes('searchParams.get("type")'), true);
   assert.equal(callbackSource.includes('searchParams.get("intent")'), true);
   assert.equal(callbackSource.includes("/auth/set-password"), true);
+  assert.equal(callbackSource.includes('intent === "setup"'), true);
+});
+
+test("site URL fallback preserves auth codes before the visitor redirect", () => {
+  assert.equal(homeSource.includes("params.code"), true);
+  assert.equal(homeSource.includes('intent: "setup"'), true);
+  assert.equal(homeSource.includes("/auth/callback?"), true);
+  assert.equal(homeSource.includes('redirect("/visitor")'), true);
 });
 
 test("set-password relies on the session established by the callback", () => {
